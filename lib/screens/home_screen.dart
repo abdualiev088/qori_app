@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../data/surahs.dart';
 import '../theme/tokens.dart';
 import '../widgets/glass.dart';
 import '../widgets/hifdth_card.dart';
 import '../widgets/hifdth_mood.dart';
 import '../widgets/progress_indicators.dart';
+import '../widgets/quran_progress_card.dart';
 
 // Placeholder data, as in the design.
 const _steps = [
@@ -79,10 +81,36 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 18),
+          const _QuranProgress(),
         ],
       ),
     );
   }
+}
+
+/// The Player only has Al-Qalam (surah 68) for now, so the grid starts there.
+const _playerSurahIndex = 67;
+
+/// Holds the selected surah for [QuranProgressCard].
+class _QuranProgress extends StatefulWidget {
+  const _QuranProgress();
+
+  @override
+  State<_QuranProgress> createState() => _QuranProgressState();
+}
+
+class _QuranProgressState extends State<_QuranProgress> {
+  // Placeholder progress until memorization is tracked.
+  final _surahs = sampleSurahProgress();
+  int _selected = _playerSurahIndex;
+
+  @override
+  Widget build(BuildContext context) => QuranProgressCard(
+        surahs: _surahs,
+        selected: _selected,
+        onSelect: (i) => setState(() => _selected = i),
+      );
 }
 
 class _GoalCard extends StatelessWidget {
