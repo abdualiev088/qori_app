@@ -60,6 +60,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Al-Saff'), findsNothing);
     expect(find.text('As-Saff'), findsNWidgets(2)); // detail row and loupe
+    // Without a Material above it, the loupe's text falls back to yellow double underlines.
+    final loupeText = tester.element(find.text('As-Saff').last);
+    expect(DefaultTextStyle.of(loupeText).style.decoration, isNot(TextDecoration.underline));
     await gesture.moveTo(tester.getCenter(tile(64).first));
     await tester.pump();
     expect(find.text('At-Taghabun'), findsNWidgets(2));

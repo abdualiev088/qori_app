@@ -478,9 +478,13 @@ class _LoupeLayer extends StatelessWidget {
           if (d == null) return const SizedBox.shrink();
           final overlay = context.findRenderObject() as RenderBox?;
           final origin = overlay != null && overlay.hasSize ? overlay.localToGlobal(Offset.zero) : Offset.zero;
-          return CustomSingleChildLayout(
-            delegate: _LoupePosition(d.tile.shift(-origin), top),
-            child: _Loupe(surah: d.surah),
+          // The overlay sits outside the page's Scaffold, so give the text a Material to draw on.
+          return Material(
+            type: MaterialType.transparency,
+            child: CustomSingleChildLayout(
+              delegate: _LoupePosition(d.tile.shift(-origin), top),
+              child: _Loupe(surah: d.surah),
+            ),
           );
         },
       ),
