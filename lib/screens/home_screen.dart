@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
 import '../widgets/glass.dart';
+import '../widgets/hifdth_card.dart';
+import '../widgets/hifdth_mood.dart';
 import '../widgets/progress_indicators.dart';
-import '../widgets/ribbed_glass.dart';
 
 // Placeholder data, as in the design.
 const _steps = [
@@ -11,6 +12,8 @@ const _steps = [
   DayStep(title: 'Review', subtitle: 'Done at 10:30 am', done: true),
   DayStep(title: 'Evening session', subtitle: 'Up next · 7:00 pm', done: false),
 ];
+/// Sessions whose time has passed without being done. Placeholder until the schedule is real.
+const _sessionsBehind = 0;
 const _week = [
   StreakDay('M', true),
   StreakDay('T', true),
@@ -64,7 +67,7 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          const _MainCard(),
+          HifdthCard(mood: moodFor(sessionsBehind: _sessionsBehind), steps: _steps),
           const SizedBox(height: 18),
           const IntrinsicHeight(
             child: Row(
@@ -80,183 +83,6 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-class _MainCard extends StatelessWidget {
-  const _MainCard();
-
-  @override
-  Widget build(BuildContext context) {
-    const radius = BorderRadius.all(Radius.circular(HRadii.homeCard));
-    final done = _steps.where((s) => s.done).length;
-    return ClipRRect(
-      borderRadius: radius,
-      child: CustomPaint(
-        painter: RibbedGlassPainter.home,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            border: Border.all(color: const Color(0xFFDDEEE4)),
-          ),
-          padding: const EdgeInsets.fromLTRB(13, 25, 13, 13), // design padding minus the 1 px border
-          child: Column(
-            children: [
-              const HifdthOrb(),
-              const SizedBox(height: 16),
-              const _StatusPill(text: 'Hifdth is checking your day…'),
-              const SizedBox(height: 16),
-              Container(
-                decoration: BoxDecoration(
-                  color: HColors.surface,
-                  borderRadius: BorderRadius.circular(HRadii.card),
-                ),
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Text("TODAY'S PROGRESS",
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: HText.inter(
-                                  size: 12, weight: FontWeight.w600, letterSpacing: 0.6, color: HColors.ink2)),
-                        ),
-                        Semantics(
-                          label: '$done of ${_steps.length} sessions done',
-                          excludeSemantics: true,
-                          child: Text.rich(TextSpan(
-                            style: HText.inter(size: 14, weight: FontWeight.w700),
-                            children: [
-                              TextSpan(text: '$done'),
-                              TextSpan(
-                                text: '/${_steps.length}',
-                                style: HText.inter(size: 14, weight: FontWeight.w500, color: HColors.inkMuted),
-                              ),
-                            ],
-                          )),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    ExcludeSemantics(
-                      child: SegmentedProgressBar(fills: [for (final s in _steps) s.done ? 1 : 0]),
-                    ),
-                    const SizedBox(height: 14),
-                    const StepTimeline(steps: _steps),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// The green assistant orb with its two eyes.
-class HifdthOrb extends StatelessWidget {
-  const HifdthOrb({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      image: true,
-      label: 'Hifdth assistant',
-      child: SizedBox.square(
-        dimension: 112,
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            const Positioned(
-              left: -18,
-              top: -18,
-              right: -18,
-              bottom: -18,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(colors: [HColors.accentGlow, Color(0x00FFFFFF)], stops: [0, .7]),
-                ),
-              ),
-            ),
-            Container(
-              width: 104,
-              height: 104,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  center: Alignment(-0.3, -0.44),
-                  radius: 0.97,
-                  colors: [Color(0xFFB8F5CF), HColors.accent, HColors.orbDeep],
-                  stops: [0, .45, 1],
-                ),
-                boxShadow: [BoxShadow(color: HColors.accentShadow, offset: Offset(0, 14), blurRadius: 30)],
-              ),
-              foregroundDecoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Color(0x40FFFFFF), Color(0x00FFFFFF)],
-                  stops: [0, .3],
-                ),
-              ),
-              padding: const EdgeInsets.only(top: 22),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [_Eye(), SizedBox(width: 16), _Eye()],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Eye extends StatelessWidget {
-  const _Eye();
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: 9,
-        height: 18,
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(5)),
-      );
-}
-
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.75),
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(color: HColors.accent, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(text, style: HText.inter(size: 13, weight: FontWeight.w500, color: HColors.pillInk)),
-            ),
-          ],
-        ),
-      );
 }
 
 class _GoalCard extends StatelessWidget {

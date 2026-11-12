@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
 
 /// A CSS `radial-gradient(ellipse rx ry at cx cy, …)`; all values are fractions of the box.
 class EllipseGlow {
@@ -16,6 +17,29 @@ class EllipseGlow {
   final double cx, cy, rx, ry;
   final List<Color> colors;
   final List<double> stops;
+
+  EllipseGlow _mapColors(Color Function(Color) f) =>
+      EllipseGlow(cx: cx, cy: cy, rx: rx, ry: ry, colors: colors.map(f).toList(), stops: stops);
+
+  @override
+  bool operator ==(Object other) =>
+      other is EllipseGlow &&
+      other.cx == cx &&
+      other.cy == cy &&
+      other.rx == rx &&
+      other.ry == ry &&
+      listEquals(other.colors, colors) &&
+      listEquals(other.stops, stops);
+
+  @override
+  int get hashCode => Object.hash(cx, cy, rx, ry, Object.hashAll(colors), Object.hashAll(stops));
+}
+
+/// Turns [c] around the color wheel by [degrees], keeping its saturation, lightness and alpha.
+Color rotateHue(Color c, double degrees) {
+  if (degrees == 0) return c;
+  final hsl = HSLColor.fromColor(c);
+  return hsl.withHue((hsl.hue + degrees) % 360).toColor();
 }
 
 /// The "ribbed glass" fill: a vertical base gradient, soft elliptical glows,
@@ -70,6 +94,40 @@ class RibbedGlassPainter extends CustomPainter {
   final LinearGradient base;
   final List<EllipseGlow> glows;
 
+  /// The same fill with every color turned [degrees] around the color wheel
+  /// (Home's mint card tinted to another mood).
+  RibbedGlassPainter rotated(double degrees) {
+    if (degrees == 0) return this;
+    Color f(Color c) => rotateHue(c, degrees);
+    return RibbedGlassPainter(
+      base: LinearGradient(begin: base.begin, end: base.end, colors: base.colors.map(f).toList(), stops: base.stops),
+      glows: [for (final g in glows) g._mapColors(f)],
+      stripe: stripe.map(f).toList(),
+    );
+  }
+
+  /// Blends two fills with the same layout (one made from the other with [rotated]).
+  static RibbedGlassPainter lerp(RibbedGlassPainter a, RibbedGlassPainter b, double t) {
+    if (t == 0) return a;
+    if (t == 1) return b;
+    List<Color> mix(List<Color> x, List<Color> y) => [for (var i = 0; i < x.length; i++) Color.lerp(x[i], y[i], t)!];
+    return RibbedGlassPainter(
+      base: LinearGradient.lerp(a.base, b.base, t)!,
+      glows: [
+        for (var i = 0; i < a.glows.length; i++)
+          EllipseGlow(
+            cx: a.glows[i].cx,
+            cy: a.glows[i].cy,
+            rx: a.glows[i].rx,
+            ry: a.glows[i].ry,
+            colors: mix(a.glows[i].colors, b.glows[i].colors),
+            stops: a.glows[i].stops,
+          ),
+      ],
+      stripe: mix(a.stripe, b.stripe),
+    );
+  }
+
   /// Colors at 0, 3, 6, 8 and 10 px of each 10 px stripe.
   final List<Color> stripe;
 
@@ -107,5 +165,6 @@ class RibbedGlassPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(RibbedGlassPainter old) => false;
+  bool shouldRepaint(RibbedGlassPainter old) =>
+      old.base != base || !listEquals(old.glows, glows) || !listEquals(old.stripe, stripe);
 }

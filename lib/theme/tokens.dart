@@ -19,8 +19,6 @@ abstract final class HColors {
 
   /// Orb shadow tone: the accent with each channel scaled (r×.55, g×.6, b×.55).
   static const orbDeep = Color(0xFF136D39);
-  static const accentGlow = Color(0x4722B567); // accent at 28%
-  static const accentShadow = Color(0x6122B567); // accent at 38%
 
   static const mintWash = Color(0xFFE8F7EF);
   static const mintRing = Color(0xFF9FDCBC);
