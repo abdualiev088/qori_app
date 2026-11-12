@@ -22,12 +22,12 @@ class _AppShellState extends State<AppShell> {
 
   static const _navHeight = 68.0;
   static const _bottom = 28.0;
+  static const _side = 16.0;
 
   @override
   Widget build(BuildContext context) {
     // Home and the placeholders scroll under the nav with an 18 px gap; Player sits 12 px above it.
     const contentInset = _bottom + _navHeight;
-    final side = _tab == HTab.player ? 16.0 : 20.0;
 
     return Scaffold(
       body: DecoratedBox(
@@ -53,8 +53,8 @@ class _AppShellState extends State<AppShell> {
             ),
             const Positioned(left: 0, right: 0, bottom: 0, child: BottomGlow()),
             Positioned(
-              left: side,
-              right: side,
+              left: _side,
+              right: _side,
               bottom: _bottom,
               child: LiquidGlassNav(current: _tab, onSelect: (t) => setState(() => _tab = t)),
             ),

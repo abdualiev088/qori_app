@@ -43,7 +43,7 @@ class HomeScreen extends StatelessWidget {
     final top = MediaQuery.paddingOf(context).top + 9;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(20, top < 56 ? 56 : top, 20, bottomInset),
+      padding: EdgeInsets.fromLTRB(16, top < 56 ? 56 : top, 16, bottomInset),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
