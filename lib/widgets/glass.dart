@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/tokens.dart';
 import 'icons.dart';
@@ -198,11 +199,57 @@ class _BottomGlowPainter extends CustomPainter {
 enum HTab { home, player, method, settings }
 
 /// The liquid-glass bottom nav: 68 tall, radius 34, four equal columns.
-class LiquidGlassNav extends StatelessWidget {
+///
+/// Tap a tab to switch, or hold or swipe along the bar: the highlight follows
+/// the finger and the tab under it is selected on release.
+class LiquidGlassNav extends StatefulWidget {
   const LiquidGlassNav({super.key, required this.current, required this.onSelect});
 
   final HTab current;
   final ValueChanged<HTab> onSelect;
+
+  @override
+  State<LiquidGlassNav> createState() => _LiquidGlassNavState();
+}
+
+class _LiquidGlassNavState extends State<LiquidGlassNav> {
+  static const _gap = 4.0;
+
+  /// Finger position along the bar while dragging; null otherwise.
+  double? _dragX;
+
+  /// The tab under the finger while dragging.
+  HTab? _hover;
+
+  double _itemWidth(double width) => (width - _gap * (HTab.values.length - 1)) / HTab.values.length;
+
+  HTab _tabAt(double x, double width) {
+    final i = (x / (_itemWidth(width) + _gap)).floor().clamp(0, HTab.values.length - 1);
+    return HTab.values[i];
+  }
+
+  void _start(double x, double width) => setState(() {
+        _dragX = x;
+        _hover = _tabAt(x, width);
+      });
+
+  void _move(double x, double width) {
+    final tab = _tabAt(x, width);
+    if (tab != _hover) HapticFeedback.selectionClick();
+    setState(() {
+      _dragX = x;
+      _hover = tab;
+    });
+  }
+
+  void _end() {
+    final tab = _hover;
+    setState(() {
+      _dragX = null;
+      _hover = null;
+    });
+    if (tab != null && tab != widget.current) widget.onSelect(tab);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -221,19 +268,81 @@ class LiquidGlassNav extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.all(5), // 6 px minus the 1 px border
-            child: Row(
-              children: [
-                for (final (i, tab) in HTab.values.indexed) ...[
-                  if (i > 0) const SizedBox(width: 4),
-                  Expanded(child: _NavItem(tab: tab, active: tab == current, onTap: () => onSelect(tab))),
-                ],
-              ],
-            ),
+            child: LayoutBuilder(builder: (context, box) {
+              final width = box.maxWidth;
+              final itemWidth = _itemWidth(width);
+              final dragX = _dragX;
+              final dragging = dragX != null;
+              final shown = _hover ?? widget.current;
+              final left = dragging
+                  ? (dragX - itemWidth / 2).clamp(0.0, width - itemWidth)
+                  : widget.current.index * (itemWidth + _gap);
+
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onHorizontalDragStart: (d) => _start(d.localPosition.dx, width),
+                onHorizontalDragUpdate: (d) => _move(d.localPosition.dx, width),
+                onHorizontalDragEnd: (_) => _end(),
+                onLongPressStart: (d) {
+                  HapticFeedback.mediumImpact();
+                  _start(d.localPosition.dx, width);
+                },
+                onLongPressMoveUpdate: (d) => _move(d.localPosition.dx, width),
+                onLongPressEnd: (_) => _end(),
+                child: Stack(
+                  children: [
+                    AnimatedPositioned(
+                      duration: Duration(milliseconds: dragging ? 90 : 320),
+                      curve: dragging ? Curves.easeOut : Curves.easeOutCubic,
+                      left: left,
+                      top: 0,
+                      bottom: 0,
+                      width: itemWidth,
+                      child: AnimatedScale(
+                        scale: dragging ? 1.08 : 1,
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOut,
+                        child: const _ActivePill(),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        for (final (i, tab) in HTab.values.indexed) ...[
+                          if (i > 0) const SizedBox(width: _gap),
+                          Expanded(
+                            child: _NavItem(tab: tab, active: tab == shown, onTap: () => widget.onSelect(tab)),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
           ),
         ),
       ),
     );
   }
+}
+
+/// The bright glass highlight behind the active tab.
+class _ActivePill extends StatelessWidget {
+  const _ActivePill();
+
+  @override
+  Widget build(BuildContext context) => const DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.all(Radius.circular(28)),
+          gradient: RadialGradient(
+            center: Alignment.topCenter,
+            radius: 1.6,
+            colors: [Color(0xFAFFFFFF), Color(0xD9E8F8EF), Color(0xCCD0F0DE)],
+            stops: [0, .6, 1],
+          ),
+          boxShadow: [BoxShadow(color: Color(0x1F145A37), offset: Offset(0, 4), blurRadius: 10)],
+        ),
+      );
 }
 
 class _NavItem extends StatelessWidget {
@@ -260,33 +369,19 @@ class _NavItem extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: DecoratedBox(
-          decoration: active
-              ? const BoxDecoration(
-                  borderRadius: BorderRadius.all(Radius.circular(28)),
-                  gradient: RadialGradient(
-                    center: Alignment.topCenter,
-                    radius: 1.6,
-                    colors: [Color(0xFAFFFFFF), Color(0xD9E8F8EF), Color(0xCCD0F0DE)],
-                    stops: [0, .6, 1],
-                  ),
-                  boxShadow: [BoxShadow(color: Color(0x1F145A37), offset: Offset(0, 4), blurRadius: 10)],
-                )
-              : const BoxDecoration(),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              icon,
-              const SizedBox(height: 3),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.fade,
-                softWrap: false,
-                style: HText.inter(size: 11, weight: active ? FontWeight.w600 : FontWeight.w500, color: color),
-              ),
-            ],
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            icon,
+            const SizedBox(height: 3),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.fade,
+              softWrap: false,
+              style: HText.inter(size: 11, weight: active ? FontWeight.w600 : FontWeight.w500, color: color),
+            ),
+          ],
         ),
       ),
     );
