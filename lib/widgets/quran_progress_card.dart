@@ -31,12 +31,20 @@ int _percent(SurahProgress s) => (s.fraction * 100).round();
 /// detail row for the selected surah. Tap a tile, or press and hold then slide
 /// to browse with a loupe above the finger. The parent owns [selected].
 class QuranProgressCard extends StatefulWidget {
-  const QuranProgressCard({super.key, required this.surahs, required this.selected, required this.onSelect})
-      : assert(surahs.length == 114);
+  const QuranProgressCard({
+    super.key,
+    required this.surahs,
+    required this.selected,
+    required this.onSelect,
+    this.onTap,
+  }) : assert(surahs.length == 114);
 
   final List<SurahProgress> surahs;
   final int selected;
   final ValueChanged<int> onSelect;
+
+  /// Called after a tile is tapped (not when browsing), e.g. to open its details.
+  final ValueChanged<int>? onTap;
 
   @override
   State<QuranProgressCard> createState() => _QuranProgressCardState();
@@ -102,7 +110,12 @@ class _QuranProgressCardState extends State<QuranProgressCard> {
 
   void _onTapUp(TapUpDetails d) {
     final i = _tileAt(d.localPosition);
-    if (i != null && i != widget.selected) widget.onSelect(i);
+    if (i != null) _tapTile(i);
+  }
+
+  void _tapTile(int i) {
+    if (i != widget.selected) widget.onSelect(i);
+    widget.onTap?.call(i);
   }
 
   void _browseStart(LongPressStartDetails d) {
@@ -229,7 +242,7 @@ class _QuranProgressCardState extends State<QuranProgressCard> {
                                 size: size,
                                 selected: row * _cols + col == widget.selected,
                                 pressed: row * _cols + col == _pressed,
-                                onTap: () => widget.onSelect(row * _cols + col),
+                                onTap: () => _tapTile(row * _cols + col),
                               ),
                             ],
                           ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:qori_app/data/learned_store.dart';
 import 'package:qori_app/screens/home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:qori_app/theme/tokens.dart';
 
 void main() {
@@ -11,8 +13,10 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
+    SharedPreferences.setMockInitialValues({});
+    final learned = LearnedStore.load(await SharedPreferences.getInstance());
     await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: HomeScreen(bottomInset: 114, now: DateTime(2026, 11, 11, 15))),
+      home: Scaffold(body: HomeScreen(bottomInset: 114, learned: learned, now: DateTime(2026, 11, 11, 15))),
     ));
 
     expect(find.text('Wednesday, 11 November'), findsOneWidget);

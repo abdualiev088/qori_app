@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../data/learned_store.dart';
 import '../data/surahs.dart';
 import '../theme/tokens.dart';
 import '../widgets/glass.dart';
 import '../widgets/hifdth_card.dart';
 import '../widgets/hifdth_mood.dart';
+import '../widgets/learned_sheet.dart';
 import '../widgets/progress_indicators.dart';
 import '../widgets/quran_progress_card.dart';
 
@@ -33,7 +35,10 @@ const _months = [
 ];
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, required this.bottomInset, this.now});
+  const HomeScreen({super.key, required this.bottomInset, required this.learned, this.now});
+
+  /// Which ayahs are learned; the Quran progress card follows it.
+  final LearnedStore learned;
 
   /// Space reserved under the content for the floating nav.
   final double bottomInset;
@@ -82,7 +87,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          const _QuranProgress(),
+          _QuranProgress(learned: learned),
         ],
       ),
     );
@@ -94,22 +99,34 @@ const _playerSurahIndex = 67;
 
 /// Holds the selected surah for [QuranProgressCard].
 class _QuranProgress extends StatefulWidget {
-  const _QuranProgress();
+  const _QuranProgress({required this.learned});
+
+  final LearnedStore learned;
 
   @override
   State<_QuranProgress> createState() => _QuranProgressState();
 }
 
 class _QuranProgressState extends State<_QuranProgress> {
-  // Placeholder progress until memorization is tracked.
-  final _surahs = sampleSurahProgress();
   int _selected = _playerSurahIndex;
 
   @override
-  Widget build(BuildContext context) => QuranProgressCard(
-        surahs: _surahs,
-        selected: _selected,
-        onSelect: (i) => setState(() => _selected = i),
+  Widget build(BuildContext context) => ListenableBuilder(
+        listenable: widget.learned,
+        builder: (context, _) => QuranProgressCard(
+          surahs: [
+            for (var i = 0; i < 114; i++)
+              SurahProgress(
+                number: i + 1,
+                name: surahNames[i],
+                ayahs: surahAyahCounts[i],
+                memorized: widget.learned.learnedCount(i + 1),
+              ),
+          ],
+          selected: _selected,
+          onSelect: (i) => setState(() => _selected = i),
+          onTap: (i) => showLearnedSheet(context, store: widget.learned, surah: i + 1),
+        ),
       );
 }
 

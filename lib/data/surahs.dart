@@ -56,7 +56,7 @@ class SurahProgress {
   double get fraction => (memorized / ayahs).clamp(0.0, 1.0);
 }
 
-/// Placeholder progress for the preview and tests: surahs 1, 67 and 78–114
+/// Placeholder progress for previews and tests only (Home uses saved progress): surahs 1, 67 and 78–114
 /// memorized; 68, 18, 36 and 2 in progress.
 List<SurahProgress> sampleSurahProgress() {
   const partial = {68: 30, 18: 40, 36: 20, 2: 5};
