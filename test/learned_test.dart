@@ -196,6 +196,44 @@ void main() {
       expect(find.text('6 of 52 ayahs learned'), findsOneWidget);
     });
 
+    testWidgets('sliding without holding marks every ayah passed', (tester) async {
+      await pumpHome(tester);
+      await openSurah(tester, 68);
+      final gesture = await tester.startGesture(tester.getCenter(ayah(1)));
+      await gesture.moveTo(tester.getCenter(ayah(2)));
+      await gesture.moveTo(tester.getCenter(ayah(5)));
+      await gesture.up();
+      await tester.pump();
+      expect(find.text('5 of 52 ayahs learned'), findsOneWidget);
+      expect(find.text('Whole surah learned'), findsOneWidget); // the sheet didn't move
+    });
+
+    testWidgets('a grid that fits does not scroll', (tester) async {
+      await pumpHome(tester);
+      await openSurah(tester, 1);
+      final grid = tester.widget<GridView>(find.byType(GridView));
+      expect(grid.physics, isA<NeverScrollableScrollPhysics>());
+    });
+
+    testWidgets('a long grid scrolls up and down, and marks when sliding sideways', (tester) async {
+      await pumpHome(tester);
+      await openSurah(tester, 2);
+      final grid = tester.widget<GridView>(find.byType(GridView));
+      expect(grid.physics, isA<BouncingScrollPhysics>());
+
+      await tester.drag(ayah(17), const Offset(0, -150));
+      await tester.pumpAndSettle();
+      expect(find.text('Not started · 286 ayahs'), findsWidgets); // sheet header (and the card behind it)
+      expect(tester.widget<GridView>(find.byType(GridView)).controller!.offset, greaterThan(0));
+
+      final gesture = await tester.startGesture(tester.getCenter(ayah(25)));
+      await gesture.moveTo(tester.getCenter(ayah(26)));
+      await gesture.moveTo(tester.getCenter(ayah(28)));
+      await gesture.up();
+      await tester.pump();
+      expect(find.text('4 of 286 ayahs learned'), findsOneWidget);
+    });
+
     testWidgets('saved ayahs survive a restart', (tester) async {
       await pumpHome(tester, saved: {LearnedStore.key: '{"68":[1,2,3]}'});
       await restart(tester);

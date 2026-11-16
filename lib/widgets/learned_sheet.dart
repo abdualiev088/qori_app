@@ -249,7 +249,7 @@ class _LearnedSheetState extends State<_LearnedSheet> {
           const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text('Tap an ayah to mark it. Hold and slide to mark several. The dashed one is next.',
+            child: Text('Tap an ayah to mark it, or slide across ayahs to mark several. The dashed one is next.',
                 style: HText.inter(size: 12, color: HColors.inkMuted)),
           ),
           const SizedBox(height: 14),
@@ -371,8 +371,12 @@ class _Switch extends StatelessWidget {
   }
 }
 
-/// 8-column ayah grid. Tap toggles one ayah; press and hold then slide marks
-/// every ayah the finger passes with the opposite of the first one's state.
+/// 8-column ayah grid. Tap toggles one ayah; sliding marks every ayah the
+/// finger passes with the opposite of the first one's state.
+///
+/// When every ayah fits, any slide marks. When the grid scrolls, a sideways
+/// slide marks right away (then can go in any direction), an up/down swipe
+/// scrolls, and press-and-hold then slide still marks in any direction.
 class _AyahGrid extends StatefulWidget {
   const _AyahGrid({required this.count, required this.learned, required this.next, required this.onChanged});
 
@@ -397,6 +401,10 @@ class _AyahGridState extends State<_AyahGrid> {
   bool _marking = false;
   bool _markValue = false;
   int _last = 0;
+
+  /// The marks so far in this slide. Several moves can land before the parent
+  /// rebuilds with a new [_AyahGrid.learned], so build on this, not on that.
+  Set<int> _working = {};
 
   @override
   void dispose() {
@@ -429,17 +437,19 @@ class _AyahGridState extends State<_AyahGrid> {
     widget.onChanged(next);
   }
 
-  void _markStart(LongPressStartDetails d) {
-    final i = _indexAt(d.localPosition, clamp: true)!;
+  void _markStart(Offset p) {
+    final i = _indexAt(p, clamp: true)!;
     _marking = true;
-    _markValue = !widget.learned.contains(i + 1);
+    _working = {...widget.learned};
+    _markValue = !_working.contains(i + 1);
     _last = i;
     setState(() => _pressed = i);
     _apply(i, i);
   }
 
-  void _markMove(LongPressMoveUpdateDetails d) {
-    final i = _indexAt(d.localPosition, clamp: true)!;
+  void _markMove(Offset p) {
+    if (!_marking) return;
+    final i = _indexAt(p, clamp: true)!;
     if (i == _last) return;
     // Fill the ayahs a fast slide skipped over.
     final from = i > _last ? _last + 1 : i;
@@ -450,14 +460,13 @@ class _AyahGridState extends State<_AyahGrid> {
   }
 
   void _apply(int from, int to) {
-    final next = {...widget.learned};
     var changed = false;
     for (var k = from; k <= to; k++) {
-      changed |= _markValue ? next.add(k + 1) : next.remove(k + 1);
+      changed |= _markValue ? _working.add(k + 1) : _working.remove(k + 1);
     }
     if (!changed) return;
     HapticFeedback.selectionClick();
-    widget.onChanged(next);
+    widget.onChanged({..._working});
   }
 
   void _markEnd() => setState(() {
@@ -471,7 +480,9 @@ class _AyahGridState extends State<_AyahGrid> {
     return LayoutBuilder(builder: (context, box) {
       final tile = _tile(box.maxWidth);
       final rows = (widget.count / _cols).ceil();
-      final height = math.min(rows * tile + (rows - 1) * _gap, box.maxHeight);
+      final full = rows * tile + (rows - 1) * _gap;
+      final fits = full <= box.maxHeight;
+      final height = math.min(full, box.maxHeight);
       return SizedBox(
         height: height,
         child: Listener(
@@ -501,19 +512,45 @@ class _AyahGridState extends State<_AyahGrid> {
                   if (i != null) _toggle(i);
                 },
               ),
-              _HoldRecognizer: GestureRecognizerFactoryWithHandlers<_HoldRecognizer>(
-                () => _HoldRecognizer(debugOwner: this),
-                (r) => r
-                  ..onLongPressStart = _markStart
-                  ..onLongPressMoveUpdate = _markMove
-                  ..onLongPressEnd = ((_) => _markEnd())
-                  ..onLongPressCancel = _markEnd,
-              ),
+              if (fits)
+                PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
+                  () => PanGestureRecognizer(debugOwner: this),
+                  (r) => r
+                    ..dragStartBehavior = DragStartBehavior.down
+                    ..gestureSettings = _slideSettings
+                    ..onStart = ((d) => _markStart(d.localPosition))
+                    ..onUpdate = ((d) => _markMove(d.localPosition))
+                    ..onEnd = ((_) => _markEnd())
+                    ..onCancel = _markEnd,
+                )
+              else ...{
+                HorizontalDragGestureRecognizer:
+                    GestureRecognizerFactoryWithHandlers<HorizontalDragGestureRecognizer>(
+                  () => HorizontalDragGestureRecognizer(debugOwner: this),
+                  (r) => r
+                    ..dragStartBehavior = DragStartBehavior.down
+                    ..gestureSettings = _sidewaysSettings
+                    ..onStart = ((d) => _markStart(d.localPosition))
+                    ..onUpdate = ((d) => _markMove(d.localPosition))
+                    ..onEnd = ((_) => _markEnd())
+                    ..onCancel = _markEnd,
+                ),
+                _HoldRecognizer: GestureRecognizerFactoryWithHandlers<_HoldRecognizer>(
+                  () => _HoldRecognizer(debugOwner: this),
+                  (r) => r
+                    ..onLongPressStart = ((d) => _markStart(d.localPosition))
+                    ..onLongPressMoveUpdate = ((d) => _markMove(d.localPosition))
+                    ..onLongPressEnd = ((_) => _markEnd())
+                    ..onLongPressCancel = _markEnd,
+                ),
+              },
             },
             child: GridView.builder(
               controller: _scroll,
               padding: EdgeInsets.zero,
-              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+              physics: fits
+                  ? const NeverScrollableScrollPhysics()
+                  : const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: _cols,
                 mainAxisSpacing: _gap,
@@ -534,6 +571,12 @@ class _AyahGridState extends State<_AyahGrid> {
     });
   }
 }
+
+/// Slides start marking after 8 px, before the sheet's own drag (18 px) can claim them.
+const _slideSettings = DeviceGestureSettings(touchSlop: 4); // pan slop is twice this
+
+/// In a scrolling grid, 12 px sideways starts marking; 18 px up or down scrolls.
+const _sidewaysSettings = DeviceGestureSettings(touchSlop: 12);
 
 /// A long press that fires after 220 ms and gives up to scrolling after 8 px.
 class _HoldRecognizer extends LongPressGestureRecognizer {
