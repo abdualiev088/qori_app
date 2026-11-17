@@ -7,9 +7,14 @@ import 'hifdth_mood.dart';
 /// Hifdth in a 112 px box: a 104 px orb with a radial gradient, a soft
 /// shadow, a light rim at the bottom, two pill eyes and (when not happy) brows.
 class HifdthPainter extends CustomPainter {
-  const HifdthPainter(this.style);
+  const HifdthPainter(this.style, {this.look = 0});
 
   final MoodStyle style;
+
+  /// Where Hifdth looks: -1 left, 0 ahead, 1 right.
+  final double look;
+
+  static const _lookShift = 8.0;
 
   static const _orb = 104.0;
   static const _eye = Size(9, 18);
@@ -58,7 +63,7 @@ class HifdthPainter extends CustomPainter {
     final dx = (_eyeGap + _eye.width) / 2;
 
     for (final (side, angle) in [(-1, style.browLeft), (1, style.browRight)]) {
-      final x = center.dx + side * dx;
+      final x = center.dx + side * dx + look * _lookShift;
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromCenter(
@@ -87,5 +92,5 @@ class HifdthPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(HifdthPainter old) => old.style != style;
+  bool shouldRepaint(HifdthPainter old) => old.style != style || old.look != look;
 }

@@ -12,10 +12,19 @@ import 'progress_indicators.dart';
 /// Home's main card: Hifdth, the status pill and today's progress on a ribbed
 /// background. Everything follows [mood] and morphs when it changes.
 class HifdthCard extends StatefulWidget {
-  const HifdthCard({super.key, required this.mood, required this.steps});
+  const HifdthCard({super.key, required this.mood, required this.steps, this.characterAway = false});
 
   final HifdthMood mood;
   final List<DayStep> steps;
+
+  /// Hides the character (keeping its space) while it's somewhere else on screen.
+  final bool characterAway;
+
+  /// How far the character's top edge sits below the card's top (border and padding).
+  static const characterTop = 1 + 25.0;
+
+  /// The character's box; it's centered horizontally in the card.
+  static const characterSize = _Hifdth._box;
 
   @override
   State<HifdthCard> createState() => _HifdthCardState();
@@ -98,6 +107,7 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
         final style = _style;
         Widget hifdth = _Hifdth(style: style, from: _from.idle, to: _to.idle, morph: _morph.value, idle: _idle);
         if (kDebugMode) hifdth = GestureDetector(onLongPress: _cycleMood, child: hifdth);
+        if (widget.characterAway) hifdth = Opacity(opacity: 0, child: ExcludeSemantics(child: hifdth));
 
         return ClipRRect(
           borderRadius: radius,
@@ -169,6 +179,84 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
   }
 }
 
+/// Hifdth on its own at [size], with the mood's idle motion. Used for the
+/// small Hifdth that follows the screen on Home.
+class HifdthAvatar extends StatefulWidget {
+  const HifdthAvatar({super.key, required this.mood, this.size = 56, this.look = 0, this.speaking = false});
+
+  final HifdthMood mood;
+  final double size;
+
+  /// Where Hifdth looks: -1 left, 0 ahead. Changes glide over 320 ms.
+  final double look;
+
+  /// Blue while it talks to the user; the color shifts over 280 ms.
+  final bool speaking;
+
+  @override
+  State<HifdthAvatar> createState() => _HifdthAvatarState();
+}
+
+class _HifdthAvatarState extends State<HifdthAvatar> with SingleTickerProviderStateMixin {
+  late final _idle = AnimationController(vsync: this);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncIdle();
+  }
+
+  @override
+  void didUpdateWidget(HifdthAvatar old) {
+    super.didUpdateWidget(old);
+    if (old.mood != widget.mood) _syncIdle();
+  }
+
+  void _syncIdle() {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _idle.stop();
+      return;
+    }
+    final half = MoodStyle.of(widget.mood).idle.period ~/ 2;
+    if (_idle.duration == half && _idle.isAnimating) return;
+    _idle
+      ..duration = half
+      ..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _idle.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mood = MoodStyle.of(widget.mood);
+    final reduce = MediaQuery.disableAnimationsOf(context);
+    return SizedBox.square(
+      dimension: widget.size,
+      child: FittedBox(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(end: widget.speaking ? 1 : 0),
+          duration: reduce ? Duration.zero : const Duration(milliseconds: 280),
+          curve: Curves.easeInOut,
+          builder: (context, blue, _) {
+            final style = blue == 0 ? mood : MoodStyle.lerp(mood, mood.speaking(), blue);
+            return TweenAnimationBuilder<double>(
+              tween: Tween(end: widget.look),
+              duration: reduce ? Duration.zero : const Duration(milliseconds: 320),
+              curve: Curves.easeInOutCubic,
+              builder: (context, look, _) =>
+                  _Hifdth(style: style, from: style.idle, to: style.idle, morph: 1, idle: _idle, look: look),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
 /// The character with its glow. The idle motion blends from the old mood's to
 /// the new one's while the morph runs.
 class _Hifdth extends StatelessWidget {
@@ -178,6 +266,7 @@ class _Hifdth extends StatelessWidget {
     required this.to,
     required this.morph,
     required this.idle,
+    this.look = 0,
   });
 
   static const _box = 112.0;
@@ -186,6 +275,7 @@ class _Hifdth extends StatelessWidget {
   final IdleMotion from, to;
   final double morph;
   final AnimationController idle;
+  final double look;
 
   /// Vertical shift, rotation (radians) and vertical scale for [motion] at loop position [v] (0–1).
   static (double, double, double) _pose(IdleMotion motion, double v) => switch (motion) {
@@ -238,7 +328,7 @@ class _Hifdth extends StatelessWidget {
                     child: child,
                   );
                 },
-                child: CustomPaint(painter: HifdthPainter(style)),
+                child: CustomPaint(painter: HifdthPainter(style, look: look)),
               ),
             ),
           ],

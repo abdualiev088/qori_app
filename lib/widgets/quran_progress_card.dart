@@ -37,6 +37,7 @@ class QuranProgressCard extends StatefulWidget {
     required this.selected,
     required this.onSelect,
     this.onTap,
+    this.hintKey,
   }) : assert(surahs.length == 114);
 
   final List<SurahProgress> surahs;
@@ -45,6 +46,9 @@ class QuranProgressCard extends StatefulWidget {
 
   /// Called after a tile is tapped (not when browsing), e.g. to open its details.
   final ValueChanged<int>? onTap;
+
+  /// Key for the hint line under the grid, so others can find where it is.
+  final Key? hintKey;
 
   @override
   State<QuranProgressCard> createState() => _QuranProgressCardState();
@@ -256,6 +260,7 @@ class _QuranProgressCardState extends State<QuranProgressCard> {
           ),
           const SizedBox(height: 10),
           Text('Tap a surah. Press and hold, then slide, to browse.',
+              key: widget.hintKey,
               style: HText.inter(size: 12, color: HColors.inkMuted)),
           const SizedBox(height: 14),
           const ColoredBox(color: HColors.divider, child: SizedBox(height: 1)),

@@ -144,6 +144,26 @@ class MoodStyle {
     );
   }
 
+  /// Hifdth's colors while it talks to the user. Eyes, brows and motion keep the mood's.
+  static const _speakingBody = [Color(0xFFBFE0FF), Color(0xFF3B8EF0), Color(0xFF1D58B5)];
+
+  /// This style in the speaking blue.
+  MoodStyle speaking() => MoodStyle(
+        body: _speakingBody,
+        accent: _speakingBody[1],
+        eyeScaleX: eyeScaleX,
+        eyeScaleY: eyeScaleY,
+        eyeOffsetY: eyeOffsetY,
+        browLeft: browLeft,
+        browRight: browRight,
+        browOffsetY: browOffsetY,
+        browOpacity: browOpacity,
+        idle: idle,
+        status: status,
+        background: background,
+        border: border,
+      );
+
   static MoodStyle of(HifdthMood mood) => switch (mood) {
         HifdthMood.happy => happy,
         HifdthMood.worried => worried,

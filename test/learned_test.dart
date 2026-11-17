@@ -3,6 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:qori_app/data/learned_store.dart';
 import 'package:qori_app/screens/home_screen.dart';
 import 'package:qori_app/theme/tokens.dart';
+import 'package:qori_app/widgets/hifdth_card.dart';
+import 'package:qori_app/widgets/hifdth_mood.dart';
+import 'package:qori_app/widgets/hifdth_painter.dart';
+import 'package:qori_app/widgets/quran_progress_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -232,6 +236,163 @@ void main() {
       await gesture.up();
       await tester.pump();
       expect(find.text('4 of 286 ayahs learned'), findsOneWidget);
+    });
+
+    double bubbleOpacity(WidgetTester tester) => tester
+        .widget<AnimatedOpacity>(
+            find.ancestor(of: find.text(HomeScreen.askTitle), matching: find.byType(AnimatedOpacity)).first)
+        .opacity;
+
+    /// The small Hifdth flying or sitting in the corner (the card's own character isn't a HifdthAvatar).
+    final mini = find.byType(HifdthAvatar);
+    double look(WidgetTester tester) => tester.widget<HifdthAvatar>(mini).look;
+    bool speaking(WidgetTester tester) => tester.widget<HifdthAvatar>(mini).speaking;
+    /// The body's middle color as painted.
+    Color bodyColor(WidgetTester tester) => (tester
+            .widget<CustomPaint>(find.descendant(of: mini, matching: find.byType(CustomPaint)))
+            .painter! as HifdthPainter)
+        .style
+        .body[1];
+    final hint = find.textContaining('Press and hold');
+    final scrollView = find.byType(SingleChildScrollView);
+
+    Future<void> scrollBy(WidgetTester tester, double dy) async {
+      await tester.drag(scrollView, Offset(0, -dy));
+      await tester.pumpAndSettle();
+    }
+
+    /// Scrolls until the middle of the Quran card is just above the nav.
+    Future<void> scrollToQuranMiddle(WidgetTester tester) async {
+      final card = find.byType(QuranProgressCard);
+      final visibleBottom = 874 - 114.0;
+      await scrollBy(tester, tester.getCenter(card).dy - visibleBottom + 20);
+    }
+
+    testWidgets('Hifdth flies down after its card spot leaves, and back when scrolling up', (tester) async {
+      await pumpHome(tester);
+      expect(mini, findsNothing);
+      await scrollBy(tester, 250);
+      expect(mini, findsOneWidget);
+      expect(tester.getRect(mini).size, const Size(56, 56));
+      expect(tester.getRect(mini).right, 402 - 16);
+      expect(bubbleOpacity(tester), 0); // not at the Quran card yet
+      await scrollBy(tester, -2000);
+      expect(mini, findsNothing);
+    });
+
+    testWidgets('at the end of the page Hifdth is level with the grid hint, with no extra space below the card',
+        (tester) async {
+      await pumpHome(tester);
+      await scrollBy(tester, 4000);
+      expect(tester.getCenter(mini).dy, closeTo(tester.getCenter(hint).dy, 0.5));
+      expect(tester.getRect(find.byType(QuranProgressCard)).bottom, closeTo(874 - 114, 0.5));
+    });
+
+    testWidgets('halfway into the Quran card Hifdth looks left and asks; the bubble leads to the grid',
+        (tester) async {
+      await pumpHome(tester);
+      await scrollBy(tester, 250);
+      expect(look(tester), 0);
+      expect(bubbleOpacity(tester), 0);
+
+      expect(speaking(tester), isFalse);
+      expect(bodyColor(tester), MoodStyle.happy.body[1]);
+
+      await scrollToQuranMiddle(tester);
+      expect(bubbleOpacity(tester), 1);
+      expect(look(tester), -1);
+      expect(speaking(tester), isTrue);
+      expect(bodyColor(tester), MoodStyle.happy.speaking().body[1]); // blue
+
+      await tester.tap(find.text(HomeScreen.askTitle));
+      await tester.pumpAndSettle();
+      expect(bubbleOpacity(tester), 0);
+      expect(look(tester), 0);
+      expect(bodyColor(tester), MoodStyle.happy.body[1]);
+
+      // Leaving the card and coming back asks again.
+      await scrollBy(tester, -600);
+      await scrollToQuranMiddle(tester);
+      expect(bubbleOpacity(tester), 1);
+    });
+
+    testWidgets('the bubble goes quiet on its own, and tapping Hifdth asks again', (tester) async {
+      await pumpHome(tester);
+      await scrollBy(tester, 250);
+      await scrollToQuranMiddle(tester);
+      expect(bubbleOpacity(tester), 1);
+      await tester.pump(const Duration(seconds: 9));
+      expect(bubbleOpacity(tester), 0);
+      await tester.tap(mini);
+      await tester.pump();
+      expect(bubbleOpacity(tester), 1);
+      await tester.tap(mini);
+      await tester.pump();
+      expect(bubbleOpacity(tester), 0);
+    });
+
+    testWidgets('the question types in word by word, without the bubble changing size', (tester) async {
+      await pumpHome(tester);
+      // Real motion for this one.
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: HomeScreen(bottomInset: 114, learned: LearnedStore.load(prefs), now: DateTime(2026, 11, 16, 9)),
+        ),
+      ));
+      await tester.drag(scrollView, const Offset(0, -250));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1)); // landed
+      await tester.drag(scrollView, const Offset(0, -300));
+      await tester.pump();
+
+      List<double> alphas(String text) => [
+            for (final span in (tester.widget<Text>(find.text(text)).textSpan! as TextSpan).children!)
+              (span as TextSpan).style!.color!.a,
+          ];
+      final bubble = find.ancestor(of: find.text(HomeScreen.askTitle), matching: find.byType(Container)).first;
+
+      await tester.pump(const Duration(milliseconds: 120));
+      final early = alphas(HomeScreen.askTitle);
+      final size = tester.getSize(bubble);
+      expect(early.first, greaterThan(0)); // the first words are in
+      expect(early.last, 0); // the rest are still to come
+      expect(alphas(HomeScreen.askBody).every((a) => a == 0), isTrue);
+
+      await tester.pump(const Duration(milliseconds: 400));
+      final later = alphas(HomeScreen.askTitle);
+      for (var i = 0; i < later.length; i++) {
+        expect(later[i], greaterThanOrEqualTo(early[i]));
+      }
+
+      await tester.pump(const Duration(milliseconds: 800));
+      expect(alphas(HomeScreen.askTitle).every((a) => a == 1), isTrue);
+      expect(alphas(HomeScreen.askBody).last, closeTo(HColors.ink2.a, 0.001));
+      expect(tester.getSize(bubble), size); // laid out in full from the start
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('Hifdth flies from its card spot down to the corner', (tester) async {
+      await pumpHome(tester);
+      // Real motion for this one.
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: HomeScreen(bottomInset: 114, learned: LearnedStore.load(prefs), now: DateTime(2026, 11, 16, 9)),
+        ),
+      ));
+      await tester.drag(scrollView, const Offset(0, -250));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+      final start = tester.getRect(mini);
+      expect(start.width, greaterThan(100)); // still about full size, near the top
+      expect(start.top, lessThan(200));
+      await tester.pump(const Duration(milliseconds: 260));
+      final mid = tester.getRect(mini);
+      expect(mid.width, inExclusiveRange(56, 112));
+      expect(mid.top, greaterThan(start.top));
+      await tester.pump(const Duration(milliseconds: 300)); // 576 ms in all
+      expect(tester.getRect(mini).size, const Size(56, 56));
+      expect(tester.getRect(mini).right, 402 - 16);
+      await tester.pumpWidget(const SizedBox());
     });
 
     testWidgets('saved ayahs survive a restart', (tester) async {
