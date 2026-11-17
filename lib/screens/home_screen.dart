@@ -20,6 +20,7 @@ const _steps = [
   DayStep(title: 'Review', subtitle: 'Done at 10:30 am', done: true),
   DayStep(title: 'Evening session', subtitle: 'Up next · 7:00 pm', done: false),
 ];
+
 /// Sessions whose time has passed without being done. Placeholder until the schedule is real.
 const _sessionsBehind = 0;
 const _week = [
@@ -224,8 +225,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             Text('${_weekdays[t.weekday - 1]}, ${t.day} ${_months[t.month - 1]}',
                                 style: HText.inter(size: 13, weight: FontWeight.w500, color: HColors.ink2)),
                             const SizedBox(height: 2),
-                            Text(greeting,
-                                style: HText.inter(size: 24, weight: FontWeight.w700, letterSpacing: -0.4)),
+                            Text(greeting, style: HText.inter(size: 24, weight: FontWeight.w700, letterSpacing: -0.4)),
                           ],
                         ),
                       ),
@@ -464,41 +464,52 @@ class _SpeechBubbleState extends State<_SpeechBubble> with SingleTickerProviderS
           child: Container(
             constraints: const BoxConstraints(maxWidth: 240),
             margin: const EdgeInsets.only(bottom: 18), // the tail points at Hifdth's face
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 11),
-            decoration: const BoxDecoration(
-              color: HColors.surface,
-              borderRadius: BorderRadius.only(
+            // Frosted only lightly, so the surah numbers behind still show through faintly.
+            child: LiquidGlass(
+              radius: 18,
+              corners: const BorderRadius.only(
                 topLeft: Radius.circular(18),
                 topRight: Radius.circular(18),
                 bottomLeft: Radius.circular(18),
                 bottomRight: Radius.circular(4),
               ),
-              boxShadow: [
-                BoxShadow(color: Color(0x1A17202A), blurRadius: 24, offset: Offset(0, 8)),
-                BoxShadow(color: Color(0x0F17202A), blurRadius: 2, offset: Offset(0, 1)),
+              blur: 4,
+              borderColor: const Color(0xCCFFFFFF),
+              shadows: const [
+                BoxShadow(color: Color(0x1F14462D), offset: Offset(0, 10), blurRadius: 28),
+                BoxShadow(color: Color(0x0F14462D), offset: Offset(0, 1), blurRadius: 3),
               ],
-            ),
-            child: AnimatedBuilder(
-              animation: _typing,
-              builder: (context, _) {
-                final ms = _typing.value * _total;
-                final bodyStart = _title.length * _step + _pause;
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text.rich(
-                      TextSpan(children: _words(_title, 0, ms, HColors.ink)),
-                      style: HText.inter(size: 14, weight: FontWeight.w600, height: 1.3, color: HColors.ink),
-                    ),
-                    const SizedBox(height: 2),
-                    Text.rich(
-                      TextSpan(children: _words(_body, bodyStart, ms, HColors.ink2)),
-                      style: HText.inter(size: 13, height: 1.3, color: HColors.ink2),
-                    ),
-                  ],
-                );
-              },
+              fill: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xC7FFFFFF), Color(0x99FFFFFF), Color(0xA6EAF6F0)],
+                stops: [0, .55, 1],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 11),
+                child: AnimatedBuilder(
+                  animation: _typing,
+                  builder: (context, _) {
+                    final ms = _typing.value * _total;
+                    final bodyStart = _title.length * _step + _pause;
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text.rich(
+                          TextSpan(children: _words(_title, 0, ms, HColors.ink)),
+                          style: HText.inter(size: 14, weight: FontWeight.w600, height: 1.3, color: HColors.ink),
+                        ),
+                        const SizedBox(height: 2),
+                        Text.rich(
+                          TextSpan(children: _words(_body, bodyStart, ms, HColors.ink2)),
+                          style: HText.inter(size: 13, height: 1.3, color: HColors.ink2),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
             ),
           ),
         ),
@@ -601,7 +612,9 @@ class _StreakCard extends StatelessWidget {
             children: [
               Flexible(
                 child: Text('Streak',
-                    maxLines: 1, overflow: TextOverflow.ellipsis, style: HText.inter(size: 14, weight: FontWeight.w600)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: HText.inter(size: 14, weight: FontWeight.w600)),
               ),
               const SizedBox(width: 6),
               Text('$streak days', style: HText.inter(size: 12, color: HColors.ink2)),

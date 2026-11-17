@@ -25,7 +25,7 @@ ui.ImageFilter glassFilter(double blur) {
 class _TopHighlight extends StatelessWidget {
   const _TopHighlight({required this.radius, this.opacity = 1});
 
-  final double radius;
+  final BorderRadius radius;
   final double opacity;
 
   @override
@@ -37,14 +37,13 @@ class _TopHighlight extends StatelessWidget {
 class _TopHighlightPainter extends CustomPainter {
   _TopHighlightPainter(this.radius, this.opacity);
 
-  final double radius;
+  final BorderRadius radius;
   final double opacity;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final outer = RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius));
-    final inner = RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 1.5, size.width, size.height - 1.5), Radius.circular(radius));
+    final outer = radius.toRRect(Offset.zero & size);
+    final inner = radius.toRRect(Rect.fromLTWH(0, 1.5, size.width, size.height - 1.5));
     canvas.drawDRRect(
       outer,
       inner,
@@ -76,9 +75,13 @@ class LiquidGlass extends StatelessWidget {
     ],
     this.borderColor = const Color(0xCCFFFFFF),
     this.highlight = 1,
+    this.corners,
   });
 
   final double radius;
+
+  /// Per-corner radii; overrides [radius] when given.
+  final BorderRadius? corners;
   final Gradient fill;
   final Widget child;
   final double blur;
@@ -88,7 +91,7 @@ class LiquidGlass extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final r = BorderRadius.circular(radius);
+    final r = corners ?? BorderRadius.circular(radius);
     return DecoratedBox(
       decoration: BoxDecoration(borderRadius: r, boxShadow: shadows),
       child: ClipRRect(
@@ -105,7 +108,7 @@ class LiquidGlass extends StatelessWidget {
               alignment: Alignment.center,
               children: [
                 child,
-                Positioned.fill(child: _TopHighlight(radius: radius, opacity: highlight)),
+                Positioned.fill(child: _TopHighlight(radius: r, opacity: highlight)),
               ],
             ),
           ),
