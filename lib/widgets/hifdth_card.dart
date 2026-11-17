@@ -8,6 +8,7 @@ import '../theme/tokens.dart';
 import 'hifdth_mood.dart';
 import 'hifdth_painter.dart';
 import 'progress_indicators.dart';
+import 'ribbed_glass.dart';
 
 /// Home's main card: Hifdth, the status pill and today's progress on a ribbed
 /// background. Everything follows [mood] and morphs when it changes.
@@ -33,6 +34,7 @@ class HifdthCard extends StatefulWidget {
 class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
   late final _morph = AnimationController(vsync: this, duration: const Duration(milliseconds: 500), value: 1);
   late final _idle = AnimationController(vsync: this);
+  late final _shimmer = AnimationController(vsync: this, duration: const Duration(seconds: 7));
 
   late MoodStyle _from = MoodStyle.of(widget.mood);
   late MoodStyle _to = _from;
@@ -51,6 +53,11 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _syncIdle();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _shimmer.stop();
+    } else if (!_shimmer.isAnimating) {
+      _shimmer.repeat();
+    }
   }
 
   @override
@@ -93,6 +100,7 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
   void dispose() {
     _morph.dispose();
     _idle.dispose();
+    _shimmer.dispose();
     super.dispose();
   }
 
@@ -112,7 +120,7 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
         return ClipRRect(
           borderRadius: radius,
           child: CustomPaint(
-            painter: style.background,
+            painter: RibbedShimmerPainter(fill: style.background, phase: _shimmer),
             child: Container(
               decoration: BoxDecoration(borderRadius: radius, border: Border.all(color: style.border)),
               padding: const EdgeInsets.fromLTRB(13, 25, 13, 13), // design padding minus the 1 px border

@@ -4,6 +4,7 @@ import 'package:qori_app/theme/tokens.dart';
 import 'package:qori_app/widgets/hifdth_card.dart';
 import 'package:qori_app/widgets/hifdth_mood.dart';
 import 'package:qori_app/widgets/progress_indicators.dart';
+import 'package:qori_app/widgets/ribbed_glass.dart';
 
 const _steps = [
   DayStep(title: 'Morning session', subtitle: 'Done', done: true),
@@ -51,5 +52,28 @@ void main() {
       await tester.pump(const Duration(milliseconds: 600));
       expect(find.text(next.status), findsOneWidget);
     }
+  });
+
+  RibbedShimmerPainter shimmer(WidgetTester tester) => tester
+      .widgetList<CustomPaint>(find.byType(CustomPaint))
+      .map((p) => p.painter)
+      .whereType<RibbedShimmerPainter>()
+      .single;
+
+  testWidgets('light sweeps across the ribs behind Hifdth', (tester) async {
+    await tester.pumpWidget(card(HifdthMood.happy));
+    final before = shimmer(tester).phase.value;
+    await tester.pump(const Duration(milliseconds: 800));
+    expect(shimmer(tester).phase.value, isNot(before));
+  });
+
+  testWidgets('the ribs hold still with Reduce Motion on', (tester) async {
+    await tester.pumpWidget(MediaQuery(
+      data: const MediaQueryData(disableAnimations: true),
+      child: card(HifdthMood.happy),
+    ));
+    final before = shimmer(tester).phase.value;
+    await tester.pump(const Duration(seconds: 2));
+    expect(shimmer(tester).phase.value, before);
   });
 }

@@ -405,6 +405,8 @@ class _SpeechBubbleState extends State<_SpeechBubble> with SingleTickerProviderS
   /// A short breath between the question and the line under it.
   static const _pause = 140;
 
+  static const _bodyColor = Color(0xE6FFFFFF);
+
   static final _total = (_title.length + _body.length - 1) * _step + _pause + _fade;
 
   late final _typing = AnimationController(vsync: this, duration: Duration(milliseconds: _total));
@@ -464,7 +466,8 @@ class _SpeechBubbleState extends State<_SpeechBubble> with SingleTickerProviderS
           child: Container(
             constraints: const BoxConstraints(maxWidth: 240),
             margin: const EdgeInsets.only(bottom: 18), // the tail points at Hifdth's face
-            // Frosted only lightly, so the surah numbers behind still show through faintly.
+            // Hifdth's speaking blue as tinted glass, frosted only lightly so the surah
+            // numbers behind still show through faintly.
             child: LiquidGlass(
               radius: 18,
               corners: const BorderRadius.only(
@@ -474,15 +477,15 @@ class _SpeechBubbleState extends State<_SpeechBubble> with SingleTickerProviderS
                 bottomRight: Radius.circular(4),
               ),
               blur: 4,
-              borderColor: const Color(0xCCFFFFFF),
+              borderColor: const Color(0x8CFFFFFF),
               shadows: const [
-                BoxShadow(color: Color(0x1F14462D), offset: Offset(0, 10), blurRadius: 28),
-                BoxShadow(color: Color(0x0F14462D), offset: Offset(0, 1), blurRadius: 3),
+                BoxShadow(color: Color(0x332A6FD6), offset: Offset(0, 10), blurRadius: 28),
+                BoxShadow(color: Color(0x1A1D58B5), offset: Offset(0, 1), blurRadius: 3),
               ],
               fill: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xC7FFFFFF), Color(0x99FFFFFF), Color(0xA6EAF6F0)],
+                colors: [Color(0xC25FA6F5), Color(0xB33B8EF0), Color(0xC72A6FD6)],
                 stops: [0, .55, 1],
               ),
               child: Padding(
@@ -497,13 +500,13 @@ class _SpeechBubbleState extends State<_SpeechBubble> with SingleTickerProviderS
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text.rich(
-                          TextSpan(children: _words(_title, 0, ms, HColors.ink)),
-                          style: HText.inter(size: 14, weight: FontWeight.w600, height: 1.3, color: HColors.ink),
+                          TextSpan(children: _words(_title, 0, ms, Colors.white)),
+                          style: HText.inter(size: 14, weight: FontWeight.w600, height: 1.3, color: Colors.white),
                         ),
                         const SizedBox(height: 2),
                         Text.rich(
-                          TextSpan(children: _words(_body, bodyStart, ms, HColors.ink2)),
-                          style: HText.inter(size: 13, height: 1.3, color: HColors.ink2),
+                          TextSpan(children: _words(_body, bodyStart, ms, _bodyColor)),
+                          style: HText.inter(size: 13, height: 1.3, color: _bodyColor),
                         ),
                       ],
                     );

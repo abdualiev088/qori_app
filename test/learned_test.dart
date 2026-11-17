@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:qori_app/data/learned_store.dart';
 import 'package:qori_app/screens/home_screen.dart';
 import 'package:qori_app/theme/tokens.dart';
+import 'package:qori_app/widgets/glass.dart';
 import 'package:qori_app/widgets/hifdth_card.dart';
 import 'package:qori_app/widgets/hifdth_mood.dart';
 import 'package:qori_app/widgets/hifdth_painter.dart';
@@ -366,8 +367,12 @@ void main() {
 
       await tester.pump(const Duration(milliseconds: 800));
       expect(alphas(HomeScreen.askTitle).every((a) => a == 1), isTrue);
-      expect(alphas(HomeScreen.askBody).last, closeTo(HColors.ink2.a, 0.001));
+      expect(alphas(HomeScreen.askBody).last, closeTo(0.9, 0.01)); // the body's slightly softer white
       expect(tester.getSize(bubble), size); // laid out in full from the start
+      final glass = tester.widget<LiquidGlass>(find.ancestor(of: find.text(HomeScreen.askTitle), matching: find.byType(LiquidGlass)));
+      final tint = (glass.fill as LinearGradient).colors[1];
+      expect(tint.b, greaterThan(tint.r)); // tinted blue
+      expect(tint.a, lessThan(1)); // still see-through glass
       await tester.pumpWidget(const SizedBox());
     });
 

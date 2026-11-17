@@ -1,5 +1,7 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/animation.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 
@@ -167,4 +169,58 @@ class RibbedGlassPainter extends CustomPainter {
   @override
   bool shouldRepaint(RibbedGlassPainter old) =>
       old.base != base || !listEquals(old.glows, glows) || !listEquals(old.stripe, stripe);
+}
+
+/// [fill] with wavy bands of light drifting across the ribs from right to left.
+/// Each rib line lights up as a band crosses it, and since every band bends in a
+/// slow wave, a line lights unevenly from top to bottom.
+class RibbedShimmerPainter extends CustomPainter {
+  RibbedShimmerPainter({required this.fill, required this.phase}) : super(repaint: phase);
+
+  final RibbedGlassPainter fill;
+  final Animation<double> phase;
+
+  static const _rib = 10.0;
+  static const _width = 6.0;
+  static const _bands = 3;
+
+  /// Half-width of a band, in px.
+  static const _band = 55.0;
+
+  /// How far a band bends either way, in px, and the height of one bend.
+  static const _wave = 22.0;
+  static const _waveLength = 150.0;
+
+  /// Height of each painted step along a line.
+  static const _step = 4.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    fill.paint(canvas, size);
+    final a = phase.value * 2 * math.pi;
+    final travel = size.width + 2 * (_band + _wave);
+    final paint = Paint();
+    canvas.save();
+    canvas.clipRect(Offset.zero & size);
+    for (var b = 0; b < _bands; b++) {
+      final x0 = size.width + _band + _wave - ((phase.value + b / _bands) % 1) * travel;
+      final seed = b * 2.1;
+      for (var y = 0.0; y < size.height; y += _step) {
+        // The band's middle at this height, bending as the wave rolls downward.
+        final center = x0 + _wave * math.sin(y / _waveLength * 2 * math.pi - a * 2 + seed);
+        final fade = 0.4 + 0.6 * math.sin(math.pi * (y + _step / 2) / size.height); // dimmer at the top and bottom
+        final first = ((center - _band) / _rib).ceil();
+        final last = ((center + _band) / _rib).floor();
+        for (var i = math.max(first, 0); i <= last && i * _rib <= size.width; i++) {
+          final glow = math.cos((i * _rib - center) / _band * math.pi / 2);
+          paint.color = Color.fromRGBO(255, 255, 255, 0.95 * glow * glow * fade);
+          canvas.drawRect(Rect.fromLTWH(i * _rib - _width / 2, y, _width, _step), paint);
+        }
+      }
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(RibbedShimmerPainter old) => old.fill != fill || old.phase != phase;
 }
