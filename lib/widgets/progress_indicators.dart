@@ -73,7 +73,7 @@ class ProgressRing extends StatelessWidget {
         dimension: size,
         child: CustomPaint(
           painter: _RingPainter(value, stroke),
-          child: Center(child: Text('$pct%', style: HText.inter(size: 14, weight: FontWeight.w700))),
+          child: Center(child: Text('$pct%', style: HText.inter(size: 14, weight: FontWeight.w700, tabular: true))),
         ),
       ),
     );
@@ -217,7 +217,7 @@ class StreakBars extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(d.label, style: HText.inter(size: 10, weight: FontWeight.w500, color: HColors.ink2)),
+                  Text(d.label, style: HText.inter(size: 12, weight: FontWeight.w500, color: HColors.ink2)),
                 ],
               ),
             ),

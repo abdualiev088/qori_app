@@ -57,6 +57,7 @@ abstract final class HText {
     Color color = HColors.ink,
     double? letterSpacing,
     double? height,
+    bool tabular = false,
   }) {
     final style = TextStyle(
       fontSize: size,
@@ -64,9 +65,16 @@ abstract final class HText {
       color: color,
       letterSpacing: letterSpacing,
       height: height,
+      // Equal-width digits, so a number that changes doesn't nudge what's around it.
+      fontFeatures: tabular ? const [FontFeature.tabularFigures()] : null,
     );
     return useGoogleFonts ? GoogleFonts.inter(textStyle: style) : style;
   }
+
+  /// Button labels: 16 px on full-width buttons, 15 px on [compact] ones
+  /// (two side by side, or inside a card).
+  static TextStyle button({Color color = HColors.ink, bool compact = false}) =>
+      inter(size: compact ? 15 : 16, weight: FontWeight.w600, color: color);
 
   static TextStyle arabic({
     double size = 22,

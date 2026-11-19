@@ -260,7 +260,7 @@ class _QuranProgressCardState extends State<QuranProgressCard> {
           ),
           const SizedBox(height: 10),
           Text('Tap a surah. Press and hold, then slide, to browse.',
-              key: widget.hintKey, style: HText.inter(size: 12, color: HColors.inkMuted)),
+              key: widget.hintKey, style: HText.inter(size: 13, color: HColors.inkMuted)),
           const SizedBox(height: 14),
           const ColoredBox(color: HColors.divider, child: SizedBox(height: 1)),
           const SizedBox(height: 12),
@@ -586,7 +586,7 @@ class _LoupeState extends State<_Loupe> with SingleTickerProviderStateMixin {
               Text('${s.number}', style: _num(size: 20, weight: FontWeight.w700, color: Colors.white)),
               Text(s.name, style: HText.inter(size: 13, weight: FontWeight.w600, color: Colors.white)),
               Text(_status(s),
-                  style: HText.inter(size: 12, color: Colors.white.withValues(alpha: 0.7))
+                  style: HText.inter(size: 13, color: Colors.white.withValues(alpha: 0.7))
                       .copyWith(fontFeatures: _tabular)),
             ],
           ),

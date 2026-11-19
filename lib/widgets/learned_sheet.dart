@@ -250,7 +250,7 @@ class _LearnedSheetState extends State<_LearnedSheet> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text('Tap an ayah to mark it, or slide across ayahs to mark several. The dashed one is next.',
-                style: HText.inter(size: 12, color: HColors.inkMuted)),
+                style: HText.inter(size: 13, color: HColors.inkMuted)),
           ),
           const SizedBox(height: 14),
           Flexible(
@@ -318,7 +318,7 @@ class _WholeSurahRow extends StatelessWidget {
                         Text('Whole surah learned', style: HText.inter(size: 15, weight: FontWeight.w600)),
                         const SizedBox(height: 1),
                         Text('Marks all $count ${_ayahs(count)} at once',
-                            style: HText.inter(size: 12, color: HColors.ink2)),
+                            style: HText.inter(size: 13, color: HColors.ink2)),
                       ],
                     ),
                   ),

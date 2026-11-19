@@ -153,7 +153,7 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
                               label: '$done of ${widget.steps.length} sessions done',
                               excludeSemantics: true,
                               child: Text.rich(TextSpan(
-                                style: HText.inter(size: 14, weight: FontWeight.w700),
+                                style: HText.inter(size: 14, weight: FontWeight.w700, tabular: true),
                                 children: [
                                   TextSpan(text: '$done'),
                                   TextSpan(

@@ -130,9 +130,13 @@ class PressableButton extends StatefulWidget {
     this.border,
     this.gradient,
     this.shadows = const [],
-    this.height = 54,
+    this.height = PressableButton.fullHeight,
     this.semanticLabel,
   });
+
+  /// Full-width buttons, and compact ones (two side by side, or inside a card).
+  static const fullHeight = 52.0;
+  static const compactHeight = 48.0;
 
   final VoidCallback? onPressed;
   final Widget child;
@@ -198,12 +202,10 @@ class AppleButton extends StatelessWidget {
         onPressed: onPressed,
         background: Colors.black,
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.apple, color: Colors.white, size: 24),
+          const Icon(Icons.apple, color: Colors.white, size: 22),
           const SizedBox(width: 10),
           Flexible(
-            child: Text(label,
-                overflow: TextOverflow.ellipsis,
-                style: HText.inter(size: 17, weight: FontWeight.w600, color: Colors.white)),
+            child: Text(label, overflow: TextOverflow.ellipsis, style: HText.button(color: Colors.white)),
           ),
         ]),
       );
@@ -220,10 +222,10 @@ class GoogleButton extends StatelessWidget {
         background: Colors.white,
         border: const Color(0xFFE1E6EC),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          const GoogleLogo(),
+          const GoogleLogo(size: 18),
           const SizedBox(width: 10),
           Flexible(
-            child: Text(label, overflow: TextOverflow.ellipsis, style: HText.inter(size: 17, weight: FontWeight.w600)),
+            child: Text(label, overflow: TextOverflow.ellipsis, style: HText.button()),
           ),
         ]),
       );
@@ -231,14 +233,19 @@ class GoogleButton extends StatelessWidget {
 
 /// The green primary action, with a spinner while [loading].
 class PrimaryButton extends StatelessWidget {
-  const PrimaryButton({super.key, required this.label, required this.onPressed, this.loading = false});
+  const PrimaryButton(
+      {super.key, required this.label, required this.onPressed, this.loading = false, this.compact = false});
   final String label;
   final VoidCallback? onPressed;
   final bool loading;
 
+  /// Smaller, for two buttons side by side or a button inside a card.
+  final bool compact;
+
   @override
   Widget build(BuildContext context) => PressableButton(
         onPressed: loading ? null : onPressed,
+        height: compact ? PressableButton.compactHeight : PressableButton.fullHeight,
         background: HColors.accent,
         semanticLabel: loading ? '$label, working' : null,
         gradient: const LinearGradient(
@@ -255,8 +262,7 @@ class PrimaryButton extends StatelessWidget {
                   dimension: 22,
                   child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
                 )
-              : Text(label,
-                  key: ValueKey(label), style: HText.inter(size: 17, weight: FontWeight.w600, color: Colors.white)),
+              : Text(label, key: ValueKey(label), style: HText.button(color: Colors.white, compact: compact)),
         ),
       );
 }

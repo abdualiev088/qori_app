@@ -33,7 +33,7 @@ class SignedOutCard extends StatelessWidget {
               style: HText.inter(size: 12, weight: FontWeight.w600, color: HColors.ink2, letterSpacing: 0.8)),
           const Spacer(),
           Text.rich(TextSpan(children: [
-            TextSpan(text: '0', style: HText.inter(size: 16, weight: FontWeight.w700)),
+            TextSpan(text: '0', style: HText.inter(size: 16, weight: FontWeight.w700, tabular: true)),
             TextSpan(text: '/114', style: HText.inter(size: 16, color: HColors.inkMuted)),
           ])),
         ]),
@@ -68,14 +68,15 @@ class SignedOutCard extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Row(children: [
-          Expanded(child: PrimaryButton(label: 'Sign in', onPressed: onSignIn)),
+          Expanded(child: PrimaryButton(label: 'Sign in', onPressed: onSignIn, compact: true)),
           const SizedBox(width: 12),
           Expanded(
             child: PressableButton(
               onPressed: onRegister,
+              height: PressableButton.compactHeight,
               background: Colors.white,
               border: const Color(0xFFDCE2E8),
-              child: Text('Register', style: HText.inter(size: 17, weight: FontWeight.w600)),
+              child: Text('Register', style: HText.button(compact: true)),
             ),
           ),
         ]),

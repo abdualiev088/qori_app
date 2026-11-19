@@ -793,7 +793,7 @@ class _GoalCard extends StatelessWidget {
                 children: [
                   Text('Daily goal', style: HText.inter(size: 14, weight: FontWeight.w600)),
                   const SizedBox(height: 2),
-                  Text(caption, style: HText.inter(size: 12, color: HColors.ink2)),
+                  Text(caption, style: HText.inter(size: 13, color: HColors.ink2)),
                 ],
               ),
             ),
@@ -828,7 +828,8 @@ class _StreakCard extends StatelessWidget {
                     style: HText.inter(size: 14, weight: FontWeight.w600)),
               ),
               const SizedBox(width: 6),
-              Text('$streak ${streak == 1 ? 'day' : 'days'}', style: HText.inter(size: 12, color: HColors.ink2)),
+              Text('$streak ${streak == 1 ? 'day' : 'days'}',
+                  style: HText.inter(size: 13, color: HColors.ink2, tabular: true)),
             ],
           ),
           const SizedBox(height: 10),

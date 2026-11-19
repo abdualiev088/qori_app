@@ -278,7 +278,7 @@ class _AyahList extends StatelessWidget {
                         style: HText.arabic(size: 22, height: 1.9)),
                     const SizedBox(height: 2),
                     Text('Tap to listen to the Basmala',
-                        style: HText.inter(size: 12, height: 1.4, color: HColors.ink2)),
+                        style: HText.inter(size: 13, height: 1.4, color: HColors.ink2)),
                   ],
                 ),
               ),
@@ -428,7 +428,7 @@ class _AyahRow extends StatelessWidget {
                                   label: Padding(
                                     padding: const EdgeInsets.only(top: 3),
                                     child: Text(arabicDigits(ayah.n),
-                                        style: HText.arabic(size: 11, height: 1, color: HColors.accentDeep)),
+                                        style: HText.arabic(size: 14, height: 1, color: HColors.accentDeep)),
                                   ),
                                 ),
                               ),
@@ -498,19 +498,21 @@ class _PlayerPanel extends StatelessWidget {
                       ],
                       if (c.queuePosition.isNotEmpty) ...[
                         const SizedBox(width: 7),
-                        Text(c.queuePosition, style: HText.inter(size: 12, weight: FontWeight.w500, color: white72)),
+                        Text(c.queuePosition,
+                            style: HText.inter(size: 13, weight: FontWeight.w500, color: white72, tabular: true)),
                       ],
                       const Spacer(),
                       Semantics(
                         liveRegion: true,
                         child: Text.rich(
                           TextSpan(
-                            style: HText.inter(size: 12, color: white72),
+                            style: HText.inter(size: 13, color: white72, tabular: true),
                             children: [
                               TextSpan(text: pre),
                               TextSpan(
                                   text: strong,
-                                  style: HText.inter(size: 12, weight: FontWeight.w700, color: Colors.white)),
+                                  style: HText.inter(
+                                      size: 13, weight: FontWeight.w700, color: Colors.white, tabular: true)),
                               TextSpan(text: post),
                             ],
                           ),
@@ -746,11 +748,11 @@ class _AutoSwitch extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: c.toggleAuto,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 36),
+          constraints: const BoxConstraints(minHeight: 44),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(c.autoLabel, style: HText.inter(size: 12, color: Colors.white)),
+              Text(c.autoLabel, style: HText.inter(size: 13, color: Colors.white)),
               const SizedBox(width: 8),
               AnimatedContainer(
                 duration: dur,
@@ -799,29 +801,34 @@ class _RepeatChip extends StatelessWidget {
       label: value == 0 ? 'Repeat forever' : 'Repeat $value times',
       excludeSemantics: true,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: Container(
-          height: 30,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: on ? const Color(0xE6BFF5D6) : Colors.white.withValues(alpha: 0.14)),
-            gradient: on
-                ? const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFFA6EBC6), HColors.playerMint],
-                  )
-                : null,
-            color: on ? null : Colors.white.withValues(alpha: 0.08),
-            boxShadow: on ? const [BoxShadow(color: Color(0x4D7FE0A8), offset: Offset(0, 3), blurRadius: 8)] : null,
-          ),
-          child: Text(
-            value == 0 ? '∞' : '$value×',
-            style: HText.inter(
-                size: 13,
-                weight: FontWeight.w600,
-                color: on ? HColors.playerInk : Colors.white.withValues(alpha: 0.85)),
+        // The chip looks 30 px tall; the padding makes the target 44 px.
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          child: Container(
+            height: 30,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: on ? const Color(0xE6BFF5D6) : Colors.white.withValues(alpha: 0.14)),
+              gradient: on
+                  ? const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFFA6EBC6), HColors.playerMint],
+                    )
+                  : null,
+              color: on ? null : Colors.white.withValues(alpha: 0.08),
+              boxShadow: on ? const [BoxShadow(color: Color(0x4D7FE0A8), offset: Offset(0, 3), blurRadius: 8)] : null,
+            ),
+            child: Text(
+              value == 0 ? '∞' : '$value×',
+              style: HText.inter(
+                  size: 13,
+                  weight: FontWeight.w600,
+                  color: on ? HColors.playerInk : Colors.white.withValues(alpha: 0.85)),
+            ),
           ),
         ),
       ),

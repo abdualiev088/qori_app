@@ -398,7 +398,7 @@ class _NavItem extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.fade,
               softWrap: false,
-              style: HText.inter(size: 11, weight: active ? FontWeight.w600 : FontWeight.w500, color: color),
+              style: HText.inter(size: 12, weight: FontWeight.w600, color: color),
             ),
           ],
         ),

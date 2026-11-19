@@ -178,8 +178,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     : Row(mainAxisSize: MainAxisSize.min, children: [
                         const Icon(Icons.logout_rounded, size: 21, color: Color(0xFFC03535)),
                         const SizedBox(width: 10),
-                        Text('Log out',
-                            style: HText.inter(size: 17, weight: FontWeight.w600, color: const Color(0xFFC03535))),
+                        Text('Log out', style: HText.button(color: const Color(0xFFC03535))),
                       ]),
               ),
             ],
@@ -331,7 +330,7 @@ class _ConfirmSheet extends StatelessWidget {
         PressableButton(
           onPressed: () => Navigator.pop(context, true),
           background: _red,
-          child: Text(action, style: HText.inter(size: 17, weight: FontWeight.w600, color: Colors.white)),
+          child: Text(action, style: HText.button(color: Colors.white)),
         ),
         const SizedBox(height: 4),
         _TextAction(label: 'Cancel', onTap: () => Navigator.pop(context, false)),
@@ -352,8 +351,7 @@ class _TextAction extends StatelessWidget {
           onTap: onTap,
           child: SizedBox(
             height: 48,
-            child:
-                Center(child: Text(label, style: HText.inter(size: 16, weight: FontWeight.w600, color: HColors.ink2))),
+            child: Center(child: Text(label, style: HText.button(color: HColors.ink2))),
           ),
         ),
       );
