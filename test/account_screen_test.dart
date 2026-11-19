@@ -102,7 +102,7 @@ void main() {
   });
 
   testWidgets('offline, the account stays on screen and asks to turn the internet on', (tester) async {
-    final api = signedIn()..online = false;
+    final api = signedIn()..reachable = false;
     await open(tester, api);
     expect(find.byType(AccountScreen), findsOneWidget);
     expect(find.text('Aziz'), findsNWidgets(2));

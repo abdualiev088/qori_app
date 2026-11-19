@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../data/auth_api.dart';
@@ -14,6 +15,7 @@ import '../widgets/hifdth_mood.dart';
 import '../widgets/learned_sheet.dart';
 import '../widgets/progress_indicators.dart';
 import '../widgets/quran_progress_card.dart';
+import '../widgets/toast.dart';
 import 'account_screen.dart';
 import 'auth_screen.dart';
 
@@ -243,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ],
                         ),
                       ),
-                      GlassProfileButton(onTap: _openAuth),
+                      const SizedBox(width: 46), // the header buttons float here (see _HeaderButtons)
                     ],
                   ),
                   const SizedBox(height: 18),
@@ -266,6 +268,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
           ),
           // The bubble, beside where Hifdth lands.
+          // Pinned: they stay put while the page scrolls under them.
+          Positioned(
+            top: top < 56 ? 56 : top,
+            right: 16,
+            child: _HeaderButtons(online: widget.auth?.online, onProfile: _openAuth),
+          ),
           Positioned(
             left: 16,
             right: 16 + _miniSize + 8,
@@ -531,6 +539,50 @@ class _SpeechBubbleState extends State<_SpeechBubble> with SingleTickerProviderS
           ),
         ),
       );
+}
+
+/// The cloud (only while offline) and profile buttons at the top right.
+class _HeaderButtons extends StatelessWidget {
+  const _HeaderButtons({required this.online, required this.onProfile});
+
+  final ValueListenable<bool>? online;
+  final VoidCallback onProfile;
+
+  /// Without an account connection (tests), the app counts as online.
+  static final _alwaysOnline = ValueNotifier(true);
+
+  static const offlineMessage = "You're offline. Changes are saved on this phone and sync when you're back online.";
+
+  @override
+  Widget build(BuildContext context) {
+    final reduce = MediaQuery.disableAnimationsOf(context);
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      ValueListenableBuilder<bool>(
+        valueListenable: online ?? _alwaysOnline,
+        builder: (context, isOnline, _) => AnimatedSwitcher(
+          duration: reduce ? Duration.zero : const Duration(milliseconds: 180),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          transitionBuilder: (child, a) => FadeTransition(
+            opacity: a,
+            child: ScaleTransition(scale: Tween(begin: 0.9, end: 1.0).animate(a), child: child),
+          ),
+          child: isOnline
+              ? const SizedBox.shrink()
+              : Padding(
+                  key: const ValueKey('offline'),
+                  padding: const EdgeInsets.only(right: 10),
+                  child: GlassCircleButton(
+                    label: 'Offline',
+                    onTap: () => Toast.show(context, offlineMessage),
+                    child: const Icon(Icons.cloud_off_rounded, size: 22, color: HColors.ink),
+                  ),
+                ),
+        ),
+      ),
+      GlassProfileButton(onTap: onProfile),
+    ]);
+  }
 }
 
 /// The Player only has Al-Qalam (surah 68) for now, so the grid starts there.

@@ -90,8 +90,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: HColors.mintHintRing),
                   ),
-                  child: Text(c.selectionHint,
-                      textAlign: TextAlign.center, style: HText.inter(size: 14, height: 1.4)),
+                  child: Text(c.selectionHint, textAlign: TextAlign.center, style: HText.inter(size: 14, height: 1.4)),
                 ),
               ),
             ],
@@ -146,8 +145,7 @@ class _Header extends StatelessWidget {
                           style: HText.inter(size: 24, weight: FontWeight.w700, letterSpacing: -0.4, height: 1.2)),
                       const SizedBox(width: 8),
                       Text('القلم',
-                          textDirection: TextDirection.rtl,
-                          style: HText.arabic(size: 22, color: HColors.accentDeep)),
+                          textDirection: TextDirection.rtl, style: HText.arabic(size: 22, color: HColors.accentDeep)),
                     ],
                   ),
                 ),
@@ -229,8 +227,8 @@ class _SelectPill extends StatelessWidget {
                           color: HColors.accentDeep,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Text('$count',
-                            style: HText.inter(size: 12, weight: FontWeight.w600, color: Colors.white)),
+                        child:
+                            Text('$count', style: HText.inter(size: 12, weight: FontWeight.w600, color: Colors.white)),
                       ),
                     ],
                   ],
@@ -405,9 +403,7 @@ class _AyahRow extends StatelessWidget {
                       stroke: cur ? HColors.accent : HColors.accentDeep,
                       label: Text('${ayah.n}',
                           style: HText.inter(
-                              size: 11,
-                              weight: FontWeight.w700,
-                              color: cur ? HColors.numOnMint : HColors.accentDeep)),
+                              size: 11, weight: FontWeight.w700, color: cur ? HColors.numOnMint : HColors.accentDeep)),
                     ),
                   ),
                 ),
@@ -494,16 +490,15 @@ class _PlayerPanel extends StatelessWidget {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(c.current == 0 ? 'Basmala' : 'Ayah ${c.current}',
-                          style: HText.inter(
-                              size: 15, weight: FontWeight.w600, letterSpacing: -0.2, color: Colors.white)),
+                          style:
+                              HText.inter(size: 15, weight: FontWeight.w600, letterSpacing: -0.2, color: Colors.white)),
                       if (c.current != 0) ...[
                         const SizedBox(width: 7),
                         Text(arabicDigits(c.current), style: HText.arabic(size: 17, color: HColors.playerMint2)),
                       ],
                       if (c.queuePosition.isNotEmpty) ...[
                         const SizedBox(width: 7),
-                        Text(c.queuePosition,
-                            style: HText.inter(size: 12, weight: FontWeight.w500, color: white72)),
+                        Text(c.queuePosition, style: HText.inter(size: 12, weight: FontWeight.w500, color: white72)),
                       ],
                       const Spacer(),
                       Semantics(
@@ -819,9 +814,7 @@ class _RepeatChip extends StatelessWidget {
                   )
                 : null,
             color: on ? null : Colors.white.withValues(alpha: 0.08),
-            boxShadow: on
-                ? const [BoxShadow(color: Color(0x4D7FE0A8), offset: Offset(0, 3), blurRadius: 8)]
-                : null,
+            boxShadow: on ? const [BoxShadow(color: Color(0x4D7FE0A8), offset: Offset(0, 3), blurRadius: 8)] : null,
           ),
           child: Text(
             value == 0 ? '∞' : '$value×',

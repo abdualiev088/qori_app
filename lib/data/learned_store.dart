@@ -70,7 +70,10 @@ class LearnedStore extends ChangeNotifier {
   static Set<int>? _clean(int surah, Iterable<int> ayahs) {
     if (surah < 1 || surah > 114) return null;
     final count = surahAyahCounts[surah - 1];
-    return {for (final a in ayahs) if (a >= 1 && a <= count) a};
+    return {
+      for (final a in ayahs)
+        if (a >= 1 && a <= count) a
+    };
   }
 
   static Map<int, Set<int>> _decode(String? raw) {

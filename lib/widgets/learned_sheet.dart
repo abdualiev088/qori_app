@@ -524,8 +524,7 @@ class _AyahGridState extends State<_AyahGrid> {
                     ..onCancel = _markEnd,
                 )
               else ...{
-                HorizontalDragGestureRecognizer:
-                    GestureRecognizerFactoryWithHandlers<HorizontalDragGestureRecognizer>(
+                HorizontalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<HorizontalDragGestureRecognizer>(
                   () => HorizontalDragGestureRecognizer(debugOwner: this),
                   (r) => r
                     ..dragStartBehavior = DragStartBehavior.down
@@ -624,8 +623,9 @@ class _AyahTile extends StatelessWidget {
               child: Text('$number',
                   maxLines: 1,
                   softWrap: false,
-                  style: HText.inter(size: 13, weight: FontWeight.w600, color: learned ? Colors.white : HColors.inkMuted)
-                      .copyWith(fontFeatures: _tabular)),
+                  style:
+                      HText.inter(size: 13, weight: FontWeight.w600, color: learned ? Colors.white : HColors.inkMuted)
+                          .copyWith(fontFeatures: _tabular)),
             ),
           ),
         ),

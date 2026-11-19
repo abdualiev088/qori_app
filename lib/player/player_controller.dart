@@ -67,7 +67,8 @@ class PlayerController extends ChangeNotifier {
         notifyListeners();
       }))
       ..add(_p
-          .createPositionStream(minPeriod: const Duration(milliseconds: 50), maxPeriod: const Duration(milliseconds: 50))
+          .createPositionStream(
+              minPeriod: const Duration(milliseconds: 50), maxPeriod: const Duration(milliseconds: 50))
           .listen((pos) {
         if (!finished) progress.value = math.min(1, pos.inMilliseconds / 1000 / _length);
       }));

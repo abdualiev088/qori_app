@@ -14,8 +14,12 @@ import 'learned_store.dart';
 ///   its set replaces the local one.
 /// - With no session yet, a guest account is created, so progress syncs
 ///   before sign-up.
-/// - When a session starts (a new guest, or any sign-in), the device's whole
-///   progress is merged into the account first (union), so nothing is lost.
+/// - When a session starts, the account's progress is settled first:
+///   signing in to an account that already has ayahs takes the account's
+///   ayahs and drops the phone's; otherwise (an empty account, a sign-up or a
+///   new guest) the phone's progress is merged into the account (union).
+/// - Logging out clears the phone's progress and starts a fresh guest.
+/// - While offline, a retry runs every [retryEvery] until the server answers.
 /// - With the queue empty, the server's progress replaces the local copy,
 ///   which brings in changes from other devices.
 class ProgressSync {
@@ -34,15 +38,33 @@ class ProgressSync {
   /// Whether the device's progress has been merged into the current account.
   static const mergedKey = 'hifdth.sync.merged.v1';
 
+  /// Set with [mergedKey] off after signing in to an existing account: the
+  /// account's ayahs win if it has any.
+  static const preferAccountKey = 'hifdth.sync.prefer_account.v1';
+
+  static const retryEvery = Duration(seconds: 10);
+  Timer? _retry;
+
   Future<void>? _running;
   bool _again = false;
 
   /// Starts listening to the store's commits.
   void attach() => store.onCommit = _queue;
 
-  /// Call after a sign-in or sign-up: the new account gets the device's progress.
-  Future<void> accountChanged() async {
+  /// Call after a sign-in or sign-up. See the class notes for what is kept.
+  Future<void> accountChanged({bool preferAccount = false}) async {
+    await prefs.setBool(preferAccountKey, preferAccount);
     await prefs.setBool(mergedKey, false);
+    await sync();
+  }
+
+  /// Call after logging out or deleting the account: the phone forgets the
+  /// account's progress, and a fresh guest starts empty.
+  Future<void> signedOut() async {
+    await prefs.remove(pendingKey);
+    await prefs.setBool(preferAccountKey, false);
+    await prefs.setBool(mergedKey, false);
+    await store.applyServer(const {});
     await sync();
   }
 
@@ -60,8 +82,13 @@ class ProgressSync {
       _again = false;
       try {
         await _syncOnce();
-      } on ApiException {
-        return; // Offline or server trouble: everything stays queued for next time.
+        _retry?.cancel();
+        _retry = null;
+      } on ApiException catch (e) {
+        // Offline or server trouble: everything stays queued, and offline it
+        // tries again shortly so changes go out as soon as the internet is back.
+        if (e.isOffline || e.status >= 500) _retry ??= Timer(retryEvery, () => (_retry = null, sync()));
+        return;
       }
     } while (_again);
   }
@@ -72,8 +99,17 @@ class ProgressSync {
       await prefs.setBool(mergedKey, false);
     }
     if (prefs.getBool(mergedKey) != true) {
-      final merged = await client.post('/progress/merge', store.toJson()) as Map<String, dynamic>;
-      await store.applyServer(merged, keep: _pending.keys.map(int.parse).toSet());
+      final account =
+          prefs.getBool(preferAccountKey) == true ? await client.get('/progress') as Map<String, dynamic> : null;
+      if (account != null && account.isNotEmpty) {
+        // The account already has ayahs: they win over what the phone had as a guest.
+        await prefs.remove(pendingKey);
+        await store.applyServer(account);
+      } else {
+        final merged = await client.post('/progress/merge', store.toJson()) as Map<String, dynamic>;
+        await store.applyServer(merged, keep: _pending.keys.map(int.parse).toSet());
+      }
+      await prefs.setBool(preferAccountKey, false);
       await prefs.setBool(mergedKey, true);
     }
     await _flush();

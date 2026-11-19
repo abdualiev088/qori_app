@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:qori_app/data/auth_api.dart';
 
 /// Stands in for the server in widget tests: an email counts as known once it
@@ -12,7 +13,10 @@ class FakeAuthApi implements AuthApi {
   QoriUser? user;
 
   @override
-  Future<void> Function()? get onSignedIn => null;
+  Future<void> Function({bool preferAccount})? get onSignedIn => null;
+
+  @override
+  Future<void> Function()? get onSignedOut => null;
 
   Future<void> _maybeFail() async {
     final error = failNext;
@@ -50,10 +54,13 @@ class FakeAuthApi implements AuthApi {
   bool get signedIn => user != null && !user!.isGuest;
 
   @override
-  Future<bool> loadMe() async => online;
+  Future<bool> loadMe() async => reachable;
 
   /// What [loadMe] reports: false acts like no internet.
-  bool online = true;
+  bool reachable = true;
+
+  @override
+  final ValueNotifier<bool> online = ValueNotifier(true);
 
   @override
   Future<void> updateName(String name) async {

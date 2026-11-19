@@ -11,7 +11,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// A small in-memory stand-in for the Qori backend, following docs/api.md.
 class FakeServer {
+  /// The guest's progress, and the signed-in account's.
   final progress = <int, Set<int>>{};
+  final account = <int, Set<int>>{};
+  final _guestAccess = <String>{};
+  final _guestRefresh = <String>{};
   final clock = <int, DateTime>{};
   final validAccess = <String>{};
   final validRefresh = <String>{};
@@ -31,17 +35,18 @@ class FakeServer {
     if (path == '/auth/email/signin') return _json(200, _tokens(guest: false));
     if (path == '/auth/refresh') {
       if (!validRefresh.remove(body['refresh'])) return _error(401, 'invalid_refresh_token');
-      return _json(200, _tokens());
+      return _json(200, _tokens(guest: _guestRefresh.remove(body['refresh'])));
     }
 
     final access = request.headers['Authorization']?.replaceFirst('Bearer ', '');
     if (!validAccess.contains(access)) return _error(401, 'token_not_valid');
+    final progress = _guestAccess.contains(access) ? this.progress : account;
 
-    if (path == '/progress' && request.method == 'GET') return _json(200, _map());
+    if (path == '/progress' && request.method == 'GET') return _json(200, _map(progress));
     if (path == '/progress/merge') {
       (body as Map<String, dynamic>)
           .forEach((k, v) => progress.putIfAbsent(int.parse(k), () => {}).addAll((v as List).cast<int>()));
-      return _json(200, _map());
+      return _json(200, _map(progress));
     }
     final surah = int.parse(path.split('/').last);
     final at = DateTime.parse(body['updated_at'] as String);
@@ -60,6 +65,8 @@ class FakeServer {
   Map<String, dynamic> _tokens({bool guest = true}) {
     _n++;
     validAccess.add('a$_n');
+    if (guest) _guestAccess.add('a$_n');
+    if (guest) _guestRefresh.add('r$_n');
     validRefresh.add('r$_n');
     return {
       'access': 'a$_n',
@@ -68,7 +75,7 @@ class FakeServer {
     };
   }
 
-  Map<String, dynamic> _map() => {
+  Map<String, dynamic> _map(Map<int, Set<int>> progress) => {
         for (final s in progress.keys.toList()..sort())
           if (progress[s]!.isNotEmpty) '$s': progress[s]!.toList()..sort(),
       };
@@ -216,20 +223,59 @@ void main() {
       expect(server.progress[68], {1});
     });
 
-    test('signing in sends the guest token and merges the device progress into the account', () async {
+    test('signing in to an account with ayahs shows only the account\'s ayahs', () async {
       final (store, sync, prefs) = await setUpSync({LearnedStore.key: '{"68":[1]}'});
-      await sync.sync();
-      final guestAccess = tokens.tokens!.access;
+      await sync.sync(); // as a guest
+      server.offline = true;
+      await store.commit(68, {1, 2}); // a guest change still waiting to go out
+      server.offline = false;
+      server.account[1] = {1, 2, 3};
 
       final auth = AuthApi(api, onSignedIn: sync.accountChanged);
       await auth.signIn(email: 'a@b.co', password: 'secret123');
 
-      expect(server.authHeaders['/auth/email/signin'], 'Bearer $guestAccess');
-      expect(tokens.tokens!.access, isNot(guestAccess));
-      expect(auth.user!.isGuest, isFalse);
-      expect(server.calls.where((c) => c == 'POST /progress/merge'), hasLength(2));
-      expect(prefs.getBool(ProgressSync.mergedKey), isTrue);
-      expect(store.ayahsOf(68), {1});
+      expect(server.authHeaders['/auth/email/signin'], isNull); // the server can't merge the guest in
+      expect(store.toJson(), {
+        '1': [1, 2, 3]
+      });
+      expect(server.account.keys, [1]); // nothing from the phone was sent to the account
+      expect(prefs.getString(ProgressSync.pendingKey), anyOf(isNull, '{}'));
+    });
+
+    test('signing in to an empty account fills it with the phone\'s ayahs', () async {
+      final (store, sync, _) = await setUpSync({LearnedStore.key: '{"68":[1,2]}'});
+      await sync.sync();
+
+      final auth = AuthApi(api, onSignedIn: sync.accountChanged);
+      await auth.signIn(email: 'a@b.co', password: 'secret123');
+
+      expect(server.account[68], {1, 2});
+      expect(store.ayahsOf(68), {1, 2});
+    });
+
+    test('logging out clears the phone\'s progress and starts an empty guest', () async {
+      final (store, sync, prefs) = await setUpSync();
+      final auth = AuthApi(api, onSignedIn: sync.accountChanged, onSignedOut: sync.signedOut);
+      await sync.sync();
+      server.account[1] = {1, 2};
+      await auth.signIn(email: 'a@b.co', password: 'secret123');
+      expect(store.ayahsOf(1), {1, 2});
+
+      await auth.signOut();
+
+      expect(store.toJson(), isEmpty);
+      expect(server.account[1], {1, 2}); // the account keeps its ayahs
+      expect(await api.hasSession, isTrue); // a fresh guest
+    });
+
+    test('the client notices going offline and back online', () async {
+      final (_, sync, _) = await setUpSync();
+      server.offline = true;
+      await sync.sync();
+      expect(api.online.value, isFalse);
+      server.offline = false;
+      await sync.sync();
+      expect(api.online.value, isTrue);
     });
   });
 }

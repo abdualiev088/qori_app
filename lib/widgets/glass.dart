@@ -125,10 +125,23 @@ class GlassProfileButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  Widget build(BuildContext context) =>
+      GlassCircleButton(label: 'Profile', onTap: onTap, child: HIcon.profile(HColors.ink));
+}
+
+/// The round 46 px glass button used in Home's header.
+class GlassCircleButton extends StatelessWidget {
+  const GlassCircleButton({super.key, required this.label, required this.onTap, required this.child});
+
+  final String label;
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'Profile',
+      label: label,
       child: GestureDetector(
         onTap: onTap,
         child: SizedBox.square(
@@ -147,7 +160,7 @@ class GlassProfileButton extends StatelessWidget {
               colors: [Color(0xF2FFFFFF), Color(0x59FFFFFF), Color(0x73D6F0E2)],
               stops: [0, .45, 1],
             ),
-            child: Center(child: HIcon.profile(HColors.ink)),
+            child: Center(child: ExcludeSemantics(child: child)),
           ),
         ),
       ),
@@ -182,8 +195,7 @@ class _BottomGlowPainter extends CustomPainter {
     c.drawCircle(
       Offset.zero,
       w,
-      Paint()
-        ..shader = ui.Gradient.radial(Offset.zero, w, [color, color.withValues(alpha: 0)], const [0, .7]),
+      Paint()..shader = ui.Gradient.radial(Offset.zero, w, [color, color.withValues(alpha: 0)], const [0, .7]),
     );
     c.restore();
   }

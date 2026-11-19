@@ -98,7 +98,11 @@ class MemoryTokenStore implements TokenStore {
 /// refresh token is rejected too, the session is cleared and the call fails
 /// with `session_expired`.
 class ApiClient {
-  ApiClient({required this.baseUrl, required TokenStore tokens, http.Client? client, this.timeout = const Duration(seconds: 15)})
+  ApiClient(
+      {required this.baseUrl,
+      required TokenStore tokens,
+      http.Client? client,
+      this.timeout = const Duration(seconds: 15)})
       : _store = tokens,
         _http = client ?? http.Client();
 
@@ -121,6 +125,10 @@ class ApiClient {
 
   Future<bool> get hasSession async => await _current() != null;
 
+  /// Whether the last request reached the server. Starts hopeful; the first
+  /// failed request turns it off and the next successful one back on.
+  final online = ValueNotifier<bool>(true);
+
   /// This device's refresh token, to revoke it on sign-out.
   Future<String?> get refreshToken async => (await _current())?.refresh;
 
@@ -136,12 +144,19 @@ class ApiClient {
   Future<dynamic> patch(String path, Object? body) => _send('PATCH', path, body);
   Future<dynamic> delete(String path) => _send('DELETE', path);
 
+  /// A POST without this device's session, for signing in to an existing
+  /// account: the server then leaves the account's progress as it is
+  /// instead of merging the guest's into it.
+  Future<dynamic> postWithoutSession(String path, Object? body) async => _decode(await _raw('POST', path, body, null));
+
   Future<dynamic> _send(String method, String path, [Object? body, bool retry = true]) async {
     final tokens = await _current();
     final response = await _raw(method, path, body, tokens?.access);
 
     // The auth endpoints answer 401 for a wrong password; only other calls mean "token expired".
     if (response.statusCode == 401 && tokens != null && !path.startsWith('/auth/') && retry) {
+      // Signed in to another account while this call was out: just retry with the new session.
+      if (!identical(await _current(), tokens)) return _send(method, path, body, false);
       if (await _refresh()) return _send(method, path, body, false);
       throw ApiException(401, 'session_expired', 'Please sign in again.');
     }
@@ -164,8 +179,11 @@ class ApiClient {
       final streamed = Uri.parse(baseUrl).isScheme('http')
           ? runZoned(() => _http.send(request), zoneValues: {#flutter.io.allow_http: true})
           : _http.send(request);
-      return await http.Response.fromStream(await streamed.timeout(timeout));
+      final response = await http.Response.fromStream(await streamed.timeout(timeout));
+      online.value = true;
+      return response;
     } catch (e) {
+      online.value = false;
       // Debug builds say where they tried and why, so a build pointed at the
       // wrong server doesn't look like a network problem.
       throw ApiException.offline(kDebugMode ? '$baseUrl\n$e' : null);
@@ -176,9 +194,12 @@ class ApiClient {
   Future<bool> _refresh() => _refreshing ??= _doRefresh().whenComplete(() => _refreshing = null);
 
   Future<bool> _doRefresh() async {
-    final refresh = (await _current())?.refresh;
+    final before = await _current();
+    final refresh = before?.refresh;
     if (refresh == null) return false;
     final response = await _raw('POST', '/auth/refresh', {'refresh': refresh}, null);
+    // A sign-in may have replaced the session meanwhile; never touch the new one.
+    if (!identical(await _current(), before)) return true;
     if (response.statusCode == 200) {
       await setTokens(Tokens.fromJson(_decode(response) as Map<String, dynamic>));
       return true;

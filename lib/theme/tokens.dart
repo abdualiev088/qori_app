@@ -80,5 +80,4 @@ abstract final class HText {
 
 const _arDigits = '٠١٢٣٤٥٦٧٨٩';
 
-String arabicDigits(int n) =>
-    n.toString().split('').map((d) => _arDigits[int.parse(d)]).join();
+String arabicDigits(int n) => n.toString().split('').map((d) => _arDigits[int.parse(d)]).join();

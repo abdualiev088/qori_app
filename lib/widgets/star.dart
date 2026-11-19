@@ -39,8 +39,7 @@ class StarPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(StarPainter old) =>
-      old.fill != fill || old.stroke != stroke || old.strokeWidth != strokeWidth;
+  bool shouldRepaint(StarPainter old) => old.fill != fill || old.stroke != stroke || old.strokeWidth != strokeWidth;
 }
 
 /// A star with a label in the middle (ayah number badge, inline end marker).

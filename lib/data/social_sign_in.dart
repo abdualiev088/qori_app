@@ -67,8 +67,8 @@ class SocialSignIn {
     }
   }
 
-  static ApiException _notSetUp(String provider) =>
-      ApiException(-1, 'provider_not_configured', "Sign in with $provider isn't available yet. Use your email for now.");
+  static ApiException _notSetUp(String provider) => ApiException(
+      -1, 'provider_not_configured', "Sign in with $provider isn't available yet. Use your email for now.");
 
   static ApiException _failed(String provider) =>
       ApiException(-1, 'social_failed', "Sign in with $provider didn't work. Please try again.");

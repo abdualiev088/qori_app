@@ -17,8 +17,7 @@ class HIcon extends StatelessWidget {
         ),
       );
 
-  static String _hex(Color c) =>
-      '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
+  static String _hex(Color c) => '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
 
   static String _stroke(Color c, double w, {bool round = true}) =>
       'fill="none" stroke="${_hex(c)}" stroke-opacity="${c.a}" stroke-width="$w" '
@@ -26,9 +25,9 @@ class HIcon extends StatelessWidget {
 
   static String _fill(Color c) => 'fill="${_hex(c)}" fill-opacity="${c.a}"';
 
-  factory HIcon.profile(Color c) => HIcon._(
-      '<g ${_stroke(c, 1.8)}><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></g>',
-      size: 20);
+  factory HIcon.profile(Color c) =>
+      HIcon._('<g ${_stroke(c, 1.8)}><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></g>',
+          size: 20);
 
   factory HIcon.check(Color c, {double size = 16, double width = 2.4}) =>
       HIcon._('<path ${_stroke(c, width)} d="M5 12.5l4.5 4.5L19 7.5"/>', size: size);
