@@ -10,6 +10,7 @@ import 'data/api_client.dart';
 import 'data/auth_api.dart';
 import 'data/learned_store.dart';
 import 'data/progress_sync.dart';
+import 'player/audio_engine.dart';
 import 'player/audio_handler.dart';
 import 'player/player_controller.dart';
 import 'theme/tokens.dart';
@@ -25,7 +26,7 @@ Future<void> main() async {
     ),
   );
   final prefs = await SharedPreferences.getInstance();
-  final player = PlayerController(handler, prefs);
+  final player = PlayerController(JustAudioEngine(handler), prefs);
   final learned = LearnedStore.load(prefs);
   final api = ApiClient(baseUrl: defaultApiUrl(), tokens: SecureTokenStore());
   final sync = ProgressSync(client: api, store: learned, prefs: prefs)..attach();

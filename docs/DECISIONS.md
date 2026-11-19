@@ -19,3 +19,17 @@ Picked from a prototype with three directions.
 - **Rejected:**
   - *Classic* (the mockup layout with Sign in / Create account tabs). It asks for the most at once (tabs plus three methods), and people often pick the wrong tab.
   - *Social first* (Apple and Google up front, email folded away). It costs email users an extra tap and still needed a "New to Qori? Create account" switch.
+
+## Player tab: surah list by juz, with a mini-player (2026-11-20)
+
+Picked from a prototype with three directions (`player-list-proto/DECISION.md`).
+
+- **Chosen: Juz.** The Player tab opens on "Surahs" by Alijon Qori: one section per juz ("Juz 18 الجزء ١٨" and its range), each a white card of surah rows. A surah that spans juz appears in each, and rows that don't start at ayah 1 read "Continues · ayahs 142–252" and open the player there.
+- **Search and juz row:** one sticky block with the search field and juz buttons 1–30. The current juz is filled dark green, fully memorized ones get the mint wash and ring. Search is forgiving about names ("yaseen", "kahf") and covers numbers, meanings ("cave") and Arabic without diacritics; results are one flat list, and Enter opens the first.
+- **Rows** show the star filled by the memorized share (from the real `LearnedStore`), a check when memorized, and a "30/52" bar on whole rows in progress.
+- **Player for any surah:** the screen slides in (native iOS push, 360 ms in, 260 ms back; none under Reduce Motion) with a glass back button. The ayah list runs to the bottom edge and the panel floats over it. Position and selection are saved per surah.
+- **Text and audio** come from a `SurahSource` (`lib/data/surah_source.dart`). All 114 surahs' text is bundled (quran-uthmani and Sahih International, from api.alquran.cloud, `assets/quran/quran.json`). Only Al-Qalam has audio (Alijon Qori, bundled); other surahs say "Audio … is coming soon" and their play controls are off.
+- **Mini-player** above the nav on the list while a surah is active: the surah, "Ayah 30 of 52 · repeat 2 of 3", play/pause and ×, with a thin progress line. It enters in 220 ms (a 10 px rise), leaves in 150 ms, and hides while the player is open. Leaving the player keeps the audio going; opening a different surah stops the old one.
+- **Rejected:**
+  - *Index* (one flat list with All / Learning / Not started / Memorized filters). Quickest when you know the surah, but it ignores the Mushaf structure that hifz students plan around.
+  - *Resume* (a "Continue" card plus sections grouped by progress). Its resume job is now done by the mini-player, and grouping by status hides where a surah sits in the Mushaf.

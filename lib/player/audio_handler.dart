@@ -16,7 +16,7 @@ class HifdthAudioHandler extends BaseAudioHandler with SeekHandler {
   void Function()? onNext;
   void Function()? onPrevious;
 
-  void setItem(MediaItem item) => mediaItem.add(item);
+  void setItem(MediaItem? item) => mediaItem.add(item);
 
   @override
   Future<void> play() async => onPlay != null ? onPlay!() : player.play();

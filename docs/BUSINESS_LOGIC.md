@@ -97,15 +97,18 @@ These are hardcoded on Home until the schedule exists:
 - Goal, streak and sessions behind are computed from that log **in the user's time zone**.
 - Still open: whether a day counts toward the streak with any one session done, or only with all of them. See `docs/BACKEND.md`.
 
-## 10. Player (live, Al-Qalam only)
+## 10. Player (live)
 
-- Only **Surah 68, Al-Qalam** (52 ayahs plus the Basmala) is available. Its audio is bundled in the app.
+- **The Player tab opens on the surah list**, grouped by the 30 juz. A surah that spans juz appears in each; rows that start partway open the player at their first ayah. Search covers names (forgiving spelling), numbers, meanings and Arabic.
+- **List progress** comes from Quran progress: the star fills by the memorized share, memorized surahs get a check, whole rows in progress show "learned/total".
+- **Every surah's text** is in the app (Arabic and Sahih International English). **Only Al-Qalam (68) has audio** (Alijon Qori, bundled); other surahs open with their text and say audio is coming soon.
 - **Repeat** each ayah 1, 3, 5, 7 or 10 times, or forever. The default is 3.
 - **With no selection:** the player stops after the current ayah, unless "Then next ayah" (auto-next) is on or the user taps Next.
 - **With a selection:** it plays only the selected ayahs in order. At the end it wraps to the first only if "Loop selected" is on.
-- Previous and Next follow the same rules backwards and forwards.
-- The current ayah, repeat count, auto-next, loop and selection are remembered between launches, on the device only.
-- **Planned:** all 114 surahs, with audio streamed from storage behind a CDN and downloaded per surah.
+- Previous and Next follow the same rules backwards and forwards. Surahs 1 and 9 have no Basmala row.
+- **Saved on the device:** the current ayah and selection **per surah**; repeat, auto-next and loop for all surahs.
+- **One surah is active at a time.** Closing the player keeps it playing; the mini-player above the nav shows it on the list (play/pause, ×, tap to reopen at the same place). × stops it. Opening a different surah stops the current one.
+- **Planned:** audio for every surah (the reciter's), streamed from storage behind a CDN.
 
 ## 11. Not built yet
 

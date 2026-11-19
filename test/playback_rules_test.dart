@@ -4,7 +4,7 @@ import 'package:qori_app/player/playback_rules.dart';
 void main() {
   group('nextAfter', () {
     int? next(int n, {bool manual = false, bool auto = false, bool loop = false, List<int> sel = const []}) =>
-        nextAfter(n, manual: manual, autoNext: auto, loopSelected: loop, selected: sel);
+        nextAfter(n, last: 52, manual: manual, autoNext: auto, loopSelected: loop, selected: sel);
 
     test('without a selection, stops unless "Then next ayah" is on', () {
       expect(next(5), isNull);

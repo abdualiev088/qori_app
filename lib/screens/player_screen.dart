@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-import '../data/al_qalam.dart';
+import '../data/surah_source.dart';
 import '../player/player_controller.dart';
 import '../theme/tokens.dart';
+import '../widgets/auth_widgets.dart' show GlassBackButton;
 import '../widgets/glass.dart';
 import '../widgets/icons.dart';
 import '../widgets/progress_indicators.dart';
@@ -11,10 +12,15 @@ import '../widgets/ribbed_glass.dart';
 import '../widgets/star.dart';
 
 class PlayerScreen extends StatefulWidget {
-  const PlayerScreen({super.key, required this.controller, required this.bottomInset});
+  const PlayerScreen({super.key, required this.controller, required this.bottomInset, this.onBack});
 
   final PlayerController controller;
+
+  /// Space the nav takes at the bottom; the panel floats [_gap] above it.
   final double bottomInset;
+
+  /// Shows the back button left of the title.
+  final VoidCallback? onBack;
 
   @override
   State<PlayerScreen> createState() => _PlayerScreenState();
@@ -22,7 +28,16 @@ class PlayerScreen extends StatefulWidget {
 
 class _PlayerScreenState extends State<PlayerScreen> {
   final _scroll = ScrollController();
-  final _rowKeys = {for (var n = 0; n <= ayat.length; n++) n: GlobalKey()};
+  final _rowKeys = <int, GlobalKey>{};
+  final _panelKey = GlobalKey();
+
+  /// Measured after layout; a close guess until then.
+  double _panelHeight = 236;
+
+  static const _gap = 12.0;
+
+  /// How much of the list's bottom the panel and nav cover.
+  double get _covered => widget.bottomInset + _gap + _panelHeight + 8;
 
   PlayerController get c => widget.controller;
 
@@ -43,16 +58,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// Centers the row, or nudges the list just enough to show it (6 px margin).
   void _scrollTo(int n, {bool center = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final ctx = _rowKeys[n]?.currentContext;
       if (ctx == null || !_scroll.hasClients) return;
       final box = ctx.findRenderObject()!;
       final viewport = RenderAbstractViewport.of(box);
       final pos = _scroll.position;
+      // The panel covers the bottom of the list, so "visible" ends above it.
+      final covered = _covered;
       final top = viewport.getOffsetToReveal(box, 0).offset;
-      final bottom = viewport.getOffsetToReveal(box, 1).offset;
+      final bottom = viewport.getOffsetToReveal(box, 1).offset + covered;
       double? target;
       if (center) {
-        target = viewport.getOffsetToReveal(box, 0.5).offset;
+        target = viewport.getOffsetToReveal(box, 0.5).offset + covered / 2;
       } else if (pos.pixels > top - 6) {
         target = top - 6;
       } else if (pos.pixels < bottom + 6) {
@@ -68,38 +86,63 @@ class _PlayerScreenState extends State<PlayerScreen> {
     });
   }
 
+  void _measurePanel() {
+    final h = _panelKey.currentContext?.size?.height;
+    if (h != null && (h - _panelHeight).abs() > 0.5 && mounted) setState(() => _panelHeight = h);
+  }
+
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.paddingOf(context).top + 9;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measurePanel());
     return ListenableBuilder(
       listenable: c,
-      builder: (context, _) => Padding(
-        padding: EdgeInsets.fromLTRB(16, top < 56 ? 56 : top, 16, widget.bottomInset),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _Header(c: c),
-            if (c.selecting) ...[
-              const SizedBox(height: 12),
-              Semantics(
-                liveRegion: true,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: HColors.mintWash,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: HColors.mintHintRing),
+      builder: (context, _) => Stack(
+        children: [
+          Positioned.fill(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, top < 56 ? 56 : top, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _Header(c: c, onBack: widget.onBack),
+                  if (c.selecting) ...[
+                    const SizedBox(height: 12),
+                    Semantics(
+                      liveRegion: true,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: HColors.mintWash,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: HColors.mintHintRing),
+                        ),
+                        child: Text(c.selectionHint,
+                            textAlign: TextAlign.center, style: HText.inter(size: 14, height: 1.4)),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  // Runs to the bottom edge; the panel and nav float over it.
+                  Expanded(
+                    child: _AyahList(
+                      c: c,
+                      scroll: _scroll,
+                      rowKey: (n) => _rowKeys.putIfAbsent(n, GlobalKey.new),
+                      bottomPadding: _covered,
+                    ),
                   ),
-                  child: Text(c.selectionHint, textAlign: TextAlign.center, style: HText.inter(size: 14, height: 1.4)),
-                ),
+                ],
               ),
-            ],
-            const SizedBox(height: 12),
-            Expanded(child: _AyahList(c: c, scroll: _scroll, rowKeys: _rowKeys)),
-            const SizedBox(height: 12),
-            _PlayerPanel(c: c),
-          ],
-        ),
+            ),
+          ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: widget.bottomInset + _gap,
+            child: KeyedSubtree(key: _panelKey, child: _PlayerPanel(c: c)),
+          ),
+        ],
       ),
     );
   }
@@ -108,9 +151,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
 // ---------------------------------------------------------------- header
 
 class _Header extends StatelessWidget {
-  const _Header({required this.c});
+  const _Header({required this.c, this.onBack});
 
   final PlayerController c;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -131,6 +175,10 @@ class _Header extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
         children: [
+          if (onBack != null) ...[
+            GlassBackButton(onTap: onBack!),
+            const SizedBox(width: 12),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,16 +189,20 @@ class _Header extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Text('Al-Qalam',
-                          style: HText.inter(size: 24, weight: FontWeight.w700, letterSpacing: -0.4, height: 1.2)),
+                      Flexible(
+                        child: Text(c.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: HText.inter(size: 24, weight: FontWeight.w700, letterSpacing: -0.4, height: 1.2)),
+                      ),
                       const SizedBox(width: 8),
-                      Text('القلم',
+                      Text(c.arabicName,
                           textDirection: TextDirection.rtl, style: HText.arabic(size: 22, color: HColors.accentDeep)),
                     ],
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text('Alijon Qori · Surah 68 · 52 ayahs',
+                Text('$reciterName · Surah ${c.surah} · ${c.ayahCount} ayahs',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: HText.inter(size: 13, weight: FontWeight.w500, color: HColors.ink2)),
@@ -245,53 +297,106 @@ class _SelectPill extends StatelessWidget {
 // ---------------------------------------------------------------- list
 
 class _AyahList extends StatelessWidget {
-  const _AyahList({required this.c, required this.scroll, required this.rowKeys});
+  const _AyahList({required this.c, required this.scroll, required this.rowKey, required this.bottomPadding});
 
   final PlayerController c;
   final ScrollController scroll;
-  final Map<int, GlobalKey> rowKeys;
+  final GlobalKey Function(int n) rowKey;
+
+  /// Lets the last ayah scroll clear of the floating panel.
+  final double bottomPadding;
 
   @override
   Widget build(BuildContext context) {
     final basmalaCurrent = c.current == 0;
+    final ayat = c.ayat;
     return ClipRRect(
-      borderRadius: BorderRadius.circular(HRadii.list),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(HRadii.list)),
       child: ColoredBox(
         color: HColors.surface,
-        child: SingleChildScrollView(
-          controller: scroll,
-          padding: const EdgeInsets.all(6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _RowSurface(
-                key: rowKeys[0],
-                current: basmalaCurrent,
-                semanticLabel: 'Basmala. Tap to listen',
-                onTap: () => c.tapAyah(0),
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+        child: c.textLoading || c.textError != null || ayat.isEmpty
+            ? Padding(
+                padding: EdgeInsets.only(bottom: bottomPadding),
+                child: _ListState(c: c),
+              )
+            : SingleChildScrollView(
+                controller: scroll,
+                padding: EdgeInsets.fromLTRB(6, 6, 6, bottomPadding),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(basmala,
-                        textAlign: TextAlign.center,
-                        textDirection: TextDirection.rtl,
-                        style: HText.arabic(size: 22, height: 1.9)),
-                    const SizedBox(height: 2),
-                    Text('Tap to listen to the Basmala',
-                        style: HText.inter(size: 13, height: 1.4, color: HColors.ink2)),
+                    if (c.hasBasmala)
+                      _RowSurface(
+                        key: rowKey(0),
+                        current: basmalaCurrent,
+                        semanticLabel: 'Basmala. Tap to listen',
+                        onTap: () => c.tapAyah(0),
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+                        child: Column(
+                          children: [
+                            Text(basmala,
+                                textAlign: TextAlign.center,
+                                textDirection: TextDirection.rtl,
+                                style: HText.arabic(size: 22, height: 1.9)),
+                            const SizedBox(height: 2),
+                            Text('Tap to listen to the Basmala',
+                                style: HText.inter(size: 13, height: 1.4, color: HColors.ink2)),
+                          ],
+                        ),
+                      ),
+                    for (final (i, a) in ayat.indexed)
+                      _AyahRow(
+                        key: rowKey(a.n),
+                        ayah: a,
+                        c: c,
+                        showDivider: i > 0 && c.current != a.n && c.current != ayat[i - 1].n,
+                      ),
                   ],
                 ),
               ),
-              for (final (i, a) in ayat.indexed)
-                _AyahRow(
-                  key: rowKeys[a.n],
-                  ayah: a,
-                  c: c,
-                  showDivider: i > 0 && c.current != a.n && c.current != ayat[i - 1].n,
-                ),
-            ],
+      ),
+    );
+  }
+}
+
+/// Loading the surah's text, or a message and Retry when it failed.
+class _ListState extends StatelessWidget {
+  const _ListState({required this.c});
+
+  final PlayerController c;
+
+  @override
+  Widget build(BuildContext context) {
+    if (c.textError == null) {
+      return Center(
+        child: Semantics(
+          label: 'Loading ${c.name}',
+          child: const SizedBox.square(
+            dimension: 28,
+            child: CircularProgressIndicator(strokeWidth: 2.4, color: HColors.accent),
           ),
         ),
+      );
+    }
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text("Couldn't load ${c.name}", style: HText.inter(size: 16, weight: FontWeight.w600)),
+          const SizedBox(height: 6),
+          Text('Check the app is up to date, then try again.',
+              textAlign: TextAlign.center, style: HText.inter(size: 14, color: HColors.ink2)),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: c.retryText,
+            style: TextButton.styleFrom(
+              minimumSize: const Size(88, 44),
+              foregroundColor: HColors.accentDeep,
+              textStyle: HText.button(),
+            ),
+            child: const Text('Try again'),
+          ),
+        ]),
       ),
     );
   }
@@ -403,7 +508,9 @@ class _AyahRow extends StatelessWidget {
                       stroke: cur ? HColors.accent : HColors.accentDeep,
                       label: Text('${ayah.n}',
                           style: HText.inter(
-                              size: 11, weight: FontWeight.w700, color: cur ? HColors.numOnMint : HColors.accentDeep)),
+                              size: ayah.n > 99 ? 9.5 : 11,
+                              weight: FontWeight.w700,
+                              color: cur ? HColors.numOnMint : HColors.accentDeep)),
                     ),
                   ),
                 ),
@@ -521,15 +628,19 @@ class _PlayerPanel extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  _SeekBar(c: c),
+                  if (c.hasAudio) _SeekBar(c: c) else _NoAudio(name: c.name),
                   const SizedBox(height: 6),
                   _Transport(c: c),
                   const SizedBox(height: 6),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('REPEAT EACH AYAH',
-                          style: HText.inter(size: 11, weight: FontWeight.w600, letterSpacing: 0.6, color: white72)),
+                      Flexible(
+                          child: Text('REPEAT EACH AYAH',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style:
+                                  HText.inter(size: 11, weight: FontWeight.w600, letterSpacing: 0.6, color: white72))),
                       _AutoSwitch(c: c),
                     ],
                   ),
@@ -550,6 +661,21 @@ class _PlayerPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Where the seek bar goes while a surah has no audio yet.
+class _NoAudio extends StatelessWidget {
+  const _NoAudio({required this.name});
+  final String name;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: 16,
+        child: Center(
+          child: Text('Audio for $name is coming soon',
+              style: HText.inter(size: 13, color: Colors.white.withValues(alpha: 0.72))),
+        ),
+      );
 }
 
 /// One segment per repetition; tap or drag seeks inside the current one.
@@ -573,7 +699,9 @@ class _SeekBar extends StatelessWidget {
       builder: (context, p, _) => Semantics(
         slider: true,
         label: 'Position',
-        value: '${(p * 100).round()}',
+        value: '${(p * 100).round()}%',
+        increasedValue: '${(p * 100).round() + 5 > 100 ? 100 : (p * 100).round() + 5}%',
+        decreasedValue: '${(p * 100).round() - 5 < 0 ? 0 : (p * 100).round() - 5}%',
         onIncrease: () => c.seekBy(const Duration(seconds: 2)),
         onDecrease: () => c.seekBy(const Duration(seconds: -2)),
         child: LayoutBuilder(
@@ -629,37 +757,42 @@ class _Transport extends StatelessWidget {
         const SizedBox(width: 26),
         Semantics(
           button: true,
+          enabled: c.hasAudio,
           label: c.playing ? 'Pause' : 'Play',
           excludeSemantics: true,
           child: GestureDetector(
-            onTap: c.toggle,
-            child: SizedBox.square(
-              dimension: 48,
-              child: Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.center,
-                children: [
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        center: Alignment(-0.3, -0.44),
-                        radius: 0.97,
-                        colors: [Color(0xFFD4FBE4), HColors.playerMint2, HColors.playerSwitchOn],
-                        stops: [0, .5, 1],
-                      ),
-                      boxShadow: [BoxShadow(color: Color(0x594CC488), offset: Offset(0, 6), blurRadius: 16)],
-                    ),
-                    child: SizedBox.expand(),
-                  ),
-                  c.playing
-                      ? HIcon.pause(HColors.playerInk)
-                      : Padding(
-                          padding: const EdgeInsets.only(left: 3),
-                          child: HIcon.play(HColors.playerInk),
+            onTap: c.hasAudio ? c.toggle : null,
+            child: AnimatedOpacity(
+              opacity: c.hasAudio ? 1 : 0.35,
+              duration: Duration.zero,
+              child: SizedBox.square(
+                dimension: 48,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          center: Alignment(-0.3, -0.44),
+                          radius: 0.97,
+                          colors: [Color(0xFFD4FBE4), HColors.playerMint2, HColors.playerSwitchOn],
+                          stops: [0, .5, 1],
                         ),
-                  if (c.loading) const Positioned(left: -5, top: -5, right: -5, bottom: -5, child: _Spinner()),
-                ],
+                        boxShadow: [BoxShadow(color: Color(0x594CC488), offset: Offset(0, 6), blurRadius: 16)],
+                      ),
+                      child: SizedBox.expand(),
+                    ),
+                    c.playing
+                        ? HIcon.pause(HColors.playerInk)
+                        : Padding(
+                            padding: const EdgeInsets.only(left: 3),
+                            child: HIcon.play(HColors.playerInk),
+                          ),
+                    if (c.loading) const Positioned(left: -5, top: -5, right: -5, bottom: -5, child: _Spinner()),
+                  ],
+                ),
               ),
             ),
           ),
