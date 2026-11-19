@@ -27,13 +27,21 @@ class FakeAuthApi implements AuthApi {
   }
 
   @override
-  Future<void> signIn({required String email, required String password}) => _maybeFail();
+  Future<void> signIn({required String email, required String password}) async {
+    await _maybeFail();
+    _signInAs(email: email);
+  }
 
   @override
   Future<void> createAccount({required String name, required String email, required String password}) async {
     await _maybeFail();
     _accounts.add(email.trim().toLowerCase());
+    _signInAs(email: email, name: name);
   }
+
+  /// What the real AuthApi does on success: [user] becomes a signed-in account.
+  void _signInAs({String? email, String name = '', bool hasPassword = true}) =>
+      user = QoriUser(id: 'u1', email: email?.trim().toLowerCase(), displayName: name, hasPassword: hasPassword);
 
   @override
   Future<void> sendPasswordReset(String email) => _maybeFail();
@@ -61,10 +69,16 @@ class FakeAuthApi implements AuthApi {
   }
 
   @override
-  Future<void> signInWithApple() => _maybeFail();
+  Future<void> signInWithApple() async {
+    await _maybeFail();
+    _signInAs(hasPassword: false);
+  }
 
   @override
-  Future<void> signInWithGoogle() => _maybeFail();
+  Future<void> signInWithGoogle() async {
+    await _maybeFail();
+    _signInAs(hasPassword: false);
+  }
 }
 
 ApiException wrongPassword() => ApiException(401, 'invalid_credentials', 'Wrong email or password.');

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/auth_api.dart';
 import '../theme/tokens.dart';
 import '../widgets/auth_widgets.dart';
+import 'account_screen.dart';
 
 enum _Step { email, password, create }
 
@@ -10,7 +11,8 @@ enum _Step { email, password, create }
 /// the password step for a known email or the sign-up step for a new one,
 /// so nobody has to pick between "sign in" and "create account".
 ///
-/// Pops with `true` once signed in.
+/// Once signed in, the account page takes this screen's place (so Back
+/// from it returns to where sign-in was opened), and the route completes with `true`.
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key, required this.api});
 
@@ -98,12 +100,21 @@ class _AuthScreenState extends State<AuthScreen> {
     final ok = await _call(() => _step == _Step.create
         ? widget.api.createAccount(name: _name.text.trim(), email: email, password: _password.text)
         : widget.api.signIn(email: email, password: _password.text));
-    if (ok && mounted) Navigator.of(context).pop(true);
+    if (ok && mounted) _signedIn();
   }
 
   Future<void> _social(Future<void> Function() call) async {
     if (_loading) return;
-    if (await _call(call) && mounted) Navigator.of(context).pop(true);
+    if (await _call(call) && mounted) _signedIn();
+  }
+
+  void _signedIn() {
+    final navigator = Navigator.of(context);
+    if (!widget.api.signedIn) {
+      navigator.pop(true);
+      return;
+    }
+    navigator.pushReplacement(MaterialPageRoute<void>(builder: (_) => AccountScreen(api: widget.api)), result: true);
   }
 
   Future<void> _forgot() async {

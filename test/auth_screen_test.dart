@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:qori_app/data/auth_api.dart';
 import 'package:qori_app/screens/auth_screen.dart';
 import 'package:qori_app/theme/tokens.dart';
+import 'package:qori_app/widgets/auth_widgets.dart';
 
 import 'fake_auth_api.dart';
 
@@ -58,7 +59,7 @@ void main() {
     expect(find.text('That email looks incomplete'), findsNothing);
   });
 
-  testWidgets('a new email signs up, and the same email then signs in', (tester) async {
+  testWidgets('a new email signs up and lands on the account page, and the same email then signs in', (tester) async {
     final api = FakeAuthApi();
     var results = await open(tester, api);
 
@@ -80,6 +81,13 @@ void main() {
     await tester.tap(find.text('Create account'));
     await settle(tester);
     expect(results, [true]);
+    expect(find.text('ACCOUNT SETTINGS'), findsOneWidget);
+    expect(find.text('Nice to meet you'), findsNothing);
+
+    // Back from the account page returns to where sign-in was opened, not to the form.
+    await tester.tap(find.byType(GlassBackButton));
+    await settle(tester);
+    expect(find.text('open'), findsOneWidget);
 
     results = await open(tester, api);
     await tester.enterText(field('Email'), 'AZIZ@mail.com ');
@@ -88,6 +96,13 @@ void main() {
     expect(find.text('Welcome back'), findsOneWidget);
     expect(find.text('Name'), findsNothing);
     expect(find.text('Forgot password?'), findsOneWidget);
+
+    await tester.enterText(field('Password'), 'longenough1');
+    await tester.tap(find.text('Sign in'));
+    await settle(tester);
+    expect(results, [true]);
+    expect(find.text('ACCOUNT SETTINGS'), findsOneWidget);
+    expect(find.text('aziz@mail.com'), findsWidgets);
   });
 
   testWidgets('Change goes back to the email step', (tester) async {
@@ -102,12 +117,13 @@ void main() {
     expect(find.text('aziz@mail.com'), findsOneWidget); // kept, ready to fix
   });
 
-  testWidgets('Apple and Google close the screen as signed in', (tester) async {
+  testWidgets('Apple and Google sign-in open the account page', (tester) async {
     final results = await open(tester, FakeAuthApi());
     await tester.ensureVisible(find.text('Continue with Apple'));
     await tester.tap(find.text('Continue with Apple'));
     await settle(tester);
     expect(results, [true]);
+    expect(find.text('ACCOUNT SETTINGS'), findsOneWidget);
   });
 
   testWidgets('a wrong password shows under the field and clears while typing', (tester) async {
