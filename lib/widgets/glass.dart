@@ -131,11 +131,14 @@ class GlassProfileButton extends StatelessWidget {
 
 /// The round 46 px glass button used in Home's header.
 class GlassCircleButton extends StatelessWidget {
-  const GlassCircleButton({super.key, required this.label, required this.onTap, required this.child});
+  const GlassCircleButton({super.key, required this.label, required this.onTap, required this.child, this.fill});
 
   final String label;
   final VoidCallback onTap;
   final Widget child;
+
+  /// The glass tint; the default is the frosted white of Home's header.
+  final Gradient? fill;
 
   @override
   Widget build(BuildContext context) {
@@ -154,12 +157,13 @@ class GlassCircleButton extends StatelessWidget {
               BoxShadow(color: Color(0x2414462D), offset: Offset(0, 8), blurRadius: 20),
               BoxShadow(color: Color(0x1A14462D), offset: Offset(0, 1), blurRadius: 3),
             ],
-            fill: const RadialGradient(
-              center: Alignment(-0.4, -0.6),
-              radius: 1.1,
-              colors: [Color(0xF2FFFFFF), Color(0x59FFFFFF), Color(0x73D6F0E2)],
-              stops: [0, .45, 1],
-            ),
+            fill: fill ??
+                const RadialGradient(
+                  center: Alignment(-0.4, -0.6),
+                  radius: 1.1,
+                  colors: [Color(0xF2FFFFFF), Color(0x59FFFFFF), Color(0x73D6F0E2)],
+                  stops: [0, .45, 1],
+                ),
             child: Center(child: ExcludeSemantics(child: child)),
           ),
         ),

@@ -541,46 +541,113 @@ class _SpeechBubbleState extends State<_SpeechBubble> with SingleTickerProviderS
       );
 }
 
-/// The cloud (only while offline) and profile buttons at the top right.
-class _HeaderButtons extends StatelessWidget {
+/// The cloud and profile buttons at the top right. The cloud shows while
+/// offline; when the connection comes back it turns green for a moment
+/// ([backOnlineFor]), then fades away.
+class _HeaderButtons extends StatefulWidget {
   const _HeaderButtons({required this.online, required this.onProfile});
 
   final ValueListenable<bool>? online;
   final VoidCallback onProfile;
 
+  static const offlineMessage = "You're offline. Changes are saved on this phone and sync when you're back online.";
+  static const backOnlineMessage = "You're back online. Your changes are syncing.";
+  static const backOnlineFor = Duration(seconds: 2);
+
+  @override
+  State<_HeaderButtons> createState() => _HeaderButtonsState();
+}
+
+enum _Cloud { hidden, offline, backOnline }
+
+class _HeaderButtonsState extends State<_HeaderButtons> {
   /// Without an account connection (tests), the app counts as online.
   static final _alwaysOnline = ValueNotifier(true);
 
-  static const offlineMessage = "You're offline. Changes are saved on this phone and sync when you're back online.";
+  ValueListenable<bool> get _online => widget.online ?? _alwaysOnline;
+  late _Cloud _cloud = _online.value ? _Cloud.hidden : _Cloud.offline;
+  Timer? _hide;
+
+  @override
+  void initState() {
+    super.initState();
+    _online.addListener(_changed);
+  }
+
+  @override
+  void didUpdateWidget(_HeaderButtons old) {
+    super.didUpdateWidget(old);
+    if (old.online != widget.online) {
+      (old.online ?? _alwaysOnline).removeListener(_changed);
+      _online.addListener(_changed);
+    }
+  }
+
+  void _changed() {
+    _hide?.cancel();
+    if (!_online.value) {
+      setState(() => _cloud = _Cloud.offline);
+    } else if (_cloud == _Cloud.offline) {
+      setState(() => _cloud = _Cloud.backOnline);
+      _hide = Timer(_HeaderButtons.backOnlineFor, () {
+        if (mounted) setState(() => _cloud = _Cloud.hidden);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _hide?.cancel();
+    _online.removeListener(_changed);
+    super.dispose();
+  }
+
+  Widget _cloudButton() => switch (_cloud) {
+        _Cloud.hidden => const SizedBox.shrink(key: ValueKey(_Cloud.hidden)),
+        _Cloud.offline => GlassCircleButton(
+            key: const ValueKey(_Cloud.offline),
+            label: 'Offline',
+            onTap: () => Toast.show(context, _HeaderButtons.offlineMessage),
+            child: const Icon(Icons.cloud_off_rounded, size: 22, color: HColors.ink),
+          ),
+        _Cloud.backOnline => GlassCircleButton(
+            key: const ValueKey(_Cloud.backOnline),
+            label: 'Back online',
+            onTap: () => Toast.show(context, _HeaderButtons.backOnlineMessage),
+            fill: const RadialGradient(
+              center: Alignment(-0.4, -0.6),
+              radius: 1.1,
+              colors: [Color(0xF26FD9A0), Color(0xE622B567), Color(0xF2169A55)],
+              stops: [0, .5, 1],
+            ),
+            child: const Icon(Icons.cloud_done_rounded, size: 22, color: Colors.white),
+          ),
+      };
 
   @override
   Widget build(BuildContext context) {
     final reduce = MediaQuery.disableAnimationsOf(context);
     return Row(mainAxisSize: MainAxisSize.min, children: [
-      ValueListenableBuilder<bool>(
-        valueListenable: online ?? _alwaysOnline,
-        builder: (context, isOnline, _) => AnimatedSwitcher(
-          duration: reduce ? Duration.zero : const Duration(milliseconds: 180),
+      AnimatedSize(
+        duration: reduce ? Duration.zero : const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        child: AnimatedSwitcher(
+          // Offline → green is a colour change, so a quick cross-fade; appearing and leaving also scale a little.
+          duration: reduce ? Duration.zero : const Duration(milliseconds: 200),
           switchInCurve: Curves.easeOut,
           switchOutCurve: Curves.easeIn,
           transitionBuilder: (child, a) => FadeTransition(
             opacity: a,
             child: ScaleTransition(scale: Tween(begin: 0.9, end: 1.0).animate(a), child: child),
           ),
-          child: isOnline
-              ? const SizedBox.shrink()
-              : Padding(
-                  key: const ValueKey('offline'),
-                  padding: const EdgeInsets.only(right: 10),
-                  child: GlassCircleButton(
-                    label: 'Offline',
-                    onTap: () => Toast.show(context, offlineMessage),
-                    child: const Icon(Icons.cloud_off_rounded, size: 22, color: HColors.ink),
-                  ),
-                ),
+          layoutBuilder: (current, previous) =>
+              Stack(alignment: Alignment.center, children: [...previous, if (current != null) current]),
+          child: _cloud == _Cloud.hidden
+              ? _cloudButton()
+              : Padding(key: ValueKey(_cloud), padding: const EdgeInsets.only(right: 10), child: _cloudButton()),
         ),
       ),
-      GlassProfileButton(onTap: onProfile),
+      GlassProfileButton(onTap: widget.onProfile),
     ]);
   }
 }
