@@ -15,28 +15,32 @@ import '../widgets/hifdth_mood.dart';
 import '../widgets/learned_sheet.dart';
 import '../widgets/progress_indicators.dart';
 import '../widgets/quran_progress_card.dart';
+import '../widgets/signed_out_card.dart';
 import '../widgets/toast.dart';
 import 'account_screen.dart';
 import 'auth_screen.dart';
 
-// Placeholder data, as in the design.
+// Today's plan, empty until sessions are tracked: nothing is done on a fresh install.
 const _steps = [
-  DayStep(title: 'Morning session', subtitle: 'Done at 6:30 am', done: true),
-  DayStep(title: 'Review', subtitle: 'Done at 10:30 am', done: true),
-  DayStep(title: 'Evening session', subtitle: 'Up next · 7:00 pm', done: false),
+  DayStep(title: 'Morning session', subtitle: 'Up next · 6:30 am', done: false),
+  DayStep(title: 'Review', subtitle: '10:30 am', done: false),
+  DayStep(title: 'Evening session', subtitle: '7:00 pm', done: false),
 ];
 
 /// Sessions whose time has passed without being done. Placeholder until the schedule is real.
 const _sessionsBehind = 0;
 const _week = [
-  StreakDay('M', true),
-  StreakDay('T', true),
-  StreakDay('W', true),
-  StreakDay('T', true),
-  StreakDay('F', true),
+  StreakDay('M', false),
+  StreakDay('T', false),
+  StreakDay('W', false),
+  StreakDay('T', false),
+  StreakDay('F', false),
   StreakDay('S', false),
   StreakDay('S', false),
 ];
+
+int get _sessionsDone => _steps.where((s) => s.done).length;
+int get _sessionsLeft => _steps.length - _sessionsDone;
 
 const _weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const _months = [
@@ -68,6 +72,18 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+  /// Signed in to a real account. Without an account connection (tests), Home
+  /// behaves as signed in.
+  bool get _signedIn => widget.auth?.signedIn ?? true;
+
+  /// Signing out stops Hifdth's question (it asks to tap a surah); the Quran
+  /// progress card redraws as the signed-out card or back.
+  void _authChanged() {
+    if (!mounted) return;
+    if (!_signedIn) _hush();
+    setState(() {});
+  }
+
   void _openAuth() {
     final auth = widget.auth;
     if (auth == null) return;
@@ -109,6 +125,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _scroll.addListener(_followScroll);
+    widget.auth?.addListener(_authChanged);
   }
 
   @override
@@ -122,6 +139,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   void dispose() {
+    widget.auth?.removeListener(_authChanged);
     _quiet?.cancel();
     _fly.dispose();
     _scroll.dispose();
@@ -188,6 +206,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   void _talk() {
+    if (!_signedIn) return; // its question asks to tap a surah, which needs an account
     _quiet?.cancel();
     _quiet = Timer(const Duration(seconds: 8), _hush);
     setState(() => _talking = true);
@@ -251,18 +270,29 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   const SizedBox(height: 18),
                   HifdthCard(key: _cardKey, mood: mood, steps: _steps, characterAway: !_fly.isDismissed),
                   const SizedBox(height: 18),
-                  const IntrinsicHeight(
+                  IntrinsicHeight(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(child: _GoalCard(value: 0.67, caption: '1 session left')),
-                        SizedBox(width: 12),
-                        Expanded(child: _StreakCard(days: _week)),
+                        Expanded(
+                          child: _GoalCard(
+                            value: _sessionsDone / _steps.length,
+                            caption: _sessionsLeft == 0
+                                ? 'All sessions done'
+                                : '$_sessionsLeft ${_sessionsLeft == 1 ? 'session' : 'sessions'} left',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(child: _StreakCard(days: _week)),
                       ],
                     ),
                   ),
                   const SizedBox(height: 18),
-                  _QuranProgress(key: _quranKey, hintKey: _hintKey, learned: widget.learned, onOpen: _hush),
+                  // Signed out, progress can't be changed: the locked card asks to sign in instead.
+                  if (_signedIn)
+                    _QuranProgress(key: _quranKey, hintKey: _hintKey, learned: widget.learned, onOpen: _hush)
+                  else
+                    SignedOutCard(key: _quranKey, hintKey: _hintKey, onSignIn: _openAuth, onRegister: _openAuth),
                 ],
               ),
             ),
@@ -274,15 +304,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             right: 16,
             child: _HeaderButtons(online: widget.auth?.online, onProfile: _openAuth),
           ),
-          Positioned(
-            left: 16,
-            right: 16 + _miniSize + 8,
-            bottom: cornerBottom,
-            child: Align(
-              alignment: Alignment.bottomRight,
-              child: _BubbleSlot(talking: landed && _talking, onTap: _showQuranCard),
+          if (_signedIn)
+            Positioned(
+              left: 16,
+              right: 16 + _miniSize + 8,
+              bottom: cornerBottom,
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: _BubbleSlot(talking: landed && _talking, onTap: _showQuranCard),
+              ),
             ),
-          ),
           if (!_fly.isDismissed)
             _FlyingHifdth(
               flight: _fly,
@@ -604,11 +635,13 @@ class _HeaderButtonsState extends State<_HeaderButtons> {
 
   Widget _cloudButton() => switch (_cloud) {
         _Cloud.hidden => const SizedBox.shrink(key: ValueKey(_Cloud.hidden)),
-        _Cloud.offline => GlassCircleButton(
+        _Cloud.offline => _Pulse(
             key: const ValueKey(_Cloud.offline),
-            label: 'Offline',
-            onTap: () => Toast.show(context, _HeaderButtons.offlineMessage),
-            child: const Icon(Icons.cloud_off_rounded, size: 22, color: HColors.ink),
+            child: GlassCircleButton(
+              label: 'Offline',
+              onTap: () => Toast.show(context, _HeaderButtons.offlineMessage),
+              child: const Icon(Icons.cloud_off_rounded, size: 22, color: HColors.ink),
+            ),
           ),
         _Cloud.backOnline => GlassCircleButton(
             key: const ValueKey(_Cloud.backOnline),
@@ -650,6 +683,48 @@ class _HeaderButtonsState extends State<_HeaderButtons> {
       GlassProfileButton(onTap: widget.onProfile),
     ]);
   }
+}
+
+/// Gently grows and shrinks [child] for as long as it's shown, so the offline
+/// cloud keeps quietly asking for attention. Still with Reduce Motion on.
+class _Pulse extends StatefulWidget {
+  const _Pulse({super.key, required this.child});
+
+  final Widget child;
+
+  /// One grow-and-shrink, and how far it grows.
+  static const period = Duration(milliseconds: 1600);
+  static const amount = 0.07;
+
+  @override
+  State<_Pulse> createState() => _PulseState();
+}
+
+class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
+  late final _wave = AnimationController(vsync: this, duration: _Pulse.period ~/ 2);
+  late final _scale =
+      Tween(begin: 1.0, end: 1 + _Pulse.amount).animate(CurvedAnimation(parent: _wave, curve: Curves.easeInOut));
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _wave
+        ..stop()
+        ..value = 0;
+    } else if (!_wave.isAnimating) {
+      _wave.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _wave.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => ScaleTransition(scale: _scale, child: widget.child);
 }
 
 /// The Player only has Al-Qalam (surah 68) for now, so the grid starts there.
@@ -753,7 +828,7 @@ class _StreakCard extends StatelessWidget {
                     style: HText.inter(size: 14, weight: FontWeight.w600)),
               ),
               const SizedBox(width: 6),
-              Text('$streak days', style: HText.inter(size: 12, color: HColors.ink2)),
+              Text('$streak ${streak == 1 ? 'day' : 'days'}', style: HText.inter(size: 12, color: HColors.ink2)),
             ],
           ),
           const SizedBox(height: 10),

@@ -23,8 +23,10 @@ void main() {
     expect(find.text('Good afternoon'), findsOneWidget);
     expect(find.text("TODAY'S PROGRESS"), findsOneWidget);
     expect(find.text('Evening session'), findsOneWidget);
-    expect(find.text('67%'), findsOneWidget);
-    expect(find.text('5 days'), findsOneWidget);
+    // A fresh install starts empty: no sessions done, no streak.
+    expect(find.text('3 sessions left'), findsOneWidget);
+    expect(find.text('0 days'), findsOneWidget);
+    expect(find.text('Done at 6:30 am'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

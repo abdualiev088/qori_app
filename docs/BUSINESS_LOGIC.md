@@ -28,18 +28,19 @@ Qori helps a person memorise the Quran (hifdth). Hifdth, a round green mascot, r
 
 ## 4. Accounts and sign-in (live)
 
-- **Guest first:** on first launch the app silently creates a guest account, so progress syncs before the user signs up. The app never requires an account.
+- **Signed out means read-only:** Quran progress belongs to a signed-in account. There are no guest accounts.
+  - The app works signed out: the **Player** plays every available surah.
+  - Signed out, Home looks the same except for **the Quran progress card**, which becomes a locked card: a faded grid, the Hifz guide saying "Sign in to save your Quran progress", and **Sign in** and **Register** buttons (both open the sign-in screen; tapping the art does too). Hifdth doesn't ask its "Tap a surah" question while signed out.
+  - Nothing on the phone can change progress until the user signs in, and the server refuses progress requests from anyone not signed in (`403 account_required`).
+  - A guest session left over from an older app version is dropped on launch, together with any progress on the phone.
 - **Email first:** the user enters an email, and the server says whether it has an account.
   - A known email → password step ("Welcome back") with "Forgot password?".
   - A new email → name and password step ("Nice to meet you").
 - **Password rules:** 8+ characters and at least one number. The app checks them while you type, and the server checks again.
 - **Apple and Google** sign-in are on the first step. Closing their sheet does nothing.
-- **What happens to the guest's ayahs when signing in:**
-  - **Sign-up:** the guest becomes the new account (same id) and keeps all its ayahs.
-  - **Signing in to an account that already has ayahs** (email, Apple or Google): the **account's ayahs win**. The phone's guest ayahs are dropped, including changes still waiting to sync. To make this possible, the app signs in without the guest's session, so the server never merges the guest in.
-  - **Signing in to an account with no ayahs:** the phone's ayahs are written into the account.
+- **When signing in:** an account that already has ayahs replaces whatever is on the phone; an empty account gets what's on the phone (normally nothing, since signed out can't change progress). Sign-in sends no earlier session, so the server never merges anything in.
 - **Errors:** show only after the first submit, next to their field, and clear as the user types. Unexpected failures always show a message, never nothing.
-- **The profile button** on Home opens the sign-in screen, or the account page when signed in to a real (non-guest) account.
+- **The profile button** on Home opens the sign-in screen, or the account page when signed in.
 - **Signed in stays signed in offline:** the device remembers who is signed in. On launch, and whenever the account page opens, the app checks with the server.
   - **Offline:** the remembered account is shown, with the notice "You're offline. Turn on the internet to update your account."
   - **The server ended the session** (signed out elsewhere, or the account was deleted): the app forgets the account, closes the page and says "You were signed out."
@@ -52,7 +53,7 @@ Qori helps a person memorise the Quran (hifdth). Hifdth, a round green mascot, r
   - **Email:** read-only. The server can't change it yet.
   - **Password:** sends a reset link. Hidden for Apple/Google-only accounts.
   - **Delete account:** required by the App Store.
-- **Log out** asks first, then revokes this device's session and **clears Quran progress on the phone**. The account keeps its ayahs; signing in again brings them back. A fresh, empty guest starts.
+- **Log out** asks first, then revokes this device's session and **clears Quran progress on the phone**. The account keeps its ayahs; signing in again brings them back. Home goes back to the signed-out card.
 - **Delete account** asks first, then deletes the account and all its synced data on the server. This can't be undone.
 - Every confirmation and edit uses the app's own bottom sheets, never system or Material dialogs.
 
@@ -62,7 +63,7 @@ The rules are in `lib/data/progress_sync.dart`.
 
 - **The device is the source of truth while offline.** Every save is queued: the latest set per surah, with the time it changed. The queue is sent when online.
 - **Conflicts:** last write per surah wins. If the server has a newer write (`409`), its set replaces the local one for that surah.
-- **New session:** see "What happens to the guest's ayahs when signing in" (section 4). A new guest starts from whatever is on the phone, which is empty after logging out.
+- **New session:** see "When signing in" (section 4). **Signed out, nothing syncs.**
 - **With nothing queued,** the server's progress replaces the local copy. That's how changes from other devices arrive.
 - **When it syncs:** on launch, when the app returns to the foreground, and after every save.
 - **Offline:** every change is saved on the phone first and queued. Server errors keep everything queued. While offline the app retries every 10 seconds, so the queue goes out as soon as the internet is back.

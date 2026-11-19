@@ -11,11 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// A small in-memory stand-in for the Qori backend, following docs/api.md.
 class FakeServer {
-  /// The guest's progress, and the signed-in account's.
+  /// The signed-in account's progress. There are no guest accounts.
   final progress = <int, Set<int>>{};
-  final account = <int, Set<int>>{};
-  final _guestAccess = <String>{};
-  final _guestRefresh = <String>{};
   final clock = <int, DateTime>{};
   final validAccess = <String>{};
   final validRefresh = <String>{};
@@ -31,22 +28,21 @@ class FakeServer {
     authHeaders[path] = request.headers['Authorization'];
     final body = request.body.isEmpty ? null : jsonDecode(request.body);
 
-    if (path == '/auth/guest') return _json(201, _tokens());
-    if (path == '/auth/email/signin') return _json(200, _tokens(guest: false));
+    if (path == '/auth/guest') return _error(404, 'not_found');
+    if (path == '/auth/email/signin') return _json(200, _tokens());
     if (path == '/auth/refresh') {
       if (!validRefresh.remove(body['refresh'])) return _error(401, 'invalid_refresh_token');
-      return _json(200, _tokens(guest: _guestRefresh.remove(body['refresh'])));
+      return _json(200, _tokens());
     }
 
     final access = request.headers['Authorization']?.replaceFirst('Bearer ', '');
     if (!validAccess.contains(access)) return _error(401, 'token_not_valid');
-    final progress = _guestAccess.contains(access) ? this.progress : account;
 
-    if (path == '/progress' && request.method == 'GET') return _json(200, _map(progress));
+    if (path == '/progress' && request.method == 'GET') return _json(200, _map());
     if (path == '/progress/merge') {
       (body as Map<String, dynamic>)
           .forEach((k, v) => progress.putIfAbsent(int.parse(k), () => {}).addAll((v as List).cast<int>()));
-      return _json(200, _map(progress));
+      return _json(200, _map());
     }
     final surah = int.parse(path.split('/').last);
     final at = DateTime.parse(body['updated_at'] as String);
@@ -62,20 +58,19 @@ class FakeServer {
     return _json(200, {'surah': surah, 'ayahs': body['ayahs'], 'updated_at': body['updated_at']});
   });
 
-  Map<String, dynamic> _tokens({bool guest = true}) {
+  /// A new signed-in session, as the sign-in endpoints return it.
+  Map<String, dynamic> _tokens() {
     _n++;
     validAccess.add('a$_n');
-    if (guest) _guestAccess.add('a$_n');
-    if (guest) _guestRefresh.add('r$_n');
     validRefresh.add('r$_n');
     return {
       'access': 'a$_n',
       'refresh': 'r$_n',
-      'user': {'id': 'u$_n', 'email': guest ? null : 'a@b.co', 'display_name': '', 'is_guest': guest},
+      'user': {'id': 'u1', 'email': 'a@b.co', 'display_name': '', 'is_guest': false},
     };
   }
 
-  Map<String, dynamic> _map(Map<int, Set<int>> progress) => {
+  Map<String, dynamic> _map() => {
         for (final s in progress.keys.toList()..sort())
           if (progress[s]!.isNotEmpty) '$s': progress[s]!.toList()..sort(),
       };
@@ -109,6 +104,9 @@ void main() {
           ..attach();
     return (store, sync, prefs);
   }
+
+  /// Starts a signed-in session, as after signing in on an earlier launch.
+  Future<void> signedIn() => api.setTokens(Tokens.fromJson(server._tokens()));
 
   group('ApiClient', () {
     test('turns the server error shape into an ApiException with fields', () async {
@@ -155,19 +153,27 @@ void main() {
   });
 
   group('ProgressSync', () {
-    test('first sync creates a guest and merges the device progress into it', () async {
-      final (store, sync, _) = await setUpSync({LearnedStore.key: '{"68":[1,2,3]}'});
+    test('signed out, nothing syncs and no session is made', () async {
+      final (_, sync, _) = await setUpSync();
       await sync.sync();
-      expect(server.calls.take(2), ['POST /auth/guest', 'POST /progress/merge']);
+      expect(server.calls, isEmpty);
+      expect(await api.hasSession, isFalse);
+    });
+
+    test('the first sync of a session merges the phone into an empty account', () async {
+      final (store, sync, _) = await setUpSync({LearnedStore.key: '{"68":[1,2,3]}'});
+      await signedIn();
+      await sync.sync();
+      expect(server.calls.first, 'POST /progress/merge');
       expect(server.progress, {
         68: {1, 2, 3}
       });
-      expect(tokens.tokens, isNotNull);
       expect(store.ayahsOf(68), {1, 2, 3});
     });
 
     test('a commit is sent to the server', () async {
       final (store, sync, prefs) = await setUpSync();
+      await signedIn();
       await sync.sync();
       await store.commit(68, {4, 5});
       await sync.sync();
@@ -177,6 +183,7 @@ void main() {
 
     test('commits made offline wait in the queue and go out when back online', () async {
       final (store, sync, prefs) = await setUpSync();
+      await signedIn();
       await sync.sync();
       server.offline = true;
       await store.commit(68, {1});
@@ -195,6 +202,7 @@ void main() {
 
     test('a newer write on the server wins and replaces the local set', () async {
       final (store, sync, _) = await setUpSync();
+      await signedIn();
       await sync.sync();
       server.progress[68] = {7, 8};
       server.clock[68] = DateTime.utc(2030); // another device, later
@@ -206,70 +214,55 @@ void main() {
 
     test('with nothing queued, changes from other devices come down', () async {
       final (store, sync, _) = await setUpSync();
+      await signedIn();
       await sync.sync();
       server.progress[2] = {1, 2, 3};
       await sync.sync();
       expect(store.ayahsOf(2), {1, 2, 3});
     });
 
-    test('a merge never overwrites a surah that is still queued', () async {
-      final (store, sync, _) = await setUpSync({LearnedStore.key: '{"68":[1,2]}'});
-      server.offline = true;
-      await store.commit(68, {1}); // un-mark ayah 2 while offline, before any account exists
-      server.offline = false;
-      server.progress[68] = {2};
-      await sync.sync();
-      expect(store.ayahsOf(68), {1});
-      expect(server.progress[68], {1});
-    });
-
-    test('signing in to an account with ayahs shows only the account\'s ayahs', () async {
-      final (store, sync, prefs) = await setUpSync({LearnedStore.key: '{"68":[1]}'});
-      await sync.sync(); // as a guest
-      server.offline = true;
-      await store.commit(68, {1, 2}); // a guest change still waiting to go out
-      server.offline = false;
-      server.account[1] = {1, 2, 3};
+    test('signing in to an account with ayahs replaces what the phone had', () async {
+      final (store, sync, _) = await setUpSync({LearnedStore.key: '{"68":[1]}'});
+      server.progress[1] = {1, 2, 3};
 
       final auth = AuthApi(api, onSignedIn: sync.accountChanged);
       await auth.signIn(email: 'a@b.co', password: 'secret123');
 
-      expect(server.authHeaders['/auth/email/signin'], isNull); // the server can't merge the guest in
+      expect(server.authHeaders['/auth/email/signin'], isNull); // sign-in sends no session
       expect(store.toJson(), {
         '1': [1, 2, 3]
       });
-      expect(server.account.keys, [1]); // nothing from the phone was sent to the account
-      expect(prefs.getString(ProgressSync.pendingKey), anyOf(isNull, '{}'));
+      expect(server.progress.keys, [1]); // nothing from the phone was sent to the account
     });
 
     test('signing in to an empty account fills it with the phone\'s ayahs', () async {
       final (store, sync, _) = await setUpSync({LearnedStore.key: '{"68":[1,2]}'});
-      await sync.sync();
 
       final auth = AuthApi(api, onSignedIn: sync.accountChanged);
       await auth.signIn(email: 'a@b.co', password: 'secret123');
 
-      expect(server.account[68], {1, 2});
+      expect(server.progress[68], {1, 2});
       expect(store.ayahsOf(68), {1, 2});
     });
 
-    test('logging out clears the phone\'s progress and starts an empty guest', () async {
-      final (store, sync, prefs) = await setUpSync();
+    test('logging out clears the phone\'s progress and leaves no session', () async {
+      final (store, sync, _) = await setUpSync();
       final auth = AuthApi(api, onSignedIn: sync.accountChanged, onSignedOut: sync.signedOut);
-      await sync.sync();
-      server.account[1] = {1, 2};
+      server.progress[1] = {1, 2};
       await auth.signIn(email: 'a@b.co', password: 'secret123');
       expect(store.ayahsOf(1), {1, 2});
 
       await auth.signOut();
 
       expect(store.toJson(), isEmpty);
-      expect(server.account[1], {1, 2}); // the account keeps its ayahs
-      expect(await api.hasSession, isTrue); // a fresh guest
+      expect(server.progress[1], {1, 2}); // the account keeps its ayahs
+      expect(await api.hasSession, isFalse);
+      expect(auth.signedIn, isFalse);
     });
 
     test('the client notices going offline and back online', () async {
       final (_, sync, _) = await setUpSync();
+      await signedIn();
       server.offline = true;
       await sync.sync();
       expect(api.online.value, isFalse);

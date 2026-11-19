@@ -40,7 +40,8 @@ class QoriUser {
 /// guest's progress into an account that has its own (see [onSignedIn]).
 /// Failures throw [ApiException]; closing the Apple or Google sheet throws
 /// [SignInCancelled].
-class AuthApi {
+/// Listeners hear when [user] changes (signing in or out).
+class AuthApi extends ChangeNotifier {
   AuthApi(this._client, {SocialSignIn? social, this.onSignedIn, this.onSignedOut, SharedPreferences? prefs})
       : _social = social ?? SocialSignIn(),
         _prefs = prefs {
@@ -61,7 +62,7 @@ class AuthApi {
   final Future<void> Function({bool preferAccount})? onSignedIn;
 
   /// Runs after logging out or deleting the account, with the session gone.
-  /// The app clears the phone's progress and starts a fresh guest here.
+  /// The app clears the phone's progress here.
   final Future<void> Function()? onSignedOut;
 
   QoriUser? _user;
@@ -70,6 +71,7 @@ class AuthApi {
 
   set user(QoriUser? value) {
     _user = value;
+    notifyListeners();
     final prefs = _prefs;
     if (prefs == null) return;
     value == null ? prefs.remove(userKey) : prefs.setString(userKey, jsonEncode(value.toJson()));
@@ -113,8 +115,7 @@ class AuthApi {
   Future<void> updateName(String name) async =>
       user = QoriUser.fromJson(await _client.patch('/me', {'display_name': name.trim()}) as Map<String, dynamic>);
 
-  /// Revokes this device's session. Progress stays on the device and syncs to a
-  /// fresh guest account, as on first launch.
+  /// Revokes this device's session and clears the phone's progress ([onSignedOut]).
   Future<void> signOut() async {
     final refresh = await _client.refreshToken;
     try {
@@ -123,6 +124,18 @@ class AuthApi {
       // Already revoked or offline: signing out locally is what matters.
     }
     await _endSession();
+  }
+
+  /// Ends a leftover session that isn't a signed-in account (a guest from an
+  /// older app version, or one the server no longer knows), so the app is
+  /// plainly signed out with no progress on the phone. Doesn't call the server.
+  Future<void> dropUnlessSignedIn() async {
+    if (signedIn) return;
+    if (await _client.hasSession || user != null) {
+      await _endSession();
+    } else {
+      await onSignedOut?.call(); // no progress may sit on the phone while signed out
+    }
   }
 
   /// Deletes the account and all its data on the server.

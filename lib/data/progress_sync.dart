@@ -12,13 +12,12 @@ import 'learned_store.dart';
 /// - Every [LearnedStore.commit] is queued (latest set per surah) and sent as
 ///   `PUT /progress/{surah}` once online. If the server has a newer write,
 ///   its set replaces the local one.
-/// - With no session yet, a guest account is created, so progress syncs
-///   before sign-up.
-/// - When a session starts, the account's progress is settled first:
-///   signing in to an account that already has ayahs takes the account's
-///   ayahs and drops the phone's; otherwise (an empty account, a sign-up or a
-///   new guest) the phone's progress is merged into the account (union).
-/// - Logging out clears the phone's progress and starts a fresh guest.
+/// - Quran progress belongs to a signed-in account: with no session nothing
+///   syncs (and the app doesn't let a signed-out user change progress).
+/// - When a session starts, the account's progress is settled first: an
+///   account that already has ayahs replaces whatever is on the phone;
+///   otherwise the phone's progress is merged into the account (union).
+/// - Logging out clears the phone's progress.
 /// - While offline, a retry runs every [retryEvery] until the server answers.
 /// - With the queue empty, the server's progress replaces the local copy,
 ///   which brings in changes from other devices.
@@ -59,7 +58,7 @@ class ProgressSync {
   }
 
   /// Call after logging out or deleting the account: the phone forgets the
-  /// account's progress, and a fresh guest starts empty.
+  /// account's progress.
   Future<void> signedOut() async {
     await prefs.remove(pendingKey);
     await prefs.setBool(preferAccountKey, false);
@@ -94,15 +93,12 @@ class ProgressSync {
   }
 
   Future<void> _syncOnce() async {
-    if (!await client.hasSession) {
-      await client.setTokens(Tokens.fromJson(await client.post('/auth/guest') as Map<String, dynamic>));
-      await prefs.setBool(mergedKey, false);
-    }
+    if (!await client.hasSession) return; // signed out: nothing to sync
     if (prefs.getBool(mergedKey) != true) {
       final account =
           prefs.getBool(preferAccountKey) == true ? await client.get('/progress') as Map<String, dynamic> : null;
       if (account != null && account.isNotEmpty) {
-        // The account already has ayahs: they win over what the phone had as a guest.
+        // The account already has ayahs: they win over whatever is on the phone.
         await prefs.remove(pendingKey);
         await store.applyServer(account);
       } else {

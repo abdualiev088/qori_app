@@ -3,14 +3,22 @@ import 'package:qori_app/data/auth_api.dart';
 
 /// Stands in for the server in widget tests: an email counts as known once it
 /// has created an account, and [failNext] makes the next call throw.
-class FakeAuthApi implements AuthApi {
+class FakeAuthApi extends ChangeNotifier implements AuthApi {
   final _accounts = <String>{};
 
   /// Thrown by the next call, then cleared.
   Object? failNext;
 
+  QoriUser? _user;
+
   @override
-  QoriUser? user;
+  QoriUser? get user => _user;
+
+  @override
+  set user(QoriUser? value) {
+    _user = value;
+    notifyListeners();
+  }
 
   @override
   Future<void> Function({bool preferAccount})? get onSignedIn => null;
@@ -55,6 +63,11 @@ class FakeAuthApi implements AuthApi {
 
   @override
   Future<bool> loadMe() async => reachable;
+
+  @override
+  Future<void> dropUnlessSignedIn() async {
+    if (!signedIn) user = null;
+  }
 
   /// What [loadMe] reports: false acts like no internet.
   bool reachable = true;

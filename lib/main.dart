@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
@@ -30,8 +32,9 @@ Future<void> main() async {
   final auth = AuthApi(api, onSignedIn: sync.accountChanged, onSignedOut: sync.signedOut, prefs: prefs);
   // Draw first; the audio session, the first ayah and the sync start in the background.
   runApp(QoriApp(player: player, learned: learned, auth: auth));
-  sync.sync();
-  auth.loadMe();
+  // Who is signed in decides everything else: a session that isn't a real
+  // account (a guest from an older version) is dropped, then progress syncs.
+  unawaited(auth.loadMe().then((_) => auth.dropUnlessSignedIn()).then((_) => sync.sync()));
   AppLifecycleListener(onResume: sync.sync);
   final session = await AudioSession.instance;
   await session.configure(const AudioSessionConfiguration.speech());
