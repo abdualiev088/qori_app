@@ -63,7 +63,7 @@ void main() {
 
     await tester.tap(find.text('Log out'));
     await settle(tester);
-    await tester.tap(find.widgetWithText(TextButton, 'Log out'));
+    await tester.tap(find.text('Log out').last); // the sheet's button, above the page
     await settle(tester);
     expect(api.user, isNull);
     expect(find.byType(AccountScreen), findsNothing);
@@ -79,5 +79,25 @@ void main() {
     await settle(tester);
     expect(api.user!.displayName, 'Abdulaziz');
     expect(find.text('Abdulaziz'), findsNWidgets(2));
+  });
+
+  testWidgets('an empty name is caught in the sheet, next to the field', (tester) async {
+    final api = signedIn();
+    await open(tester, api);
+    await tester.tap(find.text('Name'));
+    await settle(tester);
+    await tester.enterText(find.byType(TextField), '  ');
+    await tester.tap(find.text('Save'));
+    await settle(tester);
+    expect(find.text('Enter your name'), findsOneWidget);
+    expect(api.user!.displayName, 'Aziz');
+  });
+
+  testWidgets('nothing uses Material dialogs', (tester) async {
+    await open(tester, signedIn());
+    await tester.tap(find.text('Delete account'));
+    await settle(tester);
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('Delete your account?'), findsOneWidget);
   });
 }

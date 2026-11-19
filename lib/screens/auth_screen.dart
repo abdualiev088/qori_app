@@ -70,6 +70,11 @@ class _AuthScreenState extends State<AuthScreen> {
         _snack(e.message);
       }
       return false;
+    } catch (e, stack) {
+      // Never fail silently: anything unexpected still gets a message.
+      debugPrint('Sign-in failed: $e\n$stack');
+      if (mounted) _snack('Something went wrong. Please try again.');
+      return false;
     } finally {
       if (mounted) setState(() => _loading = false);
     }

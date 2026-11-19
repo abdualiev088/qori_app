@@ -5,6 +5,7 @@ import '../theme/tokens.dart';
 import '../widgets/auth_widgets.dart';
 import '../widgets/hifdth_card.dart';
 import '../widgets/hifdth_mood.dart';
+import '../widgets/toast.dart';
 
 /// The signed-in account: name, email, password reset, and log out.
 /// Pops after logging out or deleting the account.
@@ -28,19 +29,14 @@ class _AccountScreenState extends State<AccountScreen> {
     return n.isNotEmpty ? n : (_user.email ?? 'Your account');
   }
 
-  void _toast(String text) => ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(text), behavior: SnackBarBehavior.floating));
+  void _toast(String text) => Toast.show(context, text);
 
   Future<void> _editName() async {
-    final name = await showDialog<String>(context: context, builder: (_) => _NameDialog(initial: _user.displayName));
-    if (name == null || name.trim().isEmpty || name.trim() == _user.displayName) return;
-    try {
-      await widget.api.updateName(name);
-      if (mounted) setState(() => _user = widget.api.user ?? _user);
-    } on ApiException catch (e) {
-      _toast(e.message);
-    }
+    final saved = await showAppSheet<bool>(
+      context,
+      (_) => _NameSheet(initial: _user.displayName, save: widget.api.updateName),
+    );
+    if (saved == true && mounted) setState(() => _user = widget.api.user ?? _user);
   }
 
   Future<void> _resetPassword() async {
@@ -54,22 +50,8 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
-  Future<bool> _confirm({required String title, required String body, required String action}) async =>
-      await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(title),
-          content: Text(body),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: TextButton.styleFrom(foregroundColor: const Color(0xFFC03535)),
-              child: Text(action),
-            ),
-          ],
-        ),
-      ) ??
+  Future<bool> _confirm({required String title, required String body, required String action, IconData? icon}) async =>
+      await showAppSheet<bool>(context, (_) => _ConfirmSheet(title: title, body: body, action: action, icon: icon)) ??
       false;
 
   Future<void> _logOut() async {
@@ -77,6 +59,7 @@ class _AccountScreenState extends State<AccountScreen> {
       title: 'Log out?',
       body: 'Your progress stays on this phone. Sign in again to sync it with your account.',
       action: 'Log out',
+      icon: Icons.logout_rounded,
     );
     if (!ok || !mounted) return;
     setState(() => _busy = true);
@@ -88,7 +71,8 @@ class _AccountScreenState extends State<AccountScreen> {
     final ok = await _confirm(
       title: 'Delete your account?',
       body: 'Your account and its synced progress are deleted for good. This can\'t be undone.',
-      action: 'Delete',
+      action: 'Delete account',
+      icon: Icons.delete_outline_rounded,
     );
     if (!ok || !mounted) return;
     setState(() => _busy = true);
@@ -178,17 +162,53 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 }
 
-/// Edits the name; owns its text controller so it outlives the closing animation.
-class _NameDialog extends StatefulWidget {
-  const _NameDialog({required this.initial});
+/// Opens [builder] in the app's bottom sheet: white, rounded, with a grabber,
+/// lifted above the keyboard.
+Future<T?> showAppSheet<T>(BuildContext context, WidgetBuilder builder) => showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0x5917202A),
+      elevation: 0,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: EdgeInsets.fromLTRB(24, 10, 24, 20 + MediaQuery.paddingOf(context).bottom),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 5,
+                decoration: BoxDecoration(color: const Color(0xFFDCE2E8), borderRadius: BorderRadius.circular(3)),
+              ),
+            ),
+            const SizedBox(height: 20),
+            builder(context),
+          ]),
+        ),
+      ),
+    );
+
+/// Edits the name in place: prefilled, Done saves, the error sits under the
+/// field, and Save shows a spinner while the server answers. Pops `true` once saved.
+class _NameSheet extends StatefulWidget {
+  const _NameSheet({required this.initial, required this.save});
   final String initial;
+  final Future<void> Function(String name) save;
 
   @override
-  State<_NameDialog> createState() => _NameDialogState();
+  State<_NameSheet> createState() => _NameSheetState();
 }
 
-class _NameDialogState extends State<_NameDialog> {
+class _NameSheetState extends State<_NameSheet> {
   late final _controller = TextEditingController(text: widget.initial);
+  String? _error;
+  bool _saving = false;
 
   @override
   void dispose() {
@@ -196,21 +216,118 @@ class _NameDialogState extends State<_NameDialog> {
     super.dispose();
   }
 
+  Future<void> _submit() async {
+    final name = _controller.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'Enter your name');
+      return;
+    }
+    if (name == widget.initial.trim()) {
+      Navigator.pop(context, false);
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      await widget.save(name);
+      if (mounted) Navigator.pop(context, true);
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.field('display_name') ?? e.message);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: const Text('Your name'),
-        content: TextField(
-          controller: _controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          autofillHints: const [AutofillHints.name],
-          style: HText.inter(size: 16),
-          onSubmitted: (v) => Navigator.pop(context, v),
+  Widget build(BuildContext context) =>
+      Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('Your name', style: HText.inter(size: 20, weight: FontWeight.w700)),
+        const SizedBox(height: 4),
+        Text('This is how Hifdth greets you.', style: HText.inter(size: 15, color: HColors.ink2)),
+        const SizedBox(height: 20),
+        AutofillGroup(
+          child: AuthField(
+            label: 'Name',
+            hint: 'Your name',
+            icon: Icons.person_outline_rounded,
+            controller: _controller,
+            // The sheet exists only to type a name, so the keyboard opening with it is expected.
+            autofocus: true,
+            autofillHints: const [AutofillHints.name],
+            capitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.done,
+            error: _error,
+            onChanged: (_) {
+              if (_error != null) setState(() => _error = null);
+            },
+            onSubmitted: (_) => _submit(),
+          ),
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, _controller.text), child: const Text('Save')),
+        const SizedBox(height: 20),
+        PrimaryButton(label: 'Save', loading: _saving, onPressed: _submit),
+        const SizedBox(height: 4),
+        _TextAction(label: 'Cancel', onTap: _saving ? null : () => Navigator.pop(context, false)),
+      ]);
+}
+
+/// Asks before something that can't be quietly undone. Pops `true` to go ahead.
+class _ConfirmSheet extends StatelessWidget {
+  const _ConfirmSheet({required this.title, required this.body, required this.action, this.icon});
+  final String title;
+  final String body;
+  final String action;
+  final IconData? icon;
+
+  static const _red = Color(0xFFC03535);
+
+  @override
+  Widget build(BuildContext context) =>
+      Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        if (icon != null) ...[
+          Center(
+            child: Container(
+              width: 52,
+              height: 52,
+              decoration: const BoxDecoration(color: Color(0xFFFCEBEB), shape: BoxShape.circle),
+              child: Icon(icon, color: _red, size: 26),
+            ),
+          ),
+          const SizedBox(height: 14),
         ],
+        Text(title, textAlign: TextAlign.center, style: HText.inter(size: 20, weight: FontWeight.w700)),
+        const SizedBox(height: 6),
+        Text(body, textAlign: TextAlign.center, style: HText.inter(size: 15, color: HColors.ink2, height: 1.45)),
+        const SizedBox(height: 24),
+        PressableButton(
+          onPressed: () => Navigator.pop(context, true),
+          background: _red,
+          child: Text(action, style: HText.inter(size: 17, weight: FontWeight.w600, color: Colors.white)),
+        ),
+        const SizedBox(height: 4),
+        _TextAction(label: 'Cancel', onTap: () => Navigator.pop(context, false)),
+      ]);
+}
+
+/// A quiet full-width text button, 48 px tall so it's easy to hit.
+class _TextAction extends StatelessWidget {
+  const _TextAction({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: SizedBox(
+            height: 48,
+            child:
+                Center(child: Text(label, style: HText.inter(size: 16, weight: FontWeight.w600, color: HColors.ink2))),
+          ),
+        ),
       );
 }
 
@@ -236,7 +353,7 @@ class _Section extends StatelessWidget {
       );
 }
 
-class _Row extends StatelessWidget {
+class _Row extends StatefulWidget {
   const _Row({required this.icon, required this.label, this.value, this.onTap, this.danger = false});
   final IconData icon;
   final String label;
@@ -245,33 +362,49 @@ class _Row extends StatelessWidget {
   final bool danger;
 
   @override
+  State<_Row> createState() => _RowState();
+}
+
+/// Rows tint while pressed, like an iOS list, instead of a Material ripple.
+class _RowState extends State<_Row> {
+  bool _down = false;
+
+  void _press(bool down) {
+    if (widget.onTap != null && _down != down) setState(() => _down = down);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final color = danger ? const Color(0xFFC03535) : HColors.ink;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: ConstrainedBox(
+    final color = widget.danger ? const Color(0xFFC03535) : HColors.ink;
+    return Semantics(
+      button: widget.onTap != null,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => _press(true),
+        onTapUp: (_) => _press(false),
+        onTapCancel: () => _press(false),
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: _down ? 0 : 200),
+          color: _down ? const Color(0xFFF1F4F7) : Colors.white,
           constraints: const BoxConstraints(minHeight: 56),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(children: [
-              Icon(icon, size: 22, color: danger ? color : HColors.ink2),
-              const SizedBox(width: 18),
-              Text(label, style: HText.inter(size: 16, weight: FontWeight.w500, color: color)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(value ?? '',
-                    textAlign: TextAlign.right,
-                    overflow: TextOverflow.ellipsis,
-                    style: HText.inter(size: 15, color: HColors.inkMuted)),
-              ),
-              if (onTap != null && !danger) ...[
-                const SizedBox(width: 6),
-                const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFFB4BCC5)),
-              ],
-            ]),
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(children: [
+            Icon(widget.icon, size: 22, color: widget.danger ? color : HColors.ink2),
+            const SizedBox(width: 18),
+            Text(widget.label, style: HText.inter(size: 16, weight: FontWeight.w500, color: color)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(widget.value ?? '',
+                  textAlign: TextAlign.right,
+                  overflow: TextOverflow.ellipsis,
+                  style: HText.inter(size: 15, color: HColors.inkMuted)),
+            ),
+            if (widget.onTap != null && !widget.danger) ...[
+              const SizedBox(width: 6),
+              const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFFB4BCC5)),
+            ],
+          ]),
         ),
       ),
     );

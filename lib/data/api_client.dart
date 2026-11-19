@@ -19,8 +19,8 @@ String defaultApiUrl() {
 class ApiException implements Exception {
   ApiException(this.status, this.code, this.message, {this.fields = const {}, this.body});
 
-  factory ApiException.offline() =>
-      ApiException(0, 'offline', "Can't reach Qori right now. Check your connection and try again.");
+  factory ApiException.offline([String? detail]) => ApiException(0, 'offline',
+      "Can't reach Qori right now. Check your connection and try again.${detail == null ? '' : '\n\n$detail'}");
 
   /// The HTTP status, or 0 when the server couldn't be reached.
   final int status;
@@ -158,9 +158,17 @@ class ApiClient {
         ..body = jsonEncode(body);
     }
     try {
-      return await http.Response.fromStream(await _http.send(request).timeout(timeout));
-    } catch (_) {
-      throw ApiException.offline();
+      // Flutter refuses plain http to anything but localhost unless the zone
+      // opts in. Only a dev server (on this Mac, reached from a phone) uses
+      // http; a real server is https and keeps the platform's default.
+      final streamed = Uri.parse(baseUrl).isScheme('http')
+          ? runZoned(() => _http.send(request), zoneValues: {#flutter.io.allow_http: true})
+          : _http.send(request);
+      return await http.Response.fromStream(await streamed.timeout(timeout));
+    } catch (e) {
+      // Debug builds say where they tried and why, so a build pointed at the
+      // wrong server doesn't look like a network problem.
+      throw ApiException.offline(kDebugMode ? '$baseUrl\n$e' : null);
     }
   }
 
