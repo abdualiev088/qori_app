@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'api_client.dart';
 import 'social_sign_in.dart';
 
@@ -16,6 +20,9 @@ class QoriUser {
         hasPassword: (json['has_password'] as bool?) ?? false,
       );
 
+  Map<String, dynamic> toJson() =>
+      {'id': id, 'email': email, 'display_name': displayName, 'is_guest': isGuest, 'has_password': hasPassword};
+
   final String id;
   final String? email;
   final String displayName;
@@ -32,27 +39,63 @@ class QoriUser {
 /// Failures throw [ApiException]; closing the Apple or Google sheet throws
 /// [SignInCancelled].
 class AuthApi {
-  AuthApi(this._client, {SocialSignIn? social, this.onSignedIn}) : _social = social ?? SocialSignIn();
+  AuthApi(this._client, {SocialSignIn? social, this.onSignedIn, SharedPreferences? prefs})
+      : _social = social ?? SocialSignIn(),
+        _prefs = prefs {
+    user = _readCachedUser();
+  }
 
   final ApiClient _client;
   final SocialSignIn _social;
+
+  /// Remembers who is signed in, so the app still knows offline.
+  final SharedPreferences? _prefs;
+  static const userKey = 'qori.user.v1';
 
   /// Runs after every successful sign-in or sign-up, with the new tokens saved.
   /// The app merges the device's progress into the account here.
   final Future<void> Function()? onSignedIn;
 
-  QoriUser? user;
+  QoriUser? _user;
+
+  QoriUser? get user => _user;
+
+  set user(QoriUser? value) {
+    _user = value;
+    final prefs = _prefs;
+    if (prefs == null) return;
+    value == null ? prefs.remove(userKey) : prefs.setString(userKey, jsonEncode(value.toJson()));
+  }
+
+  QoriUser? _readCachedUser() {
+    final raw = _prefs?.getString(userKey);
+    if (raw == null) return null;
+    try {
+      return QoriUser.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Signed in to a real account, not the automatic guest one.
   bool get signedIn => user != null && !user!.isGuest;
 
-  /// Loads who is signed in, for a session saved from an earlier launch.
-  Future<void> loadMe() async {
-    if (!await _client.hasSession) return;
+  /// Refreshes who is signed in from the server. Returns false when the server
+  /// can't be reached; the remembered user then stays, so the app keeps
+  /// showing the signed-in state offline. A session the server has ended
+  /// (or that no longer exists) clears it.
+  Future<bool> loadMe() async {
+    if (!await _client.hasSession) {
+      user = null;
+      return true;
+    }
     try {
       user = QoriUser.fromJson(await _client.get('/me') as Map<String, dynamic>);
-    } on ApiException {
-      // Offline or the session expired; the profile button shows sign-in until it loads.
+      return true;
+    } on ApiException catch (e) {
+      if (e.isOffline || e.status >= 500) return false;
+      if (!await _client.hasSession) user = null; // the refresh token was rejected too
+      return true;
     }
   }
 

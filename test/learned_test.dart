@@ -248,12 +248,13 @@ void main() {
     final mini = find.byType(HifdthAvatar);
     double look(WidgetTester tester) => tester.widget<HifdthAvatar>(mini).look;
     bool speaking(WidgetTester tester) => tester.widget<HifdthAvatar>(mini).speaking;
+
     /// The body's middle color as painted.
-    Color bodyColor(WidgetTester tester) => (tester
-            .widget<CustomPaint>(find.descendant(of: mini, matching: find.byType(CustomPaint)))
-            .painter! as HifdthPainter)
-        .style
-        .body[1];
+    Color bodyColor(WidgetTester tester) =>
+        (tester.widget<CustomPaint>(find.descendant(of: mini, matching: find.byType(CustomPaint))).painter!
+                as HifdthPainter)
+            .style
+            .body[1];
     final hint = find.textContaining('Press and hold');
     final scrollView = find.byType(SingleChildScrollView);
 
@@ -289,8 +290,7 @@ void main() {
       expect(tester.getRect(find.byType(QuranProgressCard)).bottom, closeTo(874 - 114, 0.5));
     });
 
-    testWidgets('halfway into the Quran card Hifdth looks left and asks; the bubble leads to the grid',
-        (tester) async {
+    testWidgets('halfway into the Quran card Hifdth looks left and asks; the bubble leads to the grid', (tester) async {
       await pumpHome(tester);
       await scrollBy(tester, 250);
       expect(look(tester), 0);
@@ -369,7 +369,8 @@ void main() {
       expect(alphas(HomeScreen.askTitle).every((a) => a == 1), isTrue);
       expect(alphas(HomeScreen.askBody).last, closeTo(0.9, 0.01)); // the body's slightly softer white
       expect(tester.getSize(bubble), size); // laid out in full from the start
-      final glass = tester.widget<LiquidGlass>(find.ancestor(of: find.text(HomeScreen.askTitle), matching: find.byType(LiquidGlass)));
+      final glass = tester
+          .widget<LiquidGlass>(find.ancestor(of: find.text(HomeScreen.askTitle), matching: find.byType(LiquidGlass)));
       final tint = (glass.fill as LinearGradient).colors[1];
       expect(tint.b, greaterThan(tint.r)); // tinted blue
       expect(tint.a, lessThan(1)); // still see-through glass

@@ -100,4 +100,13 @@ void main() {
     expect(find.byType(AlertDialog), findsNothing);
     expect(find.text('Delete your account?'), findsOneWidget);
   });
+
+  testWidgets('offline, the account stays on screen and asks to turn the internet on', (tester) async {
+    final api = signedIn()..online = false;
+    await open(tester, api);
+    expect(find.byType(AccountScreen), findsOneWidget);
+    expect(find.text('Aziz'), findsNWidgets(2));
+    expect(find.text(accountOfflineNotice), findsOneWidget);
+    await tester.pump(const Duration(seconds: 6)); // let the notice time out
+  });
 }

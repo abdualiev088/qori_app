@@ -39,7 +39,8 @@ class FakeServer {
 
     if (path == '/progress' && request.method == 'GET') return _json(200, _map());
     if (path == '/progress/merge') {
-      (body as Map<String, dynamic>).forEach((k, v) => progress.putIfAbsent(int.parse(k), () => {}).addAll((v as List).cast<int>()));
+      (body as Map<String, dynamic>)
+          .forEach((k, v) => progress.putIfAbsent(int.parse(k), () => {}).addAll((v as List).cast<int>()));
       return _json(200, _map());
     }
     final surah = int.parse(path.split('/').last);
@@ -75,8 +76,9 @@ class FakeServer {
   static http.Response _json(int status, Object body) =>
       http.Response(jsonEncode(body), status, headers: {'content-type': 'application/json'});
 
-  static http.Response _error(int status, String code) =>
-      _json(status, {'error': {'code': code, 'message': code}});
+  static http.Response _error(int status, String code) => _json(status, {
+        'error': {'code': code, 'message': code}
+      });
 }
 
 void main() {
@@ -95,8 +97,9 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     final store = LearnedStore.load(prefs);
     var t = DateTime.utc(2026, 11, 19, 10);
-    final sync = ProgressSync(client: api, store: store, prefs: prefs, clock: () => t = t.add(const Duration(seconds: 1)))
-      ..attach();
+    final sync =
+        ProgressSync(client: api, store: store, prefs: prefs, clock: () => t = t.add(const Duration(seconds: 1)))
+          ..attach();
     return (store, sync, prefs);
   }
 
@@ -107,11 +110,18 @@ void main() {
         tokens: MemoryTokenStore(),
         client: MockClient((_) async => http.Response(
             jsonEncode({
-              'error': {'code': 'invalid', 'message': 'Bad email', 'fields': {'email': ['Bad email']}}
+              'error': {
+                'code': 'invalid',
+                'message': 'Bad email',
+                'fields': {
+                  'email': ['Bad email']
+                }
+              }
             }),
             400)),
       );
-      final error = await client.post('/auth/email/check', {'email': 'x'}).then<Object?>((_) => null, onError: (e) => e);
+      final error =
+          await client.post('/auth/email/check', {'email': 'x'}).then<Object?>((_) => null, onError: (e) => e);
       expect(error, isA<ApiException>().having((e) => e.field('email'), 'email', 'Bad email'));
     });
 
@@ -142,7 +152,9 @@ void main() {
       final (store, sync, _) = await setUpSync({LearnedStore.key: '{"68":[1,2,3]}'});
       await sync.sync();
       expect(server.calls.take(2), ['POST /auth/guest', 'POST /progress/merge']);
-      expect(server.progress, {68: {1, 2, 3}});
+      expect(server.progress, {
+        68: {1, 2, 3}
+      });
       expect(tokens.tokens, isNotNull);
       expect(store.ayahsOf(68), {1, 2, 3});
     });
@@ -167,7 +179,10 @@ void main() {
 
       server.offline = false;
       await sync.sync();
-      expect(server.progress, {68: {1}, 1: {1, 2}});
+      expect(server.progress, {
+        68: {1},
+        1: {1, 2}
+      });
       expect(prefs.getString(ProgressSync.pendingKey), '{}');
     });
 

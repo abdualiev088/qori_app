@@ -38,7 +38,11 @@ Qori helps a person memorise the Quran (hifdth). Hifdth, a round green mascot, r
   - Signing up, or a first Apple/Google sign-in, turns the guest into the account and keeps its id.
   - Signing in to an existing account merges the guest's progress into it (union) and deletes the guest.
 - **Errors:** show only after the first submit, next to their field, and clear as the user types. Unexpected failures always show a message, never nothing.
-- **The profile button** on Home opens the sign-in screen, or the account page when signed in to a real (non-guest) account. On launch the app asks the server who is signed in.
+- **The profile button** on Home opens the sign-in screen, or the account page when signed in to a real (non-guest) account.
+- **Signed in stays signed in offline:** the device remembers who is signed in. On launch, and whenever the account page opens, the app checks with the server.
+  - **Offline:** the remembered account is shown, with the notice "You're offline. Turn on the internet to update your account."
+  - **The server ended the session** (signed out elsewhere, or the account was deleted): the app forgets the account, closes the page and says "You were signed out."
+  - Log out works offline: the session ends on the phone straight away.
 
 ## 5. Account page (live)
 

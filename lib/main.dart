@@ -27,7 +27,7 @@ Future<void> main() async {
   final learned = LearnedStore.load(prefs);
   final api = ApiClient(baseUrl: defaultApiUrl(), tokens: SecureTokenStore());
   final sync = ProgressSync(client: api, store: learned, prefs: prefs)..attach();
-  final auth = AuthApi(api, onSignedIn: sync.accountChanged);
+  final auth = AuthApi(api, onSignedIn: sync.accountChanged, prefs: prefs);
   // Draw first; the audio session, the first ayah and the sync start in the background.
   runApp(QoriApp(player: player, learned: learned, auth: auth));
   sync.sync();

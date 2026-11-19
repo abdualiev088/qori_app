@@ -7,6 +7,9 @@ import '../widgets/hifdth_card.dart';
 import '../widgets/hifdth_mood.dart';
 import '../widgets/toast.dart';
 
+/// Shown when the account page opens without internet.
+const accountOfflineNotice = "You're offline. Turn on the internet to update your account.";
+
 /// The signed-in account: name, email, password reset, and log out.
 /// Pops after logging out or deleting the account.
 class AccountScreen extends StatefulWidget {
@@ -23,6 +26,31 @@ class _AccountScreenState extends State<AccountScreen> {
 
   /// Kept here so the page can still draw while it closes after logging out.
   late QoriUser _user = widget.api.user!;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  /// Brings the account up to date. Offline, the remembered account stays on
+  /// screen and a notice asks to turn the internet on.
+  Future<void> _refresh() async {
+    final online = await widget.api.loadMe();
+    if (!mounted) return;
+    if (!online) {
+      _toast(accountOfflineNotice);
+      return;
+    }
+    final user = widget.api.user;
+    if (user == null || user.isGuest) {
+      // The server ended this session (signed out elsewhere, or deleted).
+      _toast('You were signed out. Sign in again to sync your progress.');
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() => _user = user);
+  }
 
   String get _name {
     final n = _user.displayName.trim();

@@ -50,7 +50,10 @@ class FakeAuthApi implements AuthApi {
   bool get signedIn => user != null && !user!.isGuest;
 
   @override
-  Future<void> loadMe() async {}
+  Future<bool> loadMe() async => online;
+
+  /// What [loadMe] reports: false acts like no internet.
+  bool online = true;
 
   @override
   Future<void> updateName(String name) async {
