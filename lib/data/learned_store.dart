@@ -28,11 +28,40 @@ class LearnedStore extends ChangeNotifier {
 
   int get surahsLearned => [for (var n = 1; n <= 114; n++) n].where(isSurahLearned).length;
 
+  /// Called after every [commit] with the surah and its new set, so it can be synced.
+  void Function(int surah, Set<int> ayahs)? onCommit;
+
   /// Replaces [surah]'s learned ayahs, saves, and notifies listeners.
   Future<void> commit(int surah, Set<int> ayahs) async {
     final clean = _clean(surah, ayahs);
     if (clean == null) return;
     clean.isEmpty ? _learned.remove(surah) : _learned[surah] = clean;
+    notifyListeners();
+    await _prefs.setString(key, _encode(_learned));
+    onCommit?.call(surah, clean);
+  }
+
+  /// Everything learned, in the saved shape: {"68": [1, 2, 3]}.
+  Map<String, List<int>> toJson() => {
+        for (final s in _learned.keys.toList()..sort())
+          if (_learned[s]!.isNotEmpty) '$s': _learned[s]!.toList()..sort(),
+      };
+
+  /// Takes the server's progress (the same shape as [toJson]) as the truth,
+  /// except for the surahs in [keep], which have local changes not yet sent.
+  /// Doesn't call [onCommit].
+  Future<void> applyServer(Map<String, dynamic> json, {Set<int> keep = const {}}) async {
+    final server = _decode(jsonEncode(json));
+    final next = {
+      for (final s in keep)
+        if (_learned[s] case final ayahs?) s: ayahs,
+      for (final MapEntry(:key, :value) in server.entries)
+        if (!keep.contains(key)) key: value,
+    };
+    if (_encode(next) == _encode(_learned)) return;
+    _learned
+      ..clear()
+      ..addAll(next);
     notifyListeners();
     await _prefs.setString(key, _encode(_learned));
   }

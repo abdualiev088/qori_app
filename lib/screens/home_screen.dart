@@ -4,6 +4,7 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 
+import '../data/auth_api.dart';
 import '../data/learned_store.dart';
 import '../data/surahs.dart';
 import '../theme/tokens.dart';
@@ -13,6 +14,8 @@ import '../widgets/hifdth_mood.dart';
 import '../widgets/learned_sheet.dart';
 import '../widgets/progress_indicators.dart';
 import '../widgets/quran_progress_card.dart';
+import 'account_screen.dart';
+import 'auth_screen.dart';
 
 // Placeholder data, as in the design.
 const _steps = [
@@ -40,10 +43,13 @@ const _months = [
 ];
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.bottomInset, required this.learned, this.now});
+  const HomeScreen({super.key, required this.bottomInset, required this.learned, this.now, this.auth});
 
   /// Which ayahs are learned; the Quran progress card follows it.
   final LearnedStore learned;
+
+  /// Sign-in calls. Without it (tests) the profile button does nothing.
+  final AuthApi? auth;
 
   /// Space reserved under the content for the floating nav.
   final double bottomInset;
@@ -60,6 +66,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+  void _openAuth() {
+    final auth = widget.auth;
+    if (auth == null) return;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => auth.signedIn ? AccountScreen(api: auth) : AuthScreen(api: auth),
+    ));
+  }
+
   final _scroll = ScrollController();
   final _cardKey = GlobalKey();
   final _quranKey = GlobalKey();
@@ -229,7 +243,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ],
                         ),
                       ),
-                      GlassProfileButton(onTap: () {}),
+                      GlassProfileButton(onTap: _openAuth),
                     ],
                   ),
                   const SizedBox(height: 18),

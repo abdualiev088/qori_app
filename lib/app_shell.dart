@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'data/auth_api.dart';
 import 'data/learned_store.dart';
 import 'player/player_controller.dart';
 import 'screens/home_screen.dart';
@@ -10,10 +11,11 @@ import 'widgets/glass.dart';
 
 /// Page background, bottom glow, the four tabs and the floating glass nav.
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.player, required this.learned});
+  const AppShell({super.key, required this.player, required this.learned, required this.auth});
 
   final PlayerController player;
   final LearnedStore learned;
+  final AuthApi auth;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -46,7 +48,7 @@ class _AppShellState extends State<AppShell> {
               child: IndexedStack(
                 index: _tab.index,
                 children: [
-                  HomeScreen(bottomInset: contentInset + 18, learned: widget.learned),
+                  HomeScreen(bottomInset: contentInset + 18, learned: widget.learned, auth: widget.auth),
                   PlayerScreen(controller: widget.player, bottomInset: contentInset + 12),
                   const PlaceholderScreen(title: 'My Method', bottomInset: contentInset),
                   const PlaceholderScreen(title: 'Settings', bottomInset: contentInset),
