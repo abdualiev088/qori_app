@@ -4,18 +4,29 @@ import '../theme/tokens.dart';
 import 'auth_widgets.dart';
 import 'hifdth_card.dart';
 import 'hifdth_mood.dart';
+import 'speech_bubble.dart';
 
 /// Home's Quran progress card for someone who isn't signed in: a faded,
 /// locked grid, the guide asking them to sign in, and the two buttons.
 /// Progress belongs to an account, so nothing here can be changed.
 class SignedOutCard extends StatelessWidget {
-  const SignedOutCard({super.key, required this.onSignIn, required this.onRegister, this.hintKey});
+  const SignedOutCard({
+    super.key,
+    required this.onSignIn,
+    required this.onRegister,
+    this.hintKey,
+    this.speaking = false,
+  });
 
   final VoidCallback onSignIn;
   final VoidCallback onRegister;
 
   /// Key for the hint line at the bottom, so Home can line Hifdth up with it.
   final Key? hintKey;
+
+  /// Whether the guide's prompt shows: Home turns it on when the card scrolls
+  /// into view, and it types itself in like Hifdth's question.
+  final bool speaking;
 
   /// The guide: a man holding the Quran, cut out of its background.
   static const guideAsset = 'assets/images/hifz_guide.png';
@@ -51,7 +62,6 @@ class SignedOutCard extends StatelessWidget {
               child: LayoutBuilder(
                 builder: (context, box) => Stack(clipBehavior: Clip.none, children: [
                   const Positioned.fill(child: _FadedGrid()),
-                  const Positioned(left: 22, bottom: 30, child: _ArabicLetters()),
                   // Bigger, standing right on the Register button, a little left of its centre.
                   Positioned(
                     right: box.maxWidth * -0.03,
@@ -60,7 +70,18 @@ class SignedOutCard extends StatelessWidget {
                     height: 330,
                     child: const _Guide(),
                   ),
-                  const Positioned(left: 0, top: 78, child: _Bubble(text: bubbleText)),
+                  Positioned(
+                    left: 0,
+                    top: 70,
+                    child: SpeechBubbleSlot(
+                      title: bubbleText,
+                      visible: speaking,
+                      onTap: onSignIn,
+                      hint: 'Opens sign-in',
+                      maxWidth: 180,
+                      tailGap: 0,
+                    ),
+                  ),
                 ]),
               ),
             ),
@@ -121,26 +142,6 @@ class _FadedGrid extends StatelessWidget {
       );
 }
 
-/// A few faint Arabic letters drifting behind the guide.
-class _ArabicLetters extends StatelessWidget {
-  const _ArabicLetters();
-
-  @override
-  Widget build(BuildContext context) {
-    TextStyle letter(double size) => HText.arabic(size: size, color: const Color(0xFFC9D1DA));
-    return SizedBox(
-      width: 150,
-      height: 110,
-      child: Stack(children: [
-        Positioned(left: 30, top: 0, child: Text('ح', style: letter(46))),
-        Positioned(left: 96, top: 18, child: Text('ي', style: letter(40))),
-        Positioned(left: 0, top: 54, child: Text('ذ', style: letter(30))),
-        Positioned(left: 70, top: 66, child: Text('ف', style: letter(30))),
-      ]),
-    );
-  }
-}
-
 /// The guide's picture (Hifdth stands in if it ever fails to load).
 class _Guide extends StatelessWidget {
   const _Guide();
@@ -152,32 +153,5 @@ class _Guide extends StatelessWidget {
         alignment: Alignment.bottomCenter,
         errorBuilder: (context, error, stack) =>
             const Align(alignment: Alignment(0.2, 0.1), child: HifdthAvatar(mood: HifdthMood.happy, size: 130)),
-      );
-}
-
-/// The blue speech bubble, its tail toward the guide.
-class _Bubble extends StatelessWidget {
-  const _Bubble({required this.text});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        constraints: const BoxConstraints(maxWidth: 170),
-        padding: const EdgeInsets.fromLTRB(12, 9, 12, 10),
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF4A9AF2), Color(0xFF2F80E8)],
-          ),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(14),
-            topRight: Radius.circular(14),
-            bottomLeft: Radius.circular(14),
-            bottomRight: Radius.circular(4),
-          ),
-          boxShadow: [BoxShadow(color: Color(0x332A6FD6), offset: Offset(0, 6), blurRadius: 16)],
-        ),
-        child: Text(text, style: HText.inter(size: 13, weight: FontWeight.w600, color: Colors.white, height: 1.3)),
       );
 }

@@ -16,6 +16,7 @@ import '../widgets/learned_sheet.dart';
 import '../widgets/progress_indicators.dart';
 import '../widgets/quran_progress_card.dart';
 import '../widgets/signed_out_card.dart';
+import '../widgets/speech_bubble.dart';
 import '../widgets/toast.dart';
 import 'account_screen.dart';
 import 'auth_screen.dart';
@@ -191,6 +192,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final atQuran = middle < home.size.height - widget.bottomInset;
     if (atQuran == _atQuran) return;
     _atQuran = atQuran;
+    if (!_signedIn) {
+      setState(() {}); // the signed-out card's guide speaks while the card is in view
+      return;
+    }
     if (!atQuran) {
       _hush();
     } else if (_fly.isCompleted) {
@@ -292,7 +297,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   if (_signedIn)
                     _QuranProgress(key: _quranKey, hintKey: _hintKey, learned: widget.learned, onOpen: _hush)
                   else
-                    SignedOutCard(key: _quranKey, hintKey: _hintKey, onSignIn: _openAuth, onRegister: _openAuth),
+                    SignedOutCard(
+                      key: _quranKey,
+                      hintKey: _hintKey,
+                      speaking: _atQuran,
+                      onSignIn: _openAuth,
+                      onRegister: _openAuth,
+                    ),
                 ],
               ),
             ),
@@ -311,7 +322,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               bottom: cornerBottom,
               child: Align(
                 alignment: Alignment.bottomRight,
-                child: _BubbleSlot(talking: landed && _talking, onTap: _showQuranCard),
+                child: SpeechBubbleSlot(
+                  title: HomeScreen.askTitle,
+                  body: HomeScreen.askBody,
+                  visible: landed && _talking,
+                  onTap: _showQuranCard,
+                  hint: 'Shows your Quran progress',
+                ),
               ),
             ),
           if (!_fly.isDismissed)
@@ -404,172 +421,6 @@ class _FlyingHifdth extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Fades and scales the speech bubble in from its corner.
-class _BubbleSlot extends StatelessWidget {
-  const _BubbleSlot({required this.talking, required this.onTap});
-
-  final bool talking;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final reduce = MediaQuery.disableAnimationsOf(context);
-    final ms = reduce ? Duration.zero : Duration(milliseconds: talking ? 200 : 150);
-    return IgnorePointer(
-      ignoring: !talking,
-      child: AnimatedOpacity(
-        opacity: talking ? 1 : 0,
-        duration: ms,
-        curve: Curves.easeOut,
-        child: AnimatedScale(
-          scale: talking ? 1 : 0.92,
-          alignment: Alignment.bottomRight,
-          duration: ms,
-          curve: Curves.easeOut,
-          child: _SpeechBubble(onTap: onTap, visible: talking),
-        ),
-      ),
-    );
-  }
-}
-
-/// Hifdth's question. Each time it opens, the words stream in one after
-/// another, like a chat reply being written.
-class _SpeechBubble extends StatefulWidget {
-  const _SpeechBubble({required this.onTap, required this.visible});
-
-  final VoidCallback onTap;
-  final bool visible;
-
-  @override
-  State<_SpeechBubble> createState() => _SpeechBubbleState();
-}
-
-class _SpeechBubbleState extends State<_SpeechBubble> with SingleTickerProviderStateMixin {
-  static final _title = HomeScreen.askTitle.split(' ');
-  static final _body = HomeScreen.askBody.split(' ');
-
-  /// A new word starts this often; each one fades in over [_fade].
-  static const _step = 55;
-  static const _fade = 160;
-
-  /// A short breath between the question and the line under it.
-  static const _pause = 140;
-
-  static const _bodyColor = Color(0xE6FFFFFF);
-
-  static final _total = (_title.length + _body.length - 1) * _step + _pause + _fade;
-
-  late final _typing = AnimationController(vsync: this, duration: Duration(milliseconds: _total));
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.visible) _type();
-  }
-
-  @override
-  void didUpdateWidget(_SpeechBubble old) {
-    super.didUpdateWidget(old);
-    // Hiding keeps the words, so they fade out with the bubble; showing starts over.
-    if (widget.visible && !old.visible) _type();
-  }
-
-  void _type() {
-    if (MediaQuery.disableAnimationsOf(context)) {
-      _typing.value = 1;
-    } else {
-      _typing.forward(from: 0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _typing.dispose();
-    super.dispose();
-  }
-
-  /// The words as spans, each one's opacity following its own start time.
-  /// Words not yet written are transparent but still laid out, so the bubble
-  /// keeps its size and nothing reflows while it types.
-  List<TextSpan> _words(List<String> words, int firstStart, double ms, Color color) => [
-        for (var i = 0; i < words.length; i++)
-          TextSpan(
-            text: i < words.length - 1 ? '${words[i]} ' : words[i],
-            style: TextStyle(
-              color: color.withValues(
-                alpha: color.a * Curves.easeOut.transform(((ms - firstStart - i * _step) / _fade).clamp(0.0, 1.0)),
-              ),
-            ),
-          ),
-      ];
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-        button: true,
-        liveRegion: widget.visible,
-        hidden: !widget.visible,
-        label: '${HomeScreen.askTitle} ${HomeScreen.askBody}',
-        hint: 'Shows your Quran progress',
-        excludeSemantics: true,
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 240),
-            margin: const EdgeInsets.only(bottom: 18), // the tail points at Hifdth's face
-            // Hifdth's speaking blue as tinted glass, frosted only lightly so the surah
-            // numbers behind still show through faintly.
-            child: LiquidGlass(
-              radius: 18,
-              corners: const BorderRadius.only(
-                topLeft: Radius.circular(18),
-                topRight: Radius.circular(18),
-                bottomLeft: Radius.circular(18),
-                bottomRight: Radius.circular(4),
-              ),
-              blur: 4,
-              borderColor: const Color(0x8CFFFFFF),
-              shadows: const [
-                BoxShadow(color: Color(0x332A6FD6), offset: Offset(0, 10), blurRadius: 28),
-                BoxShadow(color: Color(0x1A1D58B5), offset: Offset(0, 1), blurRadius: 3),
-              ],
-              fill: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xC25FA6F5), Color(0xB33B8EF0), Color(0xC72A6FD6)],
-                stops: [0, .55, 1],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 10, 14, 11),
-                child: AnimatedBuilder(
-                  animation: _typing,
-                  builder: (context, _) {
-                    final ms = _typing.value * _total;
-                    final bodyStart = _title.length * _step + _pause;
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text.rich(
-                          TextSpan(children: _words(_title, 0, ms, Colors.white)),
-                          style: HText.inter(size: 14, weight: FontWeight.w600, height: 1.3, color: Colors.white),
-                        ),
-                        const SizedBox(height: 2),
-                        Text.rich(
-                          TextSpan(children: _words(_body, bodyStart, ms, _bodyColor)),
-                          style: HText.inter(size: 13, height: 1.3, color: _bodyColor),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
 }
 
 /// The cloud and profile buttons at the top right. The cloud shows while

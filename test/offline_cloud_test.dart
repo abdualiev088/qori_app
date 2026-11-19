@@ -84,4 +84,26 @@ void main() {
     expect(find.byType(QuranProgressCard), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('the signed-out card\'s prompt types itself in when it speaks', (tester) async {
+    Widget card(bool speaking) => MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(child: SignedOutCard(onSignIn: () {}, onRegister: () {}, speaking: speaking)),
+          ),
+        );
+    double lastWordAlpha() {
+      final spans = (tester.widget<Text>(find.text(SignedOutCard.bubbleText)).textSpan! as TextSpan).children!;
+      return (spans.last as TextSpan).style!.color!.a;
+    }
+
+    await tester.pumpWidget(card(false));
+    expect(lastWordAlpha(), 0);
+
+    await tester.pumpWidget(card(true));
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(lastWordAlpha(), lessThan(1)); // still typing
+    await tester.pump(const Duration(seconds: 1));
+    expect(lastWordAlpha(), 1);
+    expect(find.text('HIFZ'), findsNothing);
+  });
 }
