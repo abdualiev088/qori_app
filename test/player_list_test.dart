@@ -1,10 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:qori_app/app_shell.dart';
 import 'package:qori_app/data/auth_api.dart';
 import 'package:qori_app/data/learned_store.dart';
+import 'package:qori_app/data/surah_source.dart';
 import 'package:qori_app/player/player_controller.dart';
 import 'package:qori_app/screens/player_screen.dart';
 import 'package:qori_app/theme/tokens.dart';
@@ -22,7 +22,11 @@ Future<void> settle(WidgetTester tester) async {
 }
 
 void main() {
-  setUp(() => HText.useGoogleFonts = false);
+  setUp(() {
+    HText.useGoogleFonts = false;
+    // rootBundle caches loads; one started under an earlier test's fake clock would never finish.
+    rootBundle.evict(BundledSurahSource.asset);
+  });
 
   late FakeAudioEngine engine;
   late PlayerController player;
@@ -48,6 +52,26 @@ void main() {
 
   Finder searchField() => find.byType(TextField);
   bool miniShowing(WidgetTester tester) => tester.widget<MiniPlayer>(find.byType(MiniPlayer)).visible;
+
+  Finder ayahRow(int n) => find.bySemanticsLabel(RegExp('^Ayah $n\\.'));
+
+  /// The bundled text loads with real I/O: give it real time, up to 5 s.
+  Future<void> waitForAyah(WidgetTester tester, int n) async {
+    for (var i = 0; i < 50 && ayahRow(n).evaluate().isEmpty; i++) {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+      await tester.pump();
+    }
+    await settle(tester);
+  }
+
+  /// Taps ayah [n] of the open surah, which makes the surah active.
+  Future<void> tapAyah(WidgetTester tester, int n) async {
+    await waitForAyah(tester, n);
+    Scrollable.ensureVisible(tester.element(ayahRow(n)), alignment: 0.5);
+    await settle(tester);
+    await tester.tap(ayahRow(n));
+    await settle(tester);
+  }
 
   Future<void> search(WidgetTester tester, String text) async {
     await tester.enterText(searchField(), text);
@@ -84,9 +108,13 @@ void main() {
     await settle(tester);
 
     expect(find.byType(PlayerScreen), findsOneWidget);
+    expect(find.text('Alijon Qori · Surah 2 · 286 ayahs'), findsOneWidget);
+    await waitForAyah(tester, 142); // scrolled to the row's first ayah
+    expect(player.surah, isNull); // only reading until an ayah is tapped
+
+    await tapAyah(tester, 142);
     expect(player.surah, 2);
     expect(player.current, 142);
-    expect(find.text('Alijon Qori · Surah 2 · 286 ayahs'), findsOneWidget);
     expect(find.text('Audio for Al-Baqarah is coming soon'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
@@ -96,9 +124,11 @@ void main() {
     await search(tester, 'qalam');
     await tester.tap(find.text('Al-Qalam'));
     await settle(tester);
-    expect(miniShowing(tester), isFalse); // hidden while the player is open
+    expect(miniShowing(tester), isFalse);
 
     // Play from ayah 5.
+    await tapAyah(tester, 5);
+    expect(miniShowing(tester), isFalse); // hidden while the player is open
     await player.load(5);
     await tester.pump();
     expect(engine.playing, isTrue);
@@ -125,8 +155,8 @@ void main() {
     await search(tester, '68');
     await tester.tap(find.text('Al-Qalam'));
     await settle(tester);
-    await tester.tap(find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Play').first);
-    await tester.pump();
+    await tapAyah(tester, 1); // tapping an ayah plays it
+    expect(engine.playing, isTrue);
     await tester.tap(find.bySemanticsLabel('Back'));
     await settle(tester);
     expect(miniShowing(tester), isTrue);
@@ -139,20 +169,52 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('opening a different surah stops the one playing', (tester) async {
+  testWidgets('opening another surah while one plays only reads it; tapping an ayah switches', (tester) async {
     await openPlayerTab(tester);
     await search(tester, '68');
     await tester.tap(find.text('Al-Qalam'));
     await settle(tester);
-    await tester.tap(find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Play').first);
+    await tapAyah(tester, 5);
+    await player.load(5);
     await tester.pump();
     expect(engine.playing, isTrue);
-
-    // Not awaited: the bundled text loads with real I/O, which a widget test's clock doesn't run.
-    unawaited(player.openSurah(18));
+    await tester.tap(find.bySemanticsLabel('Back'));
     await settle(tester);
-    expect(engine.playing, isFalse);
-    expect(player.surah, 18);
+
+    // Open Al-Fatihah from the list: Al-Qalam keeps playing, in the mini-player.
+    await search(tester, 'fatihah');
+    await tester.tap(find.text('Al-Fatihah'));
+    await settle(tester);
+    await waitForAyah(tester, 2);
+    expect(find.byType(PlayerScreen), findsOneWidget);
+    expect(find.text('Alijon Qori · Surah 1 · 7 ayahs'), findsOneWidget);
+    expect(player.surah, 68);
+    expect(engine.playing, isTrue);
+    expect(miniShowing(tester), isTrue);
+    expect(find.text('REPEAT EACH AYAH'), findsNothing); // no full player while only reading
+
+    // Tapping an ayah makes Al-Fatihah the active surah, and the full player appears.
+    await tapAyah(tester, 2);
+    expect(player.surah, 1);
+    expect(player.current, 2);
+    expect(engine.playing, isFalse); // Al-Qalam stopped
+    expect(miniShowing(tester), isFalse);
+    expect(find.text('REPEAT EACH AYAH'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('opening a surah with nothing playing selects nothing; leaving shows no mini-player', (tester) async {
+    await openPlayerTab(tester);
+    await search(tester, '68');
+    await tester.tap(find.text('Al-Qalam'));
+    await settle(tester);
+    await waitForAyah(tester, 1);
+    expect(player.surah, isNull);
+    expect(find.text('REPEAT EACH AYAH'), findsNothing);
+
+    await tester.tap(find.bySemanticsLabel('Back'));
+    await settle(tester);
+    expect(miniShowing(tester), isFalse);
     await tester.pumpWidget(const SizedBox());
   });
 }

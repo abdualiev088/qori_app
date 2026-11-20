@@ -100,15 +100,18 @@ class _AppShellState extends State<AppShell> {
               ),
             ),
             const Positioned(left: 0, right: 0, bottom: 0, child: BottomGlow()),
-            // The mini-player: on the surah list while a surah is active, never over the player.
+            // The mini-player: while a surah is active, except over its own full player.
             Positioned(
               left: _side,
               right: _side,
               bottom: _bottom + _navHeight + _miniGap,
               child: ListenableBuilder(
-                listenable: Listenable.merge([widget.player, _playerObserver.open]),
+                listenable: Listenable.merge([widget.player, _playerObserver.open, _playerObserver.viewing]),
                 builder: (context, _) {
-                  final visible = _tab == HTab.player && widget.player.surah != null && !_playerObserver.open.value;
+                  // Shown on the list, and over a surah opened to read while another one is active.
+                  final active = widget.player.surah;
+                  final viewingActive = _playerObserver.open.value && _playerObserver.viewing.value?.$1 == active;
+                  final visible = _tab == HTab.player && active != null && !viewingActive;
                   final inset = _listBase + (visible ? MiniPlayer.height + _miniGap : 0);
                   if (_listInset.value != inset) {
                     WidgetsBinding.instance.addPostFrameCallback((_) => _listInset.value = inset);

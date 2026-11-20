@@ -107,7 +107,8 @@ These are hardcoded on Home until the schedule exists:
 - **With a selection:** it plays only the selected ayahs in order. At the end it wraps to the first only if "Loop selected" is on.
 - Previous and Next follow the same rules backwards and forwards. Surahs 1 and 9 have no Basmala row.
 - **Saved on the device:** the current ayah and selection **per surah**; repeat, auto-next and loop for all surahs.
-- **One surah is active at a time.** Closing the player keeps it playing; the mini-player above the nav shows it on the list (play/pause, ×, tap to reopen at the same place). × stops it. Opening a different surah stops the current one.
+- **One surah is active at a time.** Closing the player keeps it playing; the mini-player above the nav shows it on the list (play/pause, ×, tap to reopen at the same place). × stops it.
+- **Opening a surah only reads it** (unless it's already the active one): no ayah is highlighted, the full player panel stays hidden, and leaving it shows no mini-player. Any surah that was active keeps playing in the mini-player. **Tapping an ayah** makes that surah the active one: the old one stops, the tapped ayah plays (when it has audio), and the full player appears.
 - **Planned:** audio for every surah (the reciter's), streamed from storage behind a CDN.
 
 ## 11. Not built yet

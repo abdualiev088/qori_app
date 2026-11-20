@@ -1,20 +1,28 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+import '../data/surah_meta.dart';
 import '../data/surah_source.dart';
+import '../data/surahs.dart';
 import '../player/player_controller.dart';
 import '../theme/tokens.dart';
 import '../widgets/auth_widgets.dart' show GlassBackButton;
 import '../widgets/glass.dart';
 import '../widgets/icons.dart';
+import '../widgets/mini_player.dart';
 import '../widgets/progress_indicators.dart';
 import '../widgets/ribbed_glass.dart';
 import '../widgets/star.dart';
 
 class PlayerScreen extends StatefulWidget {
-  const PlayerScreen({super.key, required this.controller, required this.bottomInset, this.onBack});
+  const PlayerScreen({super.key, required this.controller, required this.bottomInset, this.viewing, this.onBack});
 
   final PlayerController controller;
+
+  /// The surah to show and the ayah to start at, when it isn't simply the
+  /// active surah. A different surah from the active one opens to read only.
+  final ValueListenable<(int, int?)?>? viewing;
 
   /// Space the nav takes at the bottom; the panel floats [_gap] above it.
   final double bottomInset;
@@ -39,24 +47,89 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// How much of the list's bottom the panel and nav cover.
   double get _covered => widget.bottomInset + _gap + _panelHeight + 8;
 
+  /// While browsing, only the nav and (with a surah active) the mini-player cover it.
+  double get _bottomCover => !_browsing
+      ? _covered
+      : widget.bottomInset + 8 + (c.surah == null ? 0 : MiniPlayer.height + 8);
+
   PlayerController get c => widget.controller;
+
+  /// The surah on screen.
+  int get _viewed => widget.viewing?.value?.$1 ?? c.surah ?? 1;
+
+  /// Reading a surah that isn't active (another one is, or none is): no
+  /// current ayah, no panel; a mini-player keeps any active one going.
+  bool get _browsing => c.surah != _viewed;
+
+  /// The browsed surah's text, loaded here so the active surah isn't touched.
+  List<Ayah> _browseAyat = const [];
+  int? _browseFor;
+  Object? _browseError;
 
   @override
   void initState() {
     super.initState();
     c.onScrollRequest = _scrollTo;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollTo(c.current, center: true));
+    widget.viewing?.addListener(_viewChanged);
+    _viewChanged();
   }
 
   @override
   void dispose() {
+    widget.viewing?.removeListener(_viewChanged);
     if (c.onScrollRequest == _scrollTo) c.onScrollRequest = null;
     _scroll.dispose();
     super.dispose();
   }
 
+  /// Another surah was opened (from the list or the mini-player).
+  void _viewChanged() {
+    if (!mounted) return;
+    _rowKeys.clear();
+    final start = widget.viewing?.value?.$2;
+    if (_browsing) {
+      _loadBrowse();
+    } else {
+      setState(() {});
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scroll.hasClients) _scroll.jumpTo(0);
+      _scrollTo(_browsing ? (start ?? 1) : c.current, center: true, any: true);
+    });
+  }
+
+  Future<void> _loadBrowse() async {
+    final s = _viewed;
+    setState(() {
+      _browseFor = s;
+      _browseAyat = const [];
+      _browseError = null;
+    });
+    try {
+      final ayat = await c.source.ayat(s);
+      if (!mounted || _browseFor != s) return;
+      setState(() => _browseAyat = ayat);
+      final start = widget.viewing?.value?.$2;
+      _scrollTo(start ?? 1, center: true, any: true);
+    } catch (e) {
+      if (!mounted || _browseFor != s) return;
+      setState(() => _browseError = e);
+    }
+  }
+
+  /// Tapping an ayah of a browsed surah makes it the active one: the old one
+  /// stops, this one plays from that ayah, and the full player appears.
+  Future<void> _activate(int n) async {
+    await c.openSurah(_viewed, ayah: n);
+    if (!mounted || c.surah != _viewed) return;
+    setState(() {});
+    if (c.hasAudio) await c.load(n);
+  }
+
   /// Centers the row, or nudges the list just enough to show it (6 px margin).
-  void _scrollTo(int n, {bool center = false}) {
+  void _scrollTo(int n, {bool center = false, bool any = false}) {
+    // The controller's requests are about the active surah; while browsing another, ignore them.
+    if (_browsing && !any) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final ctx = _rowKeys[n]?.currentContext;
@@ -65,7 +138,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       final viewport = RenderAbstractViewport.of(box);
       final pos = _scroll.position;
       // The panel covers the bottom of the list, so "visible" ends above it.
-      final covered = _covered;
+      final covered = _bottomCover;
       final top = viewport.getOffsetToReveal(box, 0).offset;
       final bottom = viewport.getOffsetToReveal(box, 1).offset + covered;
       double? target;
@@ -97,63 +170,98 @@ class _PlayerScreenState extends State<PlayerScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _measurePanel());
     return ListenableBuilder(
       listenable: c,
-      builder: (context, _) => Stack(
-        children: [
-          Positioned.fill(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(16, top < 56 ? 56 : top, 16, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _Header(c: c, onBack: widget.onBack),
-                  if (c.selecting) ...[
-                    const SizedBox(height: 12),
-                    Semantics(
-                      liveRegion: true,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: HColors.mintWash,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: HColors.mintHintRing),
+      builder: (context, _) {
+        final browsing = _browsing;
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: Padding(
+                padding: EdgeInsets.only(top: top < 56 ? 56 : top),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _Header(c: c, surah: _viewed, browsing: browsing, onBack: widget.onBack),
+                    ),
+                    if (c.selecting && !browsing) ...[
+                      const SizedBox(height: 12),
+                      Semantics(
+                        liveRegion: true,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: HColors.mintWash,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: HColors.mintHintRing),
+                          ),
+                          child: Text(c.selectionHint,
+                              textAlign: TextAlign.center, style: HText.inter(size: 14, height: 1.4)),
                         ),
-                        child: Text(c.selectionHint,
-                            textAlign: TextAlign.center, style: HText.inter(size: 14, height: 1.4)),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    // Edge to edge and down to the bottom; the panel and nav float over it.
+                    Expanded(
+                      child: _AyahList(
+                        c: c,
+                        scroll: _scroll,
+                        rowKey: (n) => _rowKeys.putIfAbsent(n, GlobalKey.new),
+                        bottomPadding: _bottomCover,
+                        browse: browsing
+                            ? _Browse(
+                                surah: _viewed,
+                                ayat: _browseAyat,
+                                error: _browseError,
+                                onRetry: _loadBrowse,
+                                onTap: _activate,
+                              )
+                            : null,
                       ),
                     ),
                   ],
-                  const SizedBox(height: 12),
-                  // Runs to the bottom edge; the panel and nav float over it.
-                  Expanded(
-                    child: _AyahList(
-                      c: c,
-                      scroll: _scroll,
-                      rowKey: (n) => _rowKeys.putIfAbsent(n, GlobalKey.new),
-                      bottomPadding: _covered,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: widget.bottomInset + _gap,
-            child: KeyedSubtree(key: _panelKey, child: _PlayerPanel(c: c)),
-          ),
-        ],
-      ),
+            if (!browsing)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: widget.bottomInset + _gap,
+                child: KeyedSubtree(key: _panelKey, child: _PlayerPanel(c: c)),
+              ),
+          ],
+        );
+      },
     );
   }
+}
+
+/// A surah opened to read while another is active.
+class _Browse {
+  const _Browse(
+      {required this.surah, required this.ayat, required this.error, required this.onRetry, required this.onTap});
+
+  final int surah;
+  final List<Ayah> ayat;
+  final Object? error;
+  final VoidCallback onRetry;
+  final void Function(int ayah) onTap;
+
+  bool get hasBasmala => surah != 1 && surah != 9;
 }
 
 // ---------------------------------------------------------------- header
 
 class _Header extends StatelessWidget {
-  const _Header({required this.c, this.onBack});
+  const _Header({required this.c, required this.surah, required this.browsing, this.onBack});
 
   final PlayerController c;
+
+  /// The surah on screen; with [browsing] it isn't the active one, so the selection controls hide.
+  final int surah;
+  final bool browsing;
   final VoidCallback? onBack;
 
   @override
@@ -190,19 +298,25 @@ class _Header extends StatelessWidget {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Flexible(
-                        child: Text(c.name,
+                        child: Text(surahNames[surah - 1],
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: HText.inter(size: 24, weight: FontWeight.w700, letterSpacing: -0.4, height: 1.2)),
                       ),
                       const SizedBox(width: 8),
-                      Text(c.arabicName,
-                          textDirection: TextDirection.rtl, style: HText.arabic(size: 22, color: HColors.accentDeep)),
+                      Flexible(
+                        child: Text(surahArabicNames[surah - 1],
+                            maxLines: 1,
+                            softWrap: false,
+                            overflow: TextOverflow.fade,
+                            textDirection: TextDirection.rtl,
+                            style: HText.arabic(size: 22, color: HColors.accentDeep)),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text('$reciterName · Surah ${c.surah} · ${c.ayahCount} ayahs',
+                Text('$reciterName · Surah $surah · ${surahAyahCounts[surah - 1]} ayahs',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: HText.inter(size: 13, weight: FontWeight.w500, color: HColors.ink2)),
@@ -210,11 +324,13 @@ class _Header extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          if (c.selecting && count == 0) textButton('All', c.selectAll),
-          if (c.selecting && count > 0) textButton('Clear', c.clearSelection),
-          if (!c.selecting && count > 0) textButton('Cancel', c.cancelSelection),
-          const SizedBox(width: 2),
-          _SelectPill(c: c),
+          if (!browsing) ...[
+            if (c.selecting && count == 0) textButton('All', c.selectAll),
+            if (c.selecting && count > 0) textButton('Clear', c.clearSelection),
+            if (!c.selecting && count > 0) textButton('Cancel', c.cancelSelection),
+            const SizedBox(width: 2),
+            _SelectPill(c: c),
+          ],
         ],
       ),
     );
@@ -297,9 +413,18 @@ class _SelectPill extends StatelessWidget {
 // ---------------------------------------------------------------- list
 
 class _AyahList extends StatelessWidget {
-  const _AyahList({required this.c, required this.scroll, required this.rowKey, required this.bottomPadding});
+  const _AyahList({
+    required this.c,
+    required this.scroll,
+    required this.rowKey,
+    required this.bottomPadding,
+    this.browse,
+  });
 
   final PlayerController c;
+
+  /// Set while reading a surah that isn't the active one.
+  final _Browse? browse;
   final ScrollController scroll;
   final GlobalKey Function(int n) rowKey;
 
@@ -308,29 +433,37 @@ class _AyahList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final basmalaCurrent = c.current == 0;
-    final ayat = c.ayat;
+    final b = browse;
+    final basmalaCurrent = b == null && c.current == 0;
+    final ayat = b?.ayat ?? c.ayat;
+    final loading = b == null ? c.textLoading : (b.error == null && b.ayat.isEmpty);
+    final error = b == null ? c.textError : b.error;
+    final hasBasmala = b?.hasBasmala ?? c.hasBasmala;
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(HRadii.list)),
       child: ColoredBox(
         color: HColors.surface,
-        child: c.textLoading || c.textError != null || ayat.isEmpty
+        child: loading || error != null || ayat.isEmpty
             ? Padding(
                 padding: EdgeInsets.only(bottom: bottomPadding),
-                child: _ListState(c: c),
+                child: _ListState(
+                  name: surahNames[(b?.surah ?? c.surah ?? 1) - 1],
+                  failed: error != null,
+                  onRetry: b?.onRetry ?? c.retryText,
+                ),
               )
             : SingleChildScrollView(
                 controller: scroll,
-                padding: EdgeInsets.fromLTRB(6, 6, 6, bottomPadding),
+                padding: EdgeInsets.fromLTRB(10, 8, 10, bottomPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (c.hasBasmala)
+                    if (hasBasmala)
                       _RowSurface(
                         key: rowKey(0),
                         current: basmalaCurrent,
                         semanticLabel: 'Basmala. Tap to listen',
-                        onTap: () => c.tapAyah(0),
+                        onTap: b == null ? () => c.tapAyah(0) : () => b.onTap(0),
                         padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
                         child: Column(
                           children: [
@@ -349,7 +482,8 @@ class _AyahList extends StatelessWidget {
                         key: rowKey(a.n),
                         ayah: a,
                         c: c,
-                        showDivider: i > 0 && c.current != a.n && c.current != ayat[i - 1].n,
+                        onTap: b?.onTap,
+                        showDivider: b != null || (i > 0 && c.current != a.n && c.current != ayat[i - 1].n),
                       ),
                   ],
                 ),
@@ -361,16 +495,18 @@ class _AyahList extends StatelessWidget {
 
 /// Loading the surah's text, or a message and Retry when it failed.
 class _ListState extends StatelessWidget {
-  const _ListState({required this.c});
+  const _ListState({required this.name, required this.failed, required this.onRetry});
 
-  final PlayerController c;
+  final String name;
+  final bool failed;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    if (c.textError == null) {
+    if (!failed) {
       return Center(
         child: Semantics(
-          label: 'Loading ${c.name}',
+          label: 'Loading $name',
           child: const SizedBox.square(
             dimension: 28,
             child: CircularProgressIndicator(strokeWidth: 2.4, color: HColors.accent),
@@ -382,13 +518,13 @@ class _ListState extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text("Couldn't load ${c.name}", style: HText.inter(size: 16, weight: FontWeight.w600)),
+          Text("Couldn't load $name", style: HText.inter(size: 16, weight: FontWeight.w600)),
           const SizedBox(height: 6),
           Text('Check the app is up to date, then try again.',
               textAlign: TextAlign.center, style: HText.inter(size: 14, color: HColors.ink2)),
           const SizedBox(height: 12),
           TextButton(
-            onPressed: c.retryText,
+            onPressed: onRetry,
             style: TextButton.styleFrom(
               minimumSize: const Size(88, 44),
               foregroundColor: HColors.accentDeep,
@@ -450,17 +586,22 @@ class _RowSurface extends StatelessWidget {
 }
 
 class _AyahRow extends StatelessWidget {
-  const _AyahRow({super.key, required this.ayah, required this.c, required this.showDivider});
+  const _AyahRow({super.key, required this.ayah, required this.c, required this.showDivider, this.onTap});
 
   final Ayah ayah;
   final PlayerController c;
   final bool showDivider;
 
+  /// Set while browsing another surah: no current ayah or selection, tapping activates it.
+  final void Function(int ayah)? onTap;
+
   @override
   Widget build(BuildContext context) {
-    final cur = ayah.n == c.current;
-    final checked = c.selected.contains(ayah.n);
-    final dim = c.hasQueue && !c.selecting && !checked && !cur;
+    final browsing = onTap != null;
+    final cur = !browsing && ayah.n == c.current;
+    final checked = !browsing && c.selected.contains(ayah.n);
+    final dim = !browsing && c.hasQueue && !c.selecting && !checked && !cur;
+    final selecting = !browsing && c.selecting;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -470,16 +611,16 @@ class _AyahRow extends StatelessWidget {
         opacity: dim ? 0.42 : 1,
         child: _RowSurface(
           current: cur,
-          tint: c.selecting && checked ? HColors.mintSelected : null,
+          tint: selecting && checked ? HColors.mintSelected : null,
           semanticLabel: 'Ayah ${ayah.n}. ${ayah.en}',
-          checked: c.selecting ? checked : null,
-          onTap: () => c.tapAyah(ayah.n),
+          checked: selecting ? checked : null,
+          onTap: browsing ? () => onTap!(ayah.n) : () => c.tapAyah(ayah.n),
           padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
           child: ExcludeSemantics(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (c.selecting) ...[
+                if (selecting) ...[
                   SizedBox(
                     width: 24,
                     height: 34,

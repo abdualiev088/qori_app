@@ -56,8 +56,10 @@ class PlayerTab extends StatelessWidget {
       );
 }
 
-/// Opens [surah] in the player, at [ayah] if given (otherwise where it was
-/// left), and pushes the player screen unless it's already showing.
+/// Shows [surah] in the player, and pushes the player screen unless it's
+/// already showing. The active surah reopens where it is ([ayah] moves it).
+/// Any other surah only opens to read, with no ayah selected, until an ayah
+/// is tapped; whatever was active keeps playing in the mini-player.
 void openPlayer(
   NavigatorState navigator, {
   required PlayerController controller,
@@ -66,12 +68,14 @@ void openPlayer(
   required double bottomInset,
   required PlayerOpenObserver observer,
 }) {
-  controller.openSurah(surah, ayah: ayah);
+  if (controller.surah == surah) controller.openSurah(surah, ayah: ayah);
+  observer.viewing.value = (surah, ayah);
   if (observer.open.value) return;
   final reduce = MediaQuery.disableAnimationsOf(navigator.context);
   Widget page(BuildContext context) => PlayerScreen(
         controller: controller,
         bottomInset: bottomInset,
+        viewing: observer.viewing,
         onBack: () => Navigator.of(context).maybePop(),
       );
   navigator.push(reduce ? _InstantPlayerRoute(builder: page) : _PlayerRoute(builder: page));
@@ -103,6 +107,10 @@ class _InstantPlayerRoute extends PageRouteBuilder<void> with PlayerRouteMarker 
 /// Tracks whether the player screen is showing in the Player tab.
 class PlayerOpenObserver extends NavigatorObserver {
   final open = ValueNotifier(false);
+
+  /// The surah the player screen shows, and the ayah to start at: it can be a
+  /// different surah from the one playing, opened only to read.
+  final viewing = ValueNotifier<(int, int?)?>(null);
 
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {

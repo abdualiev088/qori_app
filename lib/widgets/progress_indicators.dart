@@ -217,7 +217,7 @@ class StreakBars extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(d.label, style: HText.inter(size: 12, weight: FontWeight.w500, color: HColors.ink2)),
+                  Text(d.label, style: HText.inter(size: 12, height: 1.1, weight: FontWeight.w500, color: HColors.ink2)),
                 ],
               ),
             ),
