@@ -6,6 +6,21 @@ import 'al_qalam.dart' as qalam;
 
 export 'al_qalam.dart' show Ayah, basmala;
 
+/// Where to play an ayah's audio from: a file bundled with the app, or one
+/// downloaded to the device.
+sealed class AudioRef {
+  const AudioRef(this.path);
+  final String path;
+}
+
+class AssetAudio extends AudioRef {
+  const AssetAudio(super.path);
+}
+
+class FileAudio extends AudioRef {
+  const FileAudio(super.path);
+}
+
 /// Where the player gets a surah's text and audio. Swappable, so the
 /// reciter's audio (or text from a server) can come in later without
 /// touching the player.
@@ -16,8 +31,13 @@ abstract class SurahSource {
   /// Whether this surah has audio yet.
   bool hasAudio(int surah);
 
-  /// The bundled audio file for an ayah (0 is the Basmala), or null.
-  String? audioAsset(int surah, int ayah);
+  /// Where to play an ayah (0 is the Basmala) from, downloading it first if
+  /// needed. Null when the surah has no audio. Throws if a download fails.
+  Future<AudioRef?> audio(int surah, int ayah);
+
+  /// Starts fetching the ayahs around [ayah] so they're ready when the player
+  /// moves on. Never throws.
+  void prefetch(int surah, int ayah);
 
   /// A fallback length for an ayah's audio, in seconds, before the file reports its own.
   double ayahSeconds(int surah, int ayah);
@@ -59,8 +79,11 @@ class BundledSurahSource implements SurahSource {
   bool hasAudio(int surah) => surah == _audioSurah;
 
   @override
-  String? audioAsset(int surah, int ayah) =>
-      hasAudio(surah) ? 'assets/audio/068_${ayah.toString().padLeft(3, '0')}.mp3' : null;
+  Future<AudioRef?> audio(int surah, int ayah) async =>
+      hasAudio(surah) ? AssetAudio('assets/audio/068_${ayah.toString().padLeft(3, '0')}.mp3') : null;
+
+  @override
+  void prefetch(int surah, int ayah) {} // bundled audio is always there
 
   @override
   double ayahSeconds(int surah, int ayah) =>

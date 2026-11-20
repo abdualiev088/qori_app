@@ -33,3 +33,16 @@ Picked from a prototype with three directions (`player-list-proto/DECISION.md`).
 - **Rejected:**
   - *Index* (one flat list with All / Learning / Not started / Memorized filters). Quickest when you know the surah, but it ignores the Mushaf structure that hifz students plan around.
   - *Resume* (a "Continue" card plus sections grouped by progress). Its resume job is now done by the mini-player, and grouping by status hides where a surah sits in the Mushaf.
+
+## Recitation audio: downloaded per ayah, kept on the device (2026-11-20)
+
+- **The server hands out URLs, not audio.** `GET /v1/surahs/{n}/audio` lists each ayah's file with its URL, size, sha256 and length. In production the files sit in object storage (S3 or Cloudflare R2) behind a CDN. Django never streams audio, so many listeners cost CDN bandwidth, not server time.
+- **Files never change at a URL.** Their names include their checksum, so phones and the CDN can cache them forever. A corrected recording gets a new name.
+- **Downloaded on first play, kept forever.** `lib/data/audio_cache.dart` stores files by checksum in the app's support folder, which iOS doesn't clear, and verifies each download before keeping it. A downloaded ayah plays offline.
+- **Neighbours are fetched while an ayah plays.** The ayah before and after start downloading as soon as playback starts, so next and previous begin at once. The cache doesn't fetch further ahead, to avoid spending data on ayahs that may never play.
+- **One Basmala for every surah.** The reciter's Basmala is Al-Fatihah's ayah 1, listed as ayah 0 for surahs 2–114 (not 9). Because files are stored by checksum, it's downloaded once.
+- **Al-Qalam stays bundled.** `RemoteSurahSource` plays bundled audio where it exists and downloads the rest. Which surahs have audio comes from `GET /v1/recitations`, saved so it's known offline.
+- **Rejected:**
+  - *Bundling all audio.* Al-Qalam alone is 18 MB.
+  - *Streaming each ayah from Django.* Every play would hit the server, and nothing would work offline.
+  - *Downloading a whole surah up front.* That wastes data for someone who listens to one ayah, and Al-Baqarah has 286.

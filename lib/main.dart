@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_shell.dart';
 import 'data/api_client.dart';
+import 'data/audio_cache.dart';
 import 'data/auth_api.dart';
 import 'data/learned_store.dart';
 import 'data/progress_sync.dart';
@@ -26,9 +27,11 @@ Future<void> main() async {
     ),
   );
   final prefs = await SharedPreferences.getInstance();
-  final player = PlayerController(JustAudioEngine(handler), prefs);
-  final learned = LearnedStore.load(prefs);
   final api = ApiClient(baseUrl: defaultApiUrl(), tokens: SecureTokenStore());
+  // Recitation audio: downloaded from the server on first play, then kept on the device.
+  final audio = AudioCache(api: api, prefs: prefs);
+  final player = PlayerController(JustAudioEngine(handler), prefs, source: RemoteSurahSource(audio));
+  final learned = LearnedStore.load(prefs);
   final sync = ProgressSync(client: api, store: learned, prefs: prefs)..attach();
   final auth = AuthApi(api, onSignedIn: sync.accountChanged, onSignedOut: sync.signedOut, prefs: prefs);
   // Draw first; the audio session, the first ayah and the sync start in the background.
@@ -36,7 +39,11 @@ Future<void> main() async {
   // Who is signed in decides everything else: a session that isn't a real
   // account (a guest from an older version) is dropped, then progress syncs.
   unawaited(auth.loadMe().then((_) => auth.dropUnlessSignedIn()).then((_) => sync.sync()));
-  AppLifecycleListener(onResume: sync.sync);
+  unawaited(audio.refreshCatalog());
+  AppLifecycleListener(onResume: () {
+    sync.sync();
+    audio.refreshCatalog();
+  });
   final session = await AudioSession.instance;
   await session.configure(const AudioSessionConfiguration.speech());
   await player.init();

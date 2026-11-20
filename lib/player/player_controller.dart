@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/api_client.dart';
 import '../data/surah_meta.dart';
 import '../data/surah_source.dart';
 import '../data/surahs.dart';
@@ -56,6 +57,9 @@ class PlayerController extends ChangeNotifier {
   bool finished = false;
   bool playing = false;
   bool loading = false;
+
+  /// Why the current ayah couldn't load (offline and not downloaded yet), or null.
+  String? audioError;
 
   /// Progress through the current repetition, 0–1. Separate so only the bar repaints.
   final progress = ValueNotifier<double>(0);
@@ -263,8 +267,29 @@ class PlayerController extends ChangeNotifier {
     _prefs.setInt('$_k.$s.current', n);
     notifyListeners();
     if (scroll) onScrollRequest?.call(n);
-    final path = source.audioAsset(s, n);
-    if (path == null) return; // no audio for this surah yet
+    if (!source.hasAudio(s)) return; // no audio for this surah yet
+    final token = ++_loadToken;
+
+    // Downloaded on first play, then played from the device.
+    final AudioRef? ref;
+    audioError = null;
+    loading = true;
+    notifyListeners();
+    try {
+      ref = await source.audio(s, n);
+    } on ApiException catch (e) {
+      if (token == _loadToken) _failLoad(e.message);
+      return;
+    } catch (e) {
+      if (token == _loadToken) _failLoad("Couldn't load this ayah.");
+      return;
+    }
+    if (token != _loadToken || surah != s) return; // the user moved on meanwhile
+    if (ref == null) {
+      loading = false;
+      notifyListeners();
+      return;
+    }
     _audio.setItem(MediaItem(
       id: '${s}_$n',
       title: n == 0 ? 'Basmala' : 'Ayah $n',
@@ -272,17 +297,28 @@ class PlayerController extends ChangeNotifier {
       album: 'Surah ${surahNames[s - 1]}',
       duration: Duration(milliseconds: (source.ayahSeconds(s, n) * 1000).round()),
     ));
-    final token = ++_loadToken;
     try {
-      await _audio.setAsset(path);
+      await switch (ref) {
+        AssetAudio(:final path) => _audio.setAsset(path),
+        FileAudio(:final path) => _audio.setFile(path),
+      };
     } on PlayerInterruptedException {
       return;
     } catch (e) {
       debugPrint('Could not load ayah $n: $e');
+      if (token == _loadToken) _failLoad("Couldn't play this ayah.");
       return;
     }
     if (token != _loadToken) return;
     if (play) _audio.play();
+    // Fetch the neighbours while this one plays, so next and previous start at once.
+    source.prefetch(s, n);
+  }
+
+  void _failLoad(String message) {
+    loading = false;
+    audioError = message;
+    notifyListeners();
   }
 
   void toggle() {

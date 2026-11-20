@@ -38,6 +38,16 @@ class FakeAudioEngine implements AudioEngine {
     _emit();
   }
 
+  /// The last downloaded file set, if any.
+  String? file;
+
+  @override
+  Future<void> setFile(String path) async {
+    file = path;
+    _state = ProcessingState.ready;
+    _emit();
+  }
+
   @override
   Future<void> play() async {
     playing = true;

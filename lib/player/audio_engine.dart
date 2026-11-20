@@ -16,6 +16,7 @@ abstract class AudioEngine {
   ProcessingState get processingState;
 
   Future<void> setAsset(String path);
+  Future<void> setFile(String path);
   Future<void> play();
   Future<void> pause();
   Future<void> seek(Duration position);
@@ -52,6 +53,8 @@ class JustAudioEngine implements AudioEngine {
 
   @override
   Future<void> setAsset(String path) => _p.setAudioSource(AudioSource.asset(path));
+  @override
+  Future<void> setFile(String path) => _p.setAudioSource(AudioSource.file(path));
   @override
   Future<void> play() => _p.play();
   @override

@@ -14,6 +14,16 @@ String defaultApiUrl() {
   return defaultTargetPlatform == TargetPlatform.android ? 'http://10.0.2.2:8000/v1' : 'http://127.0.0.1:8000/v1';
 }
 
+/// Sends [request], allowing plain http when its URL is http.
+///
+/// Flutter refuses plain http to anything but localhost unless the zone
+/// opts in. Only a dev server (on this Mac, reached from a phone) uses http;
+/// a real server is https and keeps the platform's default.
+Future<http.StreamedResponse> sendAllowingDevHttp(http.Client client, http.BaseRequest request) =>
+    request.url.isScheme('http')
+        ? runZoned(() => client.send(request), zoneValues: {#flutter.io.allow_http: true})
+        : client.send(request);
+
 /// A failed call. The server sends `{"error": {"code", "message", "fields"}}`;
 /// [fields] maps request fields (email, password, ...) to their messages.
 class ApiException implements Exception {
@@ -173,13 +183,8 @@ class ApiClient {
         ..body = jsonEncode(body);
     }
     try {
-      // Flutter refuses plain http to anything but localhost unless the zone
-      // opts in. Only a dev server (on this Mac, reached from a phone) uses
-      // http; a real server is https and keeps the platform's default.
-      final streamed = Uri.parse(baseUrl).isScheme('http')
-          ? runZoned(() => _http.send(request), zoneValues: {#flutter.io.allow_http: true})
-          : _http.send(request);
-      final response = await http.Response.fromStream(await streamed.timeout(timeout));
+      final response =
+          await http.Response.fromStream(await sendAllowingDevHttp(_http, request).timeout(timeout));
       online.value = true;
       return response;
     } catch (e) {
