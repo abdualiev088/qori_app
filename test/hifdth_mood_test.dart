@@ -3,13 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:qori_app/theme/tokens.dart';
 import 'package:qori_app/widgets/hifdth_card.dart';
 import 'package:qori_app/widgets/hifdth_mood.dart';
-import 'package:qori_app/widgets/progress_indicators.dart';
 import 'package:qori_app/widgets/ribbed_glass.dart';
-
-const _steps = [
-  DayStep(title: 'Morning session', subtitle: 'Done', done: true),
-  DayStep(title: 'Evening session', subtitle: 'Up next', done: false),
-];
 
 void main() {
   setUp(() => HText.useGoogleFonts = false);
@@ -31,7 +25,7 @@ void main() {
   });
 
   Widget card(HifdthMood mood) => MaterialApp(
-        home: Scaffold(body: SingleChildScrollView(child: HifdthCard(mood: mood, steps: _steps))),
+        home: Scaffold(body: SingleChildScrollView(child: HifdthCard(mood: mood))),
       );
 
   testWidgets('changing the mood morphs to the new status', (tester) async {

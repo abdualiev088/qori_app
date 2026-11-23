@@ -215,9 +215,9 @@ class _BottomGlowPainter extends CustomPainter {
   bool shouldRepaint(_BottomGlowPainter old) => false;
 }
 
-enum HTab { home, player, method, settings }
+enum HTab { home, player }
 
-/// The liquid-glass bottom nav: 68 tall, radius 34, four equal columns.
+/// The liquid-glass bottom nav: 68 tall, radius 34, one equal column per tab.
 ///
 /// Tap a tab to switch, or hold or swipe along the bar: the highlight follows
 /// the finger and the tab under it is selected on release.
@@ -377,8 +377,6 @@ class _NavItem extends StatelessWidget {
     final (icon, label) = switch (tab) {
       HTab.home => (HIcon.home(color, active: active), 'Home'),
       HTab.player => (HIcon.player(color, active: active), 'Player'),
-      HTab.method => (HIcon.method(color, active: active), 'My Method'),
-      HTab.settings => (HIcon.settings(color, active: active), 'Settings'),
     };
     return Semantics(
       button: true,

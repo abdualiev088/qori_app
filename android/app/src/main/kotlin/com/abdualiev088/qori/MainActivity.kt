@@ -1,4 +1,4 @@
-package com.example.qori_app
+package com.abdualiev088.qori
 
 import com.ryanheise.audioservice.AudioServiceActivity
 

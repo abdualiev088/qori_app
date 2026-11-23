@@ -4,13 +4,12 @@ import 'data/auth_api.dart';
 import 'data/learned_store.dart';
 import 'player/player_controller.dart';
 import 'screens/home_screen.dart';
-import 'screens/placeholder_screen.dart';
 import 'screens/player_tab.dart';
 import 'theme/tokens.dart';
 import 'widgets/glass.dart';
 import 'widgets/mini_player.dart';
 
-/// Page background, bottom glow, the four tabs and the floating glass nav.
+/// Page background, bottom glow, the two tabs (Home, Player) and the floating glass nav.
 class AppShell extends StatefulWidget {
   const AppShell({super.key, required this.player, required this.learned, required this.auth});
 
@@ -66,7 +65,7 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    // Home and the placeholders scroll under the nav with an 18 px gap; Player sits 12 px above it.
+    // Home scrolls under the nav with an 18 px gap; Player sits 12 px above it.
     const contentInset = _bottom + _navHeight;
 
     return Scaffold(
@@ -94,8 +93,6 @@ class _AppShellState extends State<AppShell> {
                     playerBottomInset: contentInset,
                     titleFocus: _surahsTitle,
                   ),
-                  const PlaceholderScreen(title: 'My Method', bottomInset: contentInset),
-                  const PlaceholderScreen(title: 'Settings', bottomInset: contentInset),
                 ],
               ),
             ),

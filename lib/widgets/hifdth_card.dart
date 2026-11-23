@@ -7,16 +7,14 @@ import 'package:flutter/material.dart';
 import '../theme/tokens.dart';
 import 'hifdth_mood.dart';
 import 'hifdth_painter.dart';
-import 'progress_indicators.dart';
 import 'ribbed_glass.dart';
 
-/// Home's main card: Hifdth, the status pill and today's progress on a ribbed
-/// background. Everything follows [mood] and morphs when it changes.
+/// Home's main card: Hifdth and the status pill on a ribbed background.
+/// Everything follows [mood] and morphs when it changes.
 class HifdthCard extends StatefulWidget {
-  const HifdthCard({super.key, required this.mood, required this.steps, this.characterAway = false});
+  const HifdthCard({super.key, required this.mood, this.characterAway = false});
 
   final HifdthMood mood;
-  final List<DayStep> steps;
 
   /// Hides the character (keeping its space) while it's somewhere else on screen.
   final bool characterAway;
@@ -107,7 +105,6 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     const radius = BorderRadius.all(Radius.circular(HRadii.homeCard));
-    final done = widget.steps.where((s) => s.done).length;
 
     return AnimatedBuilder(
       animation: _morph,
@@ -129,54 +126,6 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
                   hifdth,
                   const SizedBox(height: 16),
                   _StatusPill(text: style.status, dot: style.accent),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: HColors.surface,
-                      borderRadius: BorderRadius.circular(HRadii.card),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Text("TODAY'S PROGRESS",
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: HText.inter(
-                                      size: 12, weight: FontWeight.w600, letterSpacing: 0.6, color: HColors.ink2)),
-                            ),
-                            Semantics(
-                              label: '$done of ${widget.steps.length} sessions done',
-                              excludeSemantics: true,
-                              child: Text.rich(TextSpan(
-                                style: HText.inter(size: 14, weight: FontWeight.w700, tabular: true),
-                                children: [
-                                  TextSpan(text: '$done'),
-                                  TextSpan(
-                                    text: '/${widget.steps.length}',
-                                    style: HText.inter(size: 14, weight: FontWeight.w500, color: HColors.inkMuted),
-                                  ),
-                                ],
-                              )),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        ExcludeSemantics(
-                          child: SegmentedProgressBar(
-                            fills: [for (final s in widget.steps) s.done ? 1 : 0],
-                            color: style.accent,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        StepTimeline(steps: widget.steps),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),

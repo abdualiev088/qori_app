@@ -46,3 +46,11 @@ Picked from a prototype with three directions (`player-list-proto/DECISION.md`).
   - *Bundling all audio.* Al-Qalam alone is 18 MB.
   - *Streaming each ayah from Django.* Every play would hit the server, and nothing would work offline.
   - *Downloading a whole surah up front.* That wastes data for someone who listens to one ayah, and Al-Baqarah has 286.
+
+## First release without placeholders (2026-11-23)
+
+- **Chosen:** ship TestFlight and Google Play internal testing with only what works: sign-in, Quran progress with sync, the Player. The bottom nav has two tabs, Home and Player. Home shows the greeting, Hifdth's card and Quran progress.
+- **Removed until the schedule exists:** today's sessions, the daily goal and the streak (they showed made-up times and a permanent 0), and the empty My Method and Settings tabs. Hifdth stays happy because nothing can put the user behind yet.
+- **Android id** is `com.abdualiev088.qori`, the same as the iOS bundle id; Google Play never allows changing it after the first upload. The app is called "Qori" on both home screens.
+- **Rejected:** keeping the cards with a "coming soon" label. Testers would judge the app by numbers that never move.
+

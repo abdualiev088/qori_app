@@ -263,11 +263,12 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    /// Scrolls until the middle of the Quran card is just above the nav.
+    /// Scrolls until the middle of the Quran card is just above the nav (if it isn't already).
     Future<void> scrollToQuranMiddle(WidgetTester tester) async {
       final card = find.byType(QuranProgressCard);
       final visibleBottom = 874 - 114.0;
-      await scrollBy(tester, tester.getCenter(card).dy - visibleBottom + 20);
+      final dy = tester.getCenter(card).dy - visibleBottom + 20;
+      if (dy > 0) await scrollBy(tester, dy);
     }
 
     testWidgets('Hifdth flies down after its card spot leaves, and back when scrolling up', (tester) async {
@@ -277,7 +278,6 @@ void main() {
       expect(mini, findsOneWidget);
       expect(tester.getRect(mini).size, const Size(56, 56));
       expect(tester.getRect(mini).right, 402 - 16);
-      expect(bubbleOpacity(tester), 0); // not at the Quran card yet
       await scrollBy(tester, -2000);
       expect(mini, findsNothing);
     });
@@ -292,13 +292,12 @@ void main() {
 
     testWidgets('halfway into the Quran card Hifdth looks left and asks; the bubble leads to the grid', (tester) async {
       await pumpHome(tester);
-      await scrollBy(tester, 250);
-      expect(look(tester), 0);
+      // Hifdth sits in its card and says nothing until it has flown down.
+      expect(mini, findsNothing);
       expect(bubbleOpacity(tester), 0);
 
-      expect(speaking(tester), isFalse);
-      expect(bodyColor(tester), MoodStyle.happy.body[1]);
-
+      // Home is short enough that the Quran card is in view as soon as Hifdth lands.
+      await scrollBy(tester, 250);
       await scrollToQuranMiddle(tester);
       expect(bubbleOpacity(tester), 1);
       expect(look(tester), -1);
@@ -311,8 +310,10 @@ void main() {
       expect(look(tester), 0);
       expect(bodyColor(tester), MoodStyle.happy.body[1]);
 
-      // Leaving the card and coming back asks again.
+      // Leaving (Hifdth flies back to its card) and coming back asks again.
       await scrollBy(tester, -600);
+      expect(mini, findsNothing);
+      await scrollBy(tester, 250);
       await scrollToQuranMiddle(tester);
       expect(bubbleOpacity(tester), 1);
     });

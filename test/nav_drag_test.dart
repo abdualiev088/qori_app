@@ -28,31 +28,38 @@ void main() {
     expect(selected, [HTab.player]);
   });
 
+  testWidgets('the first release has only Home and Player', (tester) async {
+    await pumpNav(tester);
+    expect(HTab.values, [HTab.home, HTab.player]);
+    expect(find.text('My Method'), findsNothing);
+    expect(find.text('Settings'), findsNothing);
+  });
+
   testWidgets('swiping from the active tab selects the tab where the finger lifts', (tester) async {
     final selected = await pumpNav(tester);
     final from = tester.getCenter(find.text('Home'));
-    final to = tester.getCenter(find.text('Settings'));
+    final to = tester.getCenter(find.text('Player'));
     await tester.dragFrom(from, to - from);
     await tester.pumpAndSettle();
-    expect(selected, [HTab.settings]);
+    expect(selected, [HTab.player]);
   });
 
   testWidgets('holding then sliding selects the tab where the finger lifts', (tester) async {
     final selected = await pumpNav(tester);
     final gesture = await tester.startGesture(tester.getCenter(find.text('Home')));
     await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
-    await gesture.moveTo(tester.getCenter(find.text('My Method')));
+    await gesture.moveTo(tester.getCenter(find.text('Player')));
     await tester.pump();
     await gesture.up();
     await tester.pumpAndSettle();
-    expect(selected, [HTab.method]);
+    expect(selected, [HTab.player]);
   });
 
   testWidgets('swiping back onto the active tab selects nothing', (tester) async {
     final selected = await pumpNav(tester);
     final home = tester.getCenter(find.text('Home'));
     final gesture = await tester.startGesture(home);
-    await gesture.moveTo(tester.getCenter(find.text('Settings')));
+    await gesture.moveTo(tester.getCenter(find.text('Player')));
     await gesture.moveTo(home);
     await gesture.up();
     await tester.pumpAndSettle();

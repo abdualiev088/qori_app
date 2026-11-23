@@ -13,7 +13,6 @@ import '../widgets/glass.dart';
 import '../widgets/hifdth_card.dart';
 import '../widgets/hifdth_mood.dart';
 import '../widgets/learned_sheet.dart';
-import '../widgets/progress_indicators.dart';
 import '../widgets/quran_progress_card.dart';
 import '../widgets/signed_out_card.dart';
 import '../widgets/speech_bubble.dart';
@@ -21,27 +20,10 @@ import '../widgets/toast.dart';
 import 'account_screen.dart';
 import 'auth_screen.dart';
 
-// Today's plan, empty until sessions are tracked: nothing is done on a fresh install.
-const _steps = [
-  DayStep(title: 'Morning session', subtitle: 'Up next · 6:30 am', done: false),
-  DayStep(title: 'Review', subtitle: '10:30 am', done: false),
-  DayStep(title: 'Evening session', subtitle: '7:00 pm', done: false),
-];
-
-/// Sessions whose time has passed without being done. Placeholder until the schedule is real.
+/// Sessions whose time has passed without being done. Always 0 until there is
+/// a schedule, so Hifdth stays happy; the daily plan, goal and streak cards come
+/// back with the schedule (removed for the first release, see git history).
 const _sessionsBehind = 0;
-const _week = [
-  StreakDay('M', false),
-  StreakDay('T', false),
-  StreakDay('W', false),
-  StreakDay('T', false),
-  StreakDay('F', false),
-  StreakDay('S', false),
-  StreakDay('S', false),
-];
-
-int get _sessionsDone => _steps.where((s) => s.done).length;
-int get _sessionsLeft => _steps.length - _sessionsDone;
 
 const _weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const _months = [
@@ -273,25 +255,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ],
                   ),
                   const SizedBox(height: 18),
-                  HifdthCard(key: _cardKey, mood: mood, steps: _steps, characterAway: !_fly.isDismissed),
-                  const SizedBox(height: 18),
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          child: _GoalCard(
-                            value: _sessionsDone / _steps.length,
-                            caption: _sessionsLeft == 0
-                                ? 'All sessions done'
-                                : '$_sessionsLeft ${_sessionsLeft == 1 ? 'session' : 'sessions'} left',
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Expanded(child: _StreakCard(days: _week)),
-                      ],
-                    ),
-                  ),
+                  HifdthCard(key: _cardKey, mood: mood, characterAway: !_fly.isDismissed),
                   const SizedBox(height: 18),
                   // Signed out, progress can't be changed: the locked card asks to sign in instead.
                   if (_signedIn)
@@ -622,71 +586,4 @@ class _QuranProgressState extends State<_QuranProgress> {
           },
         ),
       );
-}
-
-class _GoalCard extends StatelessWidget {
-  const _GoalCard({required this.value, required this.caption});
-
-  final double value;
-  final String caption;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        decoration: BoxDecoration(color: HColors.surface, borderRadius: BorderRadius.circular(HRadii.card)),
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            ProgressRing(value: value),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Daily goal', style: HText.inter(size: 14, weight: FontWeight.w600)),
-                  const SizedBox(height: 2),
-                  Text(caption, style: HText.inter(size: 13, color: HColors.ink2)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-}
-
-class _StreakCard extends StatelessWidget {
-  const _StreakCard({required this.days});
-
-  final List<StreakDay> days;
-
-  @override
-  Widget build(BuildContext context) {
-    final streak = days.where((d) => d.done).length;
-    return Container(
-      decoration: BoxDecoration(color: HColors.surface, borderRadius: BorderRadius.circular(HRadii.card)),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Flexible(
-                child: Text('Streak',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: HText.inter(size: 14, weight: FontWeight.w600)),
-              ),
-              const SizedBox(width: 6),
-              Text('$streak ${streak == 1 ? 'day' : 'days'}',
-                  style: HText.inter(size: 13, color: HColors.ink2, tabular: true)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          StreakBars(days: days),
-        ],
-      ),
-    );
-  }
 }

@@ -77,19 +77,16 @@ The rules are in `lib/data/progress_sync.dart`.
   - **1 → worried**
   - **2+ → sad**
 - The mood sets Hifdth's face, the card's colour and the status line.
-- Today `sessionsBehind` is hardcoded to `0`. The real value will come from the schedule (section 9). The thresholds are in `moodFor` in `lib/widgets/hifdth_mood.dart`.
+- Today `sessionsBehind` is hardcoded to `0`, so Hifdth is always happy. The real value will come from the schedule (section 9). The thresholds are in `moodFor` in `lib/widgets/hifdth_mood.dart`.
 
 ## 8. Home behaviour (live)
 
 - When the user scrolls down, Hifdth flies from its card to the bottom-right corner and follows the page. Scrolling back up returns it to the card.
 - When about half of the Quran progress section is on screen, Hifdth turns blue, looks left and asks: *"How much of the Quran have you memorised? Tap a surah to tell me."* The question hides after 8 seconds or when the user scrolls away. Tapping it scrolls to the Quran progress card.
 
-## 9. Daily plan, goal and streak (placeholder)
+## 9. Daily plan, goal and streak (planned)
 
-These are hardcoded on Home until the schedule exists:
-- **Today's sessions:** Morning session, Review, Evening session, each done or upcoming.
-- **Daily goal:** a percentage and how many sessions are left.
-- **Streak:** the days of the week with a session done.
+Not shown in the first release: until there is a schedule they could only show made-up numbers. Home has the greeting, Hifdth's card (character and status line) and Quran progress. The old cards (today's sessions, daily goal, streak) are in git history before they were removed.
 
 **Planned:**
 - The user sets a schedule.
@@ -113,6 +110,6 @@ These are hardcoded on Home until the schedule exists:
 
 ## 11. Not built yet
 
-- The **My Method** and **Settings** tabs are placeholders.
+- The bottom nav has two tabs, **Home** and **Player**. **My Method** and **Settings** were removed until they have something in them.
 - Changing email or password inside the app (password reset by email works).
 - More reciters and translations.

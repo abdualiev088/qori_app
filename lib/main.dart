@@ -21,7 +21,7 @@ Future<void> main() async {
   final handler = await AudioService.init(
     builder: HifdthAudioHandler.new,
     config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.example.qori_app.playback',
+      androidNotificationChannelId: 'com.abdualiev088.qori.playback',
       androidNotificationChannelName: 'Hifdth playback',
       androidNotificationOngoing: true,
     ),

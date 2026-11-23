@@ -8,7 +8,7 @@ import 'package:qori_app/theme/tokens.dart';
 void main() {
   setUp(() => HText.useGoogleFonts = false);
 
-  testWidgets('home shows the greeting, progress and streak', (tester) async {
+  testWidgets('home shows the greeting and Hifdth, without the unbuilt daily plan', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -21,12 +21,12 @@ void main() {
 
     expect(find.text('Wednesday, 11 November'), findsOneWidget);
     expect(find.text('Good afternoon'), findsOneWidget);
-    expect(find.text("TODAY'S PROGRESS"), findsOneWidget);
-    expect(find.text('Evening session'), findsOneWidget);
-    // A fresh install starts empty: no sessions done, no streak.
-    expect(find.text('3 sessions left'), findsOneWidget);
-    expect(find.text('0 days'), findsOneWidget);
-    expect(find.text('Done at 6:30 am'), findsNothing);
+    // The daily plan, goal and streak wait for the schedule: none of them shows yet.
+    expect(find.text("TODAY'S PROGRESS"), findsNothing);
+    expect(find.text('Morning session'), findsNothing);
+    expect(find.text('Daily goal'), findsNothing);
+    expect(find.text('Streak'), findsNothing);
+    expect(find.bySemanticsLabel('Hifdth assistant'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 }
