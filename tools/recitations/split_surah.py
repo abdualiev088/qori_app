@@ -55,7 +55,12 @@ HOP = 0.02  # seconds per analysis frame
 MIN_PAUSE = 0.25  # shorter quiet stretches are breaths inside words, not pauses
 PAD_BEFORE = 0.15
 PAD_AFTER = 0.35
+# Inside the recording an ayah ends at the quietest point of the pause after it,
+# but never further than this from its last sound (long pauses stay short).
+PAD_BEFORE_MAX = 0.6
+PAD_AFTER_MAX = 1.2
 MIN_HEARD = 0.3  # seconds
+PAUSE_BONUS = 2.0  # letters of text match per e-fold of pause length at an ayah's end
 BASMALA = 'بسم الله الرحمن الرحيم'
 
 
@@ -179,13 +184,22 @@ def _match(heard: str, ref: str) -> float:
     return 2 * m - 0.5 * (len(heard) + len(ref))
 
 
-def align(heard: list[str], refs: list[str], optional: set[int], max_span: int = 80, band: float = 0.12):
+def align(heard: list[str], refs: list[str], optional: set[int], gaps: list[float] | None = None,
+          max_span: int = 80, band: float = 0.12):
     """Groups consecutive speech pieces (their recognized text in [heard]) into
     units whose text is [refs], in order, by dynamic programming over text
     similarity. Pieces may be left out between units (isti'adha before the
     surah, a repeated phrase, "sadaqallah" at the end); units in [optional]
     may be absent (the basmala). Returns one (first, last) piece range per
-    unit, or None for an absent unit."""
+    unit, or None for an absent unit.
+
+    [gaps][i] is the pause after piece i. Ending a unit at a long pause earns a
+    small bonus: a short stop inside the last word of an ayah (the k of
+    "dhikr", a sukun) splits off its tail as a separate piece the recognizer
+    barely hears, and without the bonus that tail could go either way."""
+    if gaps is None:
+        gaps = [1.0] * len(heard)
+    bonus = [PAUSE_BONUS * math.log(max(g, 0.02) / 0.12) for g in gaps]
     m, k = len(heard), len(refs)
     total_h = sum(map(len, heard)) or 1
     total_r = sum(map(len, refs)) or 1
@@ -218,12 +232,12 @@ def align(heard: list[str], refs: list[str], optional: set[int], max_span: int =
                 text += heard[e]
                 if len(text) > 2.5 * len(refs[j]) + 40:
                     break
-                v = cur + _match(text, refs[j])
+                v = cur + _match(text, refs[j]) + bonus[e]
                 if v > score[j + 1][e + 1]:
                     score[j + 1][e + 1], back[(j + 1, e + 1)] = v, ('unit', i)
     if score[k][m] == neg:
         if band < 1:
-            return align(heard, refs, optional, max_span, band * 2)
+            return align(heard, refs, optional, gaps, max_span, band * 2)
         raise RuntimeError('could not align the recitation to the text')
     groups, j, i = [None] * k, k, m
     while j > 0 or i > 0:
@@ -256,6 +270,21 @@ def cut(src: Path, dst: Path, start: float, end: float):
 def spoken_text(surah: int, ayah: int, text: str) -> str:
     """The ayah as the recognizer writes it (disjoined letters stay as written: طسم)."""
     return asr.norm(text)
+
+
+def quietest(db: np.ndarray, a: float, b: float) -> float:
+    """The quietest moment of the pause between a and b (smoothed over 60 ms).
+
+    Cutting there rather than at the pause's middle keeps a long-drawn ending
+    (the madd of "dihaqa") whole: it fades through most of the pause, and the
+    quietest point is usually the breath just before the next ayah."""
+    i, j = int(a / HOP), max(int(a / HOP) + 1, int(b / HOP))
+    seg = db[i:j]
+    if len(seg) < 3:
+        return (a + b) / 2
+    smooth = np.convolve(seg, np.ones(3) / 3, mode='same')
+    k = int(np.argmin(smooth[1:-1])) + 1
+    return (i + k + 0.5) * HOP
 
 
 def _absorb(groups, pieces, heard, refs):
@@ -320,7 +349,8 @@ def split(reciter: str, surah: int):
         # On a breath or a click shorter than this the recognizer makes words up.
         h = [t if b - a >= MIN_HEARD else '' for t, (a, b) in zip(h, p)]
         try:
-            g = align(h, refs, optional)
+            gaps = [b[0] - a[1] for a, b in zip(p, p[1:])] + [10.0]
+            g = align(h, refs, optional, gaps)
         except RuntimeError:
             print(f'  pauses {drop} dB / {min_pause} s: some breath holds several ayahs, trying another level')
             continue
@@ -353,10 +383,14 @@ def split(reciter: str, surah: int):
         if g is None:
             continue
         a, b = g
-        prev_end = pieces[a - 1][1] if a > 0 else 0.0
-        next_start = pieces[b + 1][0] if b + 1 < len(pieces) else length
-        start = max(pieces[a][0] - PAD_BEFORE, (prev_end + pieces[a][0]) / 2)
-        end = min(pieces[b][1] + PAD_AFTER, (pieces[b][1] + next_start) / 2)
+        if a > 0:
+            start = max(quietest(db, pieces[a - 1][1], pieces[a][0]), pieces[a][0] - PAD_BEFORE_MAX)
+        else:
+            start = max(0.0, pieces[a][0] - PAD_BEFORE)
+        if b + 1 < len(pieces):
+            end = min(quietest(db, pieces[b][1], pieces[b + 1][0]), pieces[b][1] + PAD_AFTER_MAX)
+        else:
+            end = min(length, pieces[b][1] + PAD_AFTER_MAX)
         got = ''.join(heard[a:b + 1])
         entry = {'ayah': n, 'file': f'{label}.mp3', 'start': round(start, 2), 'end': round(end, 2),
                  'pieces': b - a + 1, 'sim': similarity(got, ref), 'heard': got}
