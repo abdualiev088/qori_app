@@ -60,6 +60,7 @@ PAD_AFTER = 0.35
 PAD_BEFORE_MAX = 0.6
 PAD_AFTER_MAX = 1.2
 MIN_HEARD = 0.3  # seconds
+QUIET_DB = 3.0  # how close to the pause's quietest a cut point must be
 PAUSE_BONUS = 2.0  # letters of text match per e-fold of pause length at an ayah's end
 BASMALA = 'بسم الله الرحمن الرحيم'
 
@@ -273,18 +274,20 @@ def spoken_text(surah: int, ayah: int, text: str) -> str:
 
 
 def quietest(db: np.ndarray, a: float, b: float) -> float:
-    """The quietest moment of the pause between a and b (smoothed over 60 ms).
+    """Where to cut the pause between a and b: the last moment, before the next
+    ayah begins, that is still about as quiet as the pause gets (smoothed over 60 ms).
 
-    Cutting there rather than at the pause's middle keeps a long-drawn ending
-    (the madd of "dihaqa") whole: it fades through most of the pause, and the
-    quietest point is usually the breath just before the next ayah."""
+    Cutting late keeps the previous ayah's tail whole: a long-drawn ending
+    (the madd of "dihaqa") and the room's echo after it ("awla" in 75:34) fade
+    through most of the pause, and an earlier cut lets that fade be heard at
+    the start of the next ayah."""
     i, j = int(a / HOP), max(int(a / HOP) + 1, int(b / HOP))
     seg = db[i:j]
     if len(seg) < 3:
         return (a + b) / 2
-    smooth = np.convolve(seg, np.ones(3) / 3, mode='same')
-    k = int(np.argmin(smooth[1:-1])) + 1
-    return (i + k + 0.5) * HOP
+    smooth = np.convolve(seg, np.ones(3) / 3, mode='same')[1:-1]
+    quiet = np.flatnonzero(smooth <= smooth.min() + QUIET_DB)
+    return (i + int(quiet[-1]) + 1 + 0.5) * HOP
 
 
 def _absorb(groups, pieces, heard, refs):
@@ -424,22 +427,31 @@ def main():
     # rest of the process. Three tries on the GPU with smaller and smaller
     # batches, then one on the CPU.
     import os
+    from concurrent.futures import ThreadPoolExecutor
     a, _, b = span.partition('-')
-    failed = []
-    for surah in range(int(a), int(b or a) + 1):
+    jobs = int(sys.argv[sys.argv.index('--jobs') + 1]) if '--jobs' in sys.argv else 1
+    surahs = list(range(int(a), int(b or a) + 1))
+    # Longest first so parallel runs finish together. With the recognized text
+    # cached, a surah needs only the CPU, so --jobs can match the core count.
+    size = lambda n: (CACHE / reciter / f'{n:03d}.mp3').stat().st_size if (CACHE / reciter / f'{n:03d}.mp3').exists() else 0
+    surahs.sort(key=size, reverse=True)
+
+    def run(surah):
         for attempt in range(4):
             env = dict(os.environ)
             env['ASR_BATCH'] = str([16, 4, 1, 16][attempt])
             if attempt == 3:
                 env['CUDA_VISIBLE_DEVICES'] = '-1'
-                print('  GPU keeps failing, using the CPU', flush=True)
+                print(f'  {surah}: GPU keeps failing, using the CPU', flush=True)
             elif attempt:
-                print(f'  retrying with batches of {env["ASR_BATCH"]}', flush=True)
+                print(f'  {surah}: retrying with batches of {env["ASR_BATCH"]}', flush=True)
             r = subprocess.run([sys.executable, __file__, reciter, str(surah), '--here'], env=env)
             if r.returncode == 0:
-                break
-        else:
-            failed.append(surah)
+                return None
+        return surah
+
+    with ThreadPoolExecutor(jobs) as pool:
+        failed = sorted(f for f in pool.map(run, surahs) if f)
     if failed:
         print('FAILED:', failed)
 
