@@ -55,7 +55,8 @@ class _MiniPlayerState extends State<MiniPlayer> {
             child: ListenableBuilder(
               listenable: c,
               builder: (context, _) {
-                if (c.surah != null) {
+                // Frozen while hidden, so the bar doesn't flip to a newly tapped surah as it fades.
+                if (c.surah != null && show) {
                   _surah = c.surah;
                   _summary = c.summary;
                 }

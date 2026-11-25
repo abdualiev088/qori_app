@@ -34,7 +34,7 @@ class PlayerScreen extends StatefulWidget {
   State<PlayerScreen> createState() => _PlayerScreenState();
 }
 
-class _PlayerScreenState extends State<PlayerScreen> {
+class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderStateMixin {
   final _scroll = ScrollController();
   final _rowKeys = <int, GlobalKey>{};
   final _panelKey = GlobalKey();
@@ -43,6 +43,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
   double _panelHeight = 236;
 
   static const _gap = 12.0;
+
+  /// Grows the panel out of the mini-player when a read-only surah becomes active.
+  late final _reveal = AnimationController(vsync: this, duration: const Duration(milliseconds: 320), value: 1);
 
   /// How much of the list's bottom the panel and nav cover.
   double get _covered => widget.bottomInset + _gap + _panelHeight + 8;
@@ -77,6 +80,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void dispose() {
     widget.viewing?.removeListener(_viewChanged);
+    _reveal.dispose();
     if (c.onScrollRequest == _scrollTo) c.onScrollRequest = null;
     _scroll.dispose();
     super.dispose();
@@ -120,7 +124,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// Tapping an ayah of a browsed surah makes it the active one: the old one
   /// stops, this one plays from that ayah, and the full player appears.
   Future<void> _activate(int n) async {
-    await c.openSurah(_viewed, ayah: n);
+    // Set before openSurah so the panel's first frame is the collapsed one.
+    if (!MediaQuery.disableAnimationsOf(context)) _reveal.value = 0;
+    final opening = c.openSurah(_viewed, ayah: n);
+    _reveal.forward();
+    await opening;
     if (!mounted || c.surah != _viewed) return;
     setState(() {});
     if (c.hasAudio) await c.load(n);
@@ -229,13 +237,65 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 left: 16,
                 right: 16,
                 bottom: widget.bottomInset + _gap,
-                child: KeyedSubtree(key: _panelKey, child: _PlayerPanel(c: c)),
+                child: KeyedSubtree(
+                  key: _panelKey,
+                  child: _PanelReveal(animation: _reveal, child: _PlayerPanel(c: c)),
+                ),
               ),
           ],
         );
       },
     );
   }
+}
+
+/// The panel growing up out of the mini-player's spot: its top edge rises
+/// from the bar's height to full, the corners ease from the bar's 20 to the
+/// panel's 26, and the glass fades in under the bar as the bar fades out.
+/// At rest (value 1) it's the panel, untouched.
+class _PanelReveal extends StatelessWidget {
+  const _PanelReveal({required this.animation, required this.child});
+
+  final Animation<double> animation;
+  final Widget child;
+
+  /// The bar's height where the panel starts (the panel sits 4 px higher than the bar).
+  static const _start = MiniPlayer.height - 4;
+  static const _curve = Cubic(0.32, 0.72, 0, 1);
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      child: child,
+      builder: (context, child) {
+        final v = animation.value;
+        if (v >= 1) return child!;
+        final t = _curve.transform(v);
+        return Opacity(
+          opacity: const Interval(0, 0.45, curve: Curves.easeOut).transform(v),
+          child: ClipRRect(clipper: _RevealClipper(t, _start), child: child),
+        );
+      },
+    );
+  }
+}
+
+class _RevealClipper extends CustomClipper<RRect> {
+  const _RevealClipper(this.t, this.start);
+
+  final double t;
+  final double start;
+
+  @override
+  RRect getClip(Size size) {
+    final visible = start + (size.height - start) * t;
+    final r = Radius.circular(20 + (HRadii.panel - 20) * t);
+    return RRect.fromLTRBR(0, size.height - visible, size.width, size.height, r);
+  }
+
+  @override
+  bool shouldReclip(_RevealClipper old) => old.t != t || old.start != start;
 }
 
 /// A surah opened to read while another is active.
