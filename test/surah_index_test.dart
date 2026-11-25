@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hifz_app/data/surah_index.dart';
-import 'package:hifz_app/data/surahs.dart';
+import 'package:qori_app/data/surah_index.dart';
+import 'package:qori_app/data/surahs.dart';
 
 void main() {
   test('30 juz, and every ayah of the Quran falls in exactly one', () {

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hifz_app/data/learned_store.dart';
-import 'package:hifz_app/data/plan.dart';
-import 'package:hifz_app/data/plan_store.dart';
-import 'package:hifz_app/screens/home_screen.dart';
-import 'package:hifz_app/theme/tokens.dart';
-import 'package:hifz_app/widgets/toast.dart';
+import 'package:qori_app/data/learned_store.dart';
+import 'package:qori_app/data/plan.dart';
+import 'package:qori_app/data/plan_store.dart';
+import 'package:qori_app/screens/home_screen.dart';
+import 'package:qori_app/theme/tokens.dart';
+import 'package:qori_app/widgets/toast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Task titles are drawn with non-breaking hyphens.

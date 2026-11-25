@@ -1271,7 +1271,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get soon => 'Tez orada';
 
   @override
-  String get madeWithCare => 'Hifz · Qurʼonni yod oladiganlar uchun';
+  String get madeWithCare => 'Qori · Qurʼonni yod oladiganlar uchun';
 
   @override
   String get langEnglish => 'Inglizcha';
@@ -2553,7 +2553,7 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
   String get soon => 'Тез орада';
 
   @override
-  String get madeWithCare => 'Hifz · Қуръонни ёд оладиганлар учун';
+  String get madeWithCare => 'Qori · Қуръонни ёд оладиганлар учун';
 
   @override
   String get langEnglish => 'Инглизча';

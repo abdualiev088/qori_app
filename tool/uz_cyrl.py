@@ -48,7 +48,7 @@ def convert(T):
       weekdaysShort='Ду,Се,Чо,Па,Жу,Ша,Як', weekdayLetters='Д,С,Ч,П,Ж,Ш,Я',
       enterEmail='Электрон почтангизни киритинг', emailIncomplete='Электрон почта тўлиқ киритилмаганга ўхшайди',
       authEmailBody='Электрон почтангизни киритинг, қолганини Hifdth ўзи бажаради.', email='Электрон почта',
-      madeWithCare='Hifz · Қуръонни ёд оладиганлар учун',
+      madeWithCare='Qori · Қуръонни ёд оладиганлар учун',
       monthsShort='янв,фев,мар,апр,май,июн,июл,авг,сен,окт,ноя,дек')
     up='А-ЯЁЎҚҒҲ'
     out={k:re.sub(f'(?<=[{up}])ъ(?=[{up}])','Ъ',v) for k,v in out.items()}

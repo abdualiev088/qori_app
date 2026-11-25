@@ -1,4 +1,4 @@
-# Hifz (Hifdth) — заметки для работы
+# Qori (Hifdth) — заметки для работы
 
 Flutter-приложение-компаньон для заучивания Корана (хифз). Маскот — **Hifdth** (зелёный шар с глазами, настроение зависит от отставания по плану).
 Репо: https://github.com/abdualiev088/qori_app (ветка `main`). Автор коммитов: azizabdualiyev.
@@ -13,7 +13,7 @@ Flutter-приложение-компаньон для заучивания Ко
 - `just_audio` + `audio_service` + `audio_session` — плеер с lock screen.
 - `shared_preferences` — локальное состояние; `flutter_secure_storage` — токены.
 - `http` — API; `google_sign_in` 7.x, `sign_in_with_apple`; `google_fonts` (Inter, Amiri Quran); `flutter_svg`.
-- iOS bundle и Android applicationId — `com.abdualiev088.hifz`, team `QQLG5SP5R2`. Подпись Android-релиза — `android/key.properties` (не в git).
+- iOS bundle и Android applicationId — `com.abdualiev088.qori`, team `QQLG5SP5R2`. Подпись Android-релиза — `android/key.properties` (не в git).
 
 ## Структура `lib/`
 | Файл | Что |
@@ -24,8 +24,8 @@ Flutter-приложение-компаньон для заучивания Ко
 | `data/surahs.dart` | Имена и число аятов 114 сур, `SurahProgress`, `sampleSurahProgress()` (только для превью/тестов). |
 | `data/al_qalam.dart` | Сгенерировано (не править руками): текст суры 68 (ar/en), `basmala`, `ayahDurations` (индекс 0 = басмала). |
 | `data/learned_store.dart` | `LearnedStore` (ChangeNotifier): выученные аяты, prefs `hifdth.learned.v1` = `{"68":[1,2,3]}`. `commit()` заменяет набор суры целиком, `applyServer(json, keep:)`. |
-| `data/api_client.dart` | `ApiClient`: JSON, bearer, авто-refresh при 401 (кроме `/auth/*`), `ApiException {status, code, message, fields, body}`, status 0 = offline. URL: `--dart-define=HIFZ_API_URL`, иначе `http://127.0.0.1:8000/v1` (Android-эмулятор `10.0.2.2`). |
-| `data/auth_api.dart` | `AuthApi`, `HifzUser{id,email,displayName,isGuest,hasPassword}`. Email-first: `/auth/email/check`, `/signin`, `/signup`, `/auth/password/reset`, `/auth/social`, `/auth/signout`, `GET/PATCH/DELETE /me`. |
+| `data/api_client.dart` | `ApiClient`: JSON, bearer, авто-refresh при 401 (кроме `/auth/*`), `ApiException {status, code, message, fields, body}`, status 0 = offline. URL: `--dart-define=QORI_API_URL`, иначе `http://127.0.0.1:8000/v1` (Android-эмулятор `10.0.2.2`). |
+| `data/auth_api.dart` | `AuthApi`, `QoriUser{id,email,displayName,isGuest,hasPassword}`. Email-first: `/auth/email/check`, `/signin`, `/signup`, `/auth/password/reset`, `/auth/social`, `/auth/signout`, `GET/PATCH/DELETE /me`. |
 | `data/progress_sync.dart` | `ProgressSync`: гостевой аккаунт `/auth/guest`, очередь `hifdth.sync.pending.v1`, `/progress/merge` (union) при смене аккаунта (`hifdth.sync.merged.v1`), `PUT /progress/{surah}` с `updated_at`, 409 → берём серверный набор, потом `GET /progress`. |
 | `data/social_sign_in.dart` | Нативные Apple/Google. Google требует `--dart-define` `GOOGLE_IOS_CLIENT_ID` / `GOOGLE_SERVER_CLIENT_ID`. Отмена → `SignInCancelled`. |
 | `player/player_controller.dart` | Плеер (порт из `Player.dc.html`): repeat (1,3,5,7,10,0=∞), autoNext, loopSelected, выделение-очередь; prefs `hifdth.qalam.*`. Аудио `assets/audio/068_NNN.mp3` (000 = басмала). |
@@ -63,5 +63,5 @@ Flutter-приложение-компаньон для заучивания Ко
 flutter pub get
 flutter analyze
 flutter test
-flutter run --dart-define=HIFZ_API_URL=http://127.0.0.1:8000/v1
+flutter run --dart-define=QORI_API_URL=http://127.0.0.1:8000/v1
 ```

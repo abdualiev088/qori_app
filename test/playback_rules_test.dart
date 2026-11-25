@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hifz_app/player/playback_rules.dart';
+import 'package:qori_app/player/playback_rules.dart';
 
 void main() {
   group('nextAfter', () {

@@ -1268,7 +1268,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get soon => 'Soon';
 
   @override
-  String get madeWithCare => 'Hifz · made for those who memorize the Quran';
+  String get madeWithCare => 'Qori · made for those who memorize the Quran';
 
   @override
   String get langEnglish => 'English';

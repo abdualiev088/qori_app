@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hifz_app/data/surahs.dart';
-import 'package:hifz_app/theme/tokens.dart';
-import 'package:hifz_app/widgets/quran_progress_card.dart';
+import 'package:qori_app/data/surahs.dart';
+import 'package:qori_app/theme/tokens.dart';
+import 'package:qori_app/widgets/quran_progress_card.dart';
 
 void main() {
   setUp(() => HText.useGoogleFonts = false);

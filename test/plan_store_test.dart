@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hifz_app/data/plan.dart';
-import 'package:hifz_app/data/plan_store.dart';
+import 'package:qori_app/data/plan.dart';
+import 'package:qori_app/data/plan_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Plan plan({int lines = 5}) => Plan(

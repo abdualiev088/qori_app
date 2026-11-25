@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:hifz_app/data/auth_api.dart';
+import 'package:qori_app/data/auth_api.dart';
 
 /// Stands in for the server in widget tests: an email counts as known once it
 /// has created an account, and [failNext] makes the next call throw.
@@ -9,13 +9,13 @@ class FakeAuthApi extends ChangeNotifier implements AuthApi {
   /// Thrown by the next call, then cleared.
   Object? failNext;
 
-  HifzUser? _user;
+  QoriUser? _user;
 
   @override
-  HifzUser? get user => _user;
+  QoriUser? get user => _user;
 
   @override
-  set user(HifzUser? value) {
+  set user(QoriUser? value) {
     _user = value;
     notifyListeners();
   }
@@ -53,7 +53,7 @@ class FakeAuthApi extends ChangeNotifier implements AuthApi {
 
   /// What the real AuthApi does on success: [user] becomes a signed-in account.
   void _signInAs({String? email, String name = '', bool hasPassword = true}) =>
-      user = HifzUser(id: 'u1', email: email?.trim().toLowerCase(), displayName: name, hasPassword: hasPassword);
+      user = QoriUser(id: 'u1', email: email?.trim().toLowerCase(), displayName: name, hasPassword: hasPassword);
 
   @override
   Future<void> sendPasswordReset(String email) => _maybeFail();
@@ -79,7 +79,7 @@ class FakeAuthApi extends ChangeNotifier implements AuthApi {
   Future<void> updateName(String name) async {
     await _maybeFail();
     final u = user!;
-    user = HifzUser(id: u.id, email: u.email, displayName: name.trim(), hasPassword: u.hasPassword);
+    user = QoriUser(id: u.id, email: u.email, displayName: name.trim(), hasPassword: u.hasPassword);
   }
 
   @override

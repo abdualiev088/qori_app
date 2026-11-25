@@ -10,10 +10,10 @@ export 'api_client.dart' show ApiException;
 export 'social_sign_in.dart' show SignInCancelled;
 
 /// The signed-in user, as the server describes them.
-class HifzUser {
-  const HifzUser({required this.id, this.email, this.displayName = '', this.isGuest = false, this.hasPassword = false});
+class QoriUser {
+  const QoriUser({required this.id, this.email, this.displayName = '', this.isGuest = false, this.hasPassword = false});
 
-  factory HifzUser.fromJson(Map<String, dynamic> json) => HifzUser(
+  factory QoriUser.fromJson(Map<String, dynamic> json) => QoriUser(
         id: json['id'] as String,
         email: json['email'] as String?,
         displayName: (json['display_name'] as String?) ?? '',
@@ -53,7 +53,7 @@ class AuthApi extends ChangeNotifier {
 
   /// Remembers who is signed in, so the app still knows offline.
   final SharedPreferences? _prefs;
-  static const userKey = 'hifz.user.v1';
+  static const userKey = 'qori.user.v1';
 
   /// Runs after every successful sign-in or sign-up, with the new tokens saved.
   /// [preferAccount] is true when signing in to an account that may already
@@ -65,11 +65,11 @@ class AuthApi extends ChangeNotifier {
   /// The app clears the phone's progress here.
   final Future<void> Function()? onSignedOut;
 
-  HifzUser? _user;
+  QoriUser? _user;
 
-  HifzUser? get user => _user;
+  QoriUser? get user => _user;
 
-  set user(HifzUser? value) {
+  set user(QoriUser? value) {
     _user = value;
     notifyListeners();
     final prefs = _prefs;
@@ -77,11 +77,11 @@ class AuthApi extends ChangeNotifier {
     value == null ? prefs.remove(userKey) : prefs.setString(userKey, jsonEncode(value.toJson()));
   }
 
-  HifzUser? _readCachedUser() {
+  QoriUser? _readCachedUser() {
     final raw = _prefs?.getString(userKey);
     if (raw == null) return null;
     try {
-      return HifzUser.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      return QoriUser.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (_) {
       return null;
     }
@@ -103,7 +103,7 @@ class AuthApi extends ChangeNotifier {
       return true;
     }
     try {
-      user = HifzUser.fromJson(await _client.get('/me') as Map<String, dynamic>);
+      user = QoriUser.fromJson(await _client.get('/me') as Map<String, dynamic>);
       return true;
     } on ApiException catch (e) {
       if (e.isOffline || e.status >= 500) return false;
@@ -113,7 +113,7 @@ class AuthApi extends ChangeNotifier {
   }
 
   Future<void> updateName(String name) async =>
-      user = HifzUser.fromJson(await _client.patch('/me', {'display_name': name.trim()}) as Map<String, dynamic>);
+      user = QoriUser.fromJson(await _client.patch('/me', {'display_name': name.trim()}) as Map<String, dynamic>);
 
   /// Revokes this device's session and clears the phone's progress ([onSignedOut]).
   Future<void> signOut() async {
@@ -178,7 +178,7 @@ class AuthApi extends ChangeNotifier {
   Future<void> _adopt(dynamic response, {bool preferAccount = false}) async {
     final json = response as Map<String, dynamic>;
     await _client.setTokens(Tokens.fromJson(json));
-    user = HifzUser.fromJson(json['user'] as Map<String, dynamic>);
+    user = QoriUser.fromJson(json['user'] as Map<String, dynamic>);
     await onSignedIn?.call(preferAccount: preferAccount);
   }
 }

@@ -24,7 +24,7 @@ Future<void> main() async {
   final handler = await AudioService.init(
     builder: HifdthAudioHandler.new,
     config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.abdualiev088.hifz.playback',
+      androidNotificationChannelId: 'com.abdualiev088.qori.playback',
       androidNotificationChannelName: 'Hifdth playback',
       androidNotificationOngoing: true,
     ),
@@ -44,7 +44,7 @@ Future<void> main() async {
   final sync = ProgressSync(client: api, store: learned, prefs: prefs)..attach();
   final auth = AuthApi(api, onSignedIn: sync.accountChanged, onSignedOut: sync.signedOut, prefs: prefs);
   // Draw first; the audio session, the first ayah and the sync start in the background.
-  runApp(HifzApp(player: player, learned: learned, auth: auth, plans: plans, locale: locale));
+  runApp(QoriApp(player: player, learned: learned, auth: auth, plans: plans, locale: locale));
   // Who is signed in decides everything else: a session that isn't a real
   // account (a guest from an older version) is dropped, then progress syncs.
   unawaited(auth.loadMe().then((_) => auth.dropUnlessSignedIn()).then((_) => sync.sync()));
@@ -58,8 +58,8 @@ Future<void> main() async {
   await player.init();
 }
 
-class HifzApp extends StatelessWidget {
-  const HifzApp({
+class QoriApp extends StatelessWidget {
+  const QoriApp({
     super.key,
     required this.player,
     required this.learned,
@@ -79,7 +79,7 @@ class HifzApp extends StatelessWidget {
 
   Widget _app() {
     return MaterialApp(
-      title: 'Hifz',
+      title: 'Qori',
       debugShowCheckedModeBanner: false,
       locale: locale.locale,
       supportedLocales: AppLocalizations.supportedLocales,

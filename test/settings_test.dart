@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hifz_app/data/locale_store.dart';
-import 'package:hifz_app/l10n/app_localizations.dart';
-import 'package:hifz_app/l10n/plan_text.dart';
-import 'package:hifz_app/player/player_controller.dart';
-import 'package:hifz_app/screens/settings_screen.dart';
-import 'package:hifz_app/theme/tokens.dart';
+import 'package:qori_app/data/locale_store.dart';
+import 'package:qori_app/l10n/app_localizations.dart';
+import 'package:qori_app/l10n/plan_text.dart';
+import 'package:qori_app/player/player_controller.dart';
+import 'package:qori_app/screens/settings_screen.dart';
+import 'package:qori_app/theme/tokens.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fake_audio_engine.dart';

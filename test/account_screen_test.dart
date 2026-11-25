@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hifz_app/data/auth_api.dart';
-import 'package:hifz_app/screens/account_screen.dart';
-import 'package:hifz_app/theme/tokens.dart';
+import 'package:qori_app/data/auth_api.dart';
+import 'package:qori_app/screens/account_screen.dart';
+import 'package:qori_app/theme/tokens.dart';
 
 import 'fake_auth_api.dart';
 import 'l10n_en.dart';
@@ -17,7 +17,7 @@ void main() {
   setUp(() => HText.useGoogleFonts = false);
 
   FakeAuthApi signedIn({bool hasPassword = true}) =>
-      FakeAuthApi()..user = HifzUser(id: '1', email: 'aziz@mail.com', displayName: 'Aziz', hasPassword: hasPassword);
+      FakeAuthApi()..user = QoriUser(id: '1', email: 'aziz@mail.com', displayName: 'Aziz', hasPassword: hasPassword);
 
   Future<void> open(WidgetTester tester, AuthApi api) async {
     tester.view

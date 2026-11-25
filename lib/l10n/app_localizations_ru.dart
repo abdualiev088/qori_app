@@ -1325,7 +1325,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get soon => 'Скоро';
 
   @override
-  String get madeWithCare => 'Hifz · для тех, кто учит Коран наизусть';
+  String get madeWithCare => 'Qori · для тех, кто учит Коран наизусть';
 
   @override
   String get langEnglish => 'Английский';

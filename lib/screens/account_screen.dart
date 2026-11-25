@@ -25,7 +25,7 @@ class _AccountScreenState extends State<AccountScreen> {
   bool _busy = false;
 
   /// Kept here so the page can still draw while it closes after logging out.
-  late HifzUser _user = widget.api.user!;
+  late QoriUser _user = widget.api.user!;
 
   @override
   void initState() {

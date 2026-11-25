@@ -5,11 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
-/// Where the Hifz API lives. Pass `--dart-define=HIFZ_API_URL=https://api.example.com/v1`
+/// Where the Qori API lives. Pass `--dart-define=QORI_API_URL=https://api.example.com/v1`
 /// for a deployed server; without it, a dev server on this machine
 /// (the Android emulator reaches the host at 10.0.2.2).
 String defaultApiUrl() {
-  const fromEnv = String.fromEnvironment('HIFZ_API_URL');
+  const fromEnv = String.fromEnvironment('QORI_API_URL');
   if (fromEnv.isNotEmpty) return fromEnv;
   return defaultTargetPlatform == TargetPlatform.android ? 'http://10.0.2.2:8000/v1' : 'http://127.0.0.1:8000/v1';
 }
@@ -30,7 +30,7 @@ class ApiException implements Exception {
   ApiException(this.status, this.code, this.message, {this.fields = const {}, this.body});
 
   factory ApiException.offline([String? detail]) => ApiException(0, 'offline',
-      "Can't reach Hifz right now. Check your connection and try again.${detail == null ? '' : '\n\n$detail'}");
+      "Can't reach Qori right now. Check your connection and try again.${detail == null ? '' : '\n\n$detail'}");
 
   /// The HTTP status, or 0 when the server couldn't be reached.
   final int status;
@@ -72,7 +72,7 @@ abstract class TokenStore {
 class SecureTokenStore implements TokenStore {
   SecureTokenStore([this._storage = const FlutterSecureStorage()]);
 
-  static const _key = 'hifz.tokens.v1';
+  static const _key = 'qori.tokens.v1';
   final FlutterSecureStorage _storage;
 
   @override
@@ -102,7 +102,7 @@ class MemoryTokenStore implements TokenStore {
   Future<void> write(Tokens? tokens) async => this.tokens = tokens;
 }
 
-/// JSON over HTTPS to the Hifz API, with the session's bearer token.
+/// JSON over HTTPS to the Qori API, with the session's bearer token.
 ///
 /// An expired access token is refreshed once and the call retried. If the
 /// refresh token is rejected too, the session is cleared and the call fails

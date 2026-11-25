@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hifz_app/theme/tokens.dart';
-import 'package:hifz_app/widgets/hifdth_card.dart';
-import 'package:hifz_app/widgets/hifdth_mood.dart';
-import 'package:hifz_app/widgets/ribbed_glass.dart';
+import 'package:qori_app/theme/tokens.dart';
+import 'package:qori_app/widgets/hifdth_card.dart';
+import 'package:qori_app/widgets/hifdth_mood.dart';
+import 'package:qori_app/widgets/ribbed_glass.dart';
 import 'l10n_en.dart';
 
 void main() {

@@ -1,8 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hifz_app/theme/tokens.dart';
-import 'package:hifz_app/widgets/glass.dart';
+import 'package:qori_app/theme/tokens.dart';
+import 'package:qori_app/widgets/glass.dart';
 
 void main() {
   setUp(() => HText.useGoogleFonts = false);

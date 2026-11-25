@@ -1,12 +1,12 @@
-# Hifz: business logic
+# Qori: business logic
 
 The rules the app follows, in plain words. If this file and the code disagree, the code wins: fix this file in the same change.
 
 Status tags: **live** (works today), **placeholder** (hardcoded until the real logic exists), **planned** (not built).
 
-## 1. What Hifz is
+## 1. What Qori is
 
-Hifz helps a person memorise the Quran (hifdth). Hifdth, a round green mascot, reflects how the user is doing and talks to them. The app works fully offline and syncs to the Hifz server when it can.
+Qori helps a person memorise the Quran (hifdth). Hifdth, a round green mascot, reflects how the user is doing and talks to them. The app works fully offline and syncs to the Qori server when it can.
 
 ## 2. Core facts
 

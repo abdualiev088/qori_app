@@ -1946,7 +1946,7 @@ abstract class AppLocalizations {
   /// No description provided for @madeWithCare.
   ///
   /// In en, this message translates to:
-  /// **'Hifz · made for those who memorize the Quran'**
+  /// **'Qori · made for those who memorize the Quran'**
   String get madeWithCare;
 
   /// No description provided for @langEnglish.

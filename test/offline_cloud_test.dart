@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hifz_app/data/auth_api.dart';
-import 'package:hifz_app/data/learned_store.dart';
-import 'package:hifz_app/screens/home_screen.dart';
-import 'package:hifz_app/theme/tokens.dart';
-import 'package:hifz_app/widgets/hifdth_card.dart';
-import 'package:hifz_app/widgets/quran_progress_card.dart';
-import 'package:hifz_app/widgets/signed_out_card.dart';
+import 'package:qori_app/data/auth_api.dart';
+import 'package:qori_app/data/learned_store.dart';
+import 'package:qori_app/screens/home_screen.dart';
+import 'package:qori_app/theme/tokens.dart';
+import 'package:qori_app/widgets/hifdth_card.dart';
+import 'package:qori_app/widgets/quran_progress_card.dart';
+import 'package:qori_app/widgets/signed_out_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fake_auth_api.dart';
@@ -29,7 +29,7 @@ void main() {
     addTearDown(tester.view.reset);
     SharedPreferences.setMockInitialValues({});
     final learned = LearnedStore.load(await SharedPreferences.getInstance());
-    final auth = FakeAuthApi()..user = const HifzUser(id: '1', email: 'a@b.co');
+    final auth = FakeAuthApi()..user = const QoriUser(id: '1', email: 'a@b.co');
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(body: HomeScreen(bottomInset: 0, learned: learned, auth: auth, now: DateTime(2026, 11, 19, 9))),
     ));
@@ -79,7 +79,7 @@ void main() {
     expect(find.byType(HifdthCard), findsOneWidget); // the rest of Home stays
     expect(find.bySemanticsLabel('Profile'), findsOneWidget);
 
-    auth.user = const HifzUser(id: '1', email: 'a@b.co');
+    auth.user = const QoriUser(id: '1', email: 'a@b.co');
     await tester.pump();
     expect(find.byType(SignedOutCard), findsNothing);
     expect(find.byType(QuranProgressCard), findsOneWidget);
