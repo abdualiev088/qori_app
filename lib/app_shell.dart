@@ -2,20 +2,24 @@ import 'package:flutter/material.dart';
 
 import 'data/auth_api.dart';
 import 'data/learned_store.dart';
+import 'data/plan_store.dart';
 import 'player/player_controller.dart';
 import 'screens/home_screen.dart';
+import 'screens/method_screen.dart';
 import 'screens/player_tab.dart';
 import 'theme/tokens.dart';
 import 'widgets/glass.dart';
 import 'widgets/mini_player.dart';
+import 'widgets/toast.dart';
 
-/// Page background, bottom glow, the two tabs (Home, Player) and the floating glass nav.
+/// Page background, bottom glow, the three tabs (Home, Player, My Method) and the floating glass nav.
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.player, required this.learned, required this.auth});
+  const AppShell({super.key, required this.player, required this.learned, required this.auth, required this.plans});
 
   final PlayerController player;
   final LearnedStore learned;
   final AuthApi auth;
+  final PlanStore plans;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -65,7 +69,7 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    // Home scrolls under the nav with an 18 px gap; Player sits 12 px above it.
+    // Home and My Method scroll under the nav with an 18 px gap; Player sits 12 px above it.
     const contentInset = _bottom + _navHeight;
 
     return Scaffold(
@@ -83,7 +87,13 @@ class _AppShellState extends State<AppShell> {
               child: IndexedStack(
                 index: _tab.index,
                 children: [
-                  HomeScreen(bottomInset: contentInset + 18, learned: widget.learned, auth: widget.auth),
+                  HomeScreen(
+                    bottomInset: contentInset + 18,
+                    learned: widget.learned,
+                    auth: widget.auth,
+                    plans: widget.plans,
+                    onOpenMethod: () => _select(HTab.method),
+                  ),
                   PlayerTab(
                     navigatorKey: _playerNav,
                     observer: _playerObserver,
@@ -92,6 +102,14 @@ class _AppShellState extends State<AppShell> {
                     listBottomInset: _listInset,
                     playerBottomInset: contentInset,
                     titleFocus: _surahsTitle,
+                  ),
+                  MethodScreen(
+                    store: widget.plans,
+                    bottomInset: contentInset,
+                    onSaved: (message) {
+                      _select(HTab.home);
+                      Toast.show(context, message);
+                    },
                   ),
                 ],
               ),

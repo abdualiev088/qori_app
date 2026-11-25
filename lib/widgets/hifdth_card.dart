@@ -7,14 +7,39 @@ import 'package:flutter/material.dart';
 import '../theme/tokens.dart';
 import 'hifdth_mood.dart';
 import 'hifdth_painter.dart';
+import 'progress_indicators.dart';
 import 'ribbed_glass.dart';
 
-/// Home's main card: Hifdth and the status pill on a ribbed background.
-/// Everything follows [mood] and morphs when it changes.
+/// Home's main card: Hifdth, the status pill and today's progress on a ribbed
+/// background. Everything follows [mood] and morphs when it changes.
 class HifdthCard extends StatefulWidget {
-  const HifdthCard({super.key, required this.mood, this.characterAway = false});
+  const HifdthCard({
+    super.key,
+    required this.mood,
+    this.steps = const [],
+    this.characterAway = false,
+    this.title = "TODAY'S PROGRESS",
+    this.subtitle,
+    this.status,
+    this.onToggle,
+    this.empty,
+  });
 
   final HifdthMood mood;
+  final List<DayStep> steps;
+
+  /// The white panel's label, and the line under it ("Day 4 of 50").
+  final String title;
+  final String? subtitle;
+
+  /// Replaces the mood's pill text (no plan, rest day, all done).
+  final String? status;
+
+  /// Makes the steps checkboxes.
+  final ValueChanged<int>? onToggle;
+
+  /// Shown in place of the steps when there are none (no plan, rest day…).
+  final Widget? empty;
 
   /// Hides the character (keeping its space) while it's somewhere else on screen.
   final bool characterAway;
@@ -105,6 +130,7 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     const radius = BorderRadius.all(Radius.circular(HRadii.homeCard));
+    final done = widget.steps.where((s) => s.done).length;
 
     return AnimatedBuilder(
       animation: _morph,
@@ -125,7 +151,57 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
                 children: [
                   hifdth,
                   const SizedBox(height: 16),
-                  _StatusPill(text: style.status, dot: style.accent),
+                  _StatusPill(text: widget.status ?? style.status, dot: style.accent),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: HColors.surface,
+                      borderRadius: BorderRadius.circular(HRadii.card),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(widget.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: HText.inter(
+                                      size: 12, weight: FontWeight.w600, letterSpacing: 0.6, color: HColors.ink2)),
+                            ),
+                            // "Day 4/50" as a small chip; the bar and the ticks show today's progress.
+                            if (widget.subtitle case final sub?)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration:
+                                    BoxDecoration(color: HColors.bgTop, borderRadius: BorderRadius.circular(999)),
+                                child: Text(sub,
+                                    style: HText.inter(
+                                        size: 12, weight: FontWeight.w600, color: HColors.ink2, tabular: true)),
+                              ),
+                          ],
+                        ),
+                        if (widget.steps.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Semantics(
+                            label: '$done of ${widget.steps.length} done',
+                            excludeSemantics: true,
+                            child: SegmentedProgressBar(
+                              fills: [for (final s in widget.steps) s.done ? 1 : 0],
+                              color: style.accent,
+                            ),
+                          ),
+                          SizedBox(height: widget.onToggle == null ? 14 : 4),
+                          StepTimeline(steps: widget.steps, onToggle: widget.onToggle),
+                        ] else if (widget.empty case final empty?) ...[
+                          const SizedBox(height: 12),
+                          empty,
+                        ],
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -295,32 +371,101 @@ class _Hifdth extends StatelessWidget {
   }
 }
 
-class _StatusPill extends StatelessWidget {
+/// The status line under Hifdth. When the text changes (a task ticked, the
+/// mood shifting) the new words stream in one after another, like the speech
+/// bubble's, and the pill eases to its new width. The first text just shows.
+class _StatusPill extends StatefulWidget {
   const _StatusPill({required this.text, required this.dot});
 
   final String text;
   final Color dot;
 
   @override
-  Widget build(BuildContext context) => Container(
+  State<_StatusPill> createState() => _StatusPillState();
+}
+
+class _StatusPillState extends State<_StatusPill> with SingleTickerProviderStateMixin {
+  /// A new word starts this often; each one fades in over [_fade] (the bubble's timing).
+  static const _step = 55;
+  static const _fade = 160;
+
+  List<String> get _words => widget.text.split(' ');
+  int get _total => (_words.length - 1) * _step + _fade;
+
+  late final _typing = AnimationController(vsync: this, duration: Duration(milliseconds: _total), value: 1);
+
+  @override
+  void didUpdateWidget(_StatusPill old) {
+    super.didUpdateWidget(old);
+    if (old.text == widget.text) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _typing.value = 1;
+    } else {
+      _typing
+        ..duration = Duration(milliseconds: _total)
+        ..forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _typing.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduce = MediaQuery.disableAnimationsOf(context);
+    final style = HText.inter(size: 13, weight: FontWeight.w500, color: HColors.pillInk);
+    return Semantics(
+      liveRegion: true,
+      label: widget.text,
+      excludeSemantics: true,
+      child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.75),
           borderRadius: BorderRadius.circular(999),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(text, style: HText.inter(size: 13, weight: FontWeight.w500, color: HColors.pillInk)),
-            ),
-          ],
+        child: AnimatedSize(
+          duration: reduce ? Duration.zero : const Duration(milliseconds: 220),
+          curve: Curves.easeInOut,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: widget.dot, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: AnimatedBuilder(
+                  animation: _typing,
+                  builder: (context, _) {
+                    final ms = _typing.value * _total;
+                    final words = _words;
+                    // Words not written yet are laid out but clear, so nothing reflows while it types.
+                    return Text.rich(
+                      TextSpan(style: style, children: [
+                        for (var i = 0; i < words.length; i++)
+                          TextSpan(
+                            text: i < words.length - 1 ? '${words[i]} ' : words[i],
+                            style: TextStyle(
+                              color: HColors.pillInk.withValues(
+                                alpha: Curves.easeOut.transform(((ms - i * _step) / _fade).clamp(0.0, 1.0)),
+                              ),
+                            ),
+                          ),
+                      ]),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
-      );
+      ),
+    );
+  }
 }

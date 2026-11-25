@@ -28,10 +28,10 @@ void main() {
     expect(selected, [HTab.player]);
   });
 
-  testWidgets('the first release has only Home and Player', (tester) async {
+  testWidgets('the nav has Home, Player and My Method; Settings waits until it has content', (tester) async {
     await pumpNav(tester);
-    expect(HTab.values, [HTab.home, HTab.player]);
-    expect(find.text('My Method'), findsNothing);
+    expect(HTab.values, [HTab.home, HTab.player, HTab.method]);
+    expect(find.text('My Method'), findsOneWidget);
     expect(find.text('Settings'), findsNothing);
   });
 

@@ -7,12 +7,18 @@ import 'package:flutter/material.dart';
 
 import '../data/auth_api.dart';
 import '../data/learned_store.dart';
+import '../data/plan.dart';
+import '../data/plan_store.dart';
 import '../data/surahs.dart';
 import '../theme/tokens.dart';
+import '../widgets/auth_widgets.dart' show PrimaryButton;
 import '../widgets/glass.dart';
 import '../widgets/hifdth_card.dart';
 import '../widgets/hifdth_mood.dart';
 import '../widgets/learned_sheet.dart';
+import '../widgets/method_explainer.dart' show Method33;
+import '../widgets/mushaf_icon.dart';
+import '../widgets/progress_indicators.dart';
 import '../widgets/quran_progress_card.dart';
 import '../widgets/signed_out_card.dart';
 import '../widgets/speech_bubble.dart';
@@ -20,10 +26,7 @@ import '../widgets/toast.dart';
 import 'account_screen.dart';
 import 'auth_screen.dart';
 
-/// Sessions whose time has passed without being done. Always 0 until there is
-/// a schedule, so Hifdth stays happy; the daily plan, goal and streak cards come
-/// back with the schedule (removed for the first release, see git history).
-const _sessionsBehind = 0;
+const _weekLetters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 const _weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const _months = [
@@ -32,7 +35,20 @@ const _months = [
 ];
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.bottomInset, required this.learned, this.now, this.auth});
+  const HomeScreen(
+      {super.key,
+      required this.bottomInset,
+      required this.learned,
+      this.now,
+      this.auth,
+      this.plans,
+      this.onOpenMethod});
+
+  /// The memorization plan and its ticks. Without it Home shows "No plan yet".
+  final PlanStore? plans;
+
+  /// Opens the My Method tab (set up or change the plan).
+  final VoidCallback? onOpenMethod;
 
   /// Which ayahs are learned; the Quran progress card follows it.
   final LearnedStore learned;
@@ -109,6 +125,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     super.initState();
     _scroll.addListener(_followScroll);
     widget.auth?.addListener(_authChanged);
+    widget.plans?.addListener(_planChanged);
+  }
+
+  void _planChanged() {
+    if (mounted) setState(() {});
+  }
+
+  DateTime get _now => widget.now ?? DateTime.now();
+
+  /// Ticks or unticks today's task [i]; finishing the day says well done.
+  Future<void> _toggle(List<PlanTask> tasks, int i) async {
+    final store = widget.plans;
+    if (store == null) return;
+    final now = _now;
+    final wasDone = store.allDone(now);
+    await store.toggle(now, tasks[i].id);
+    if (!wasDone && store.allDone(now) && mounted) Toast.show(context, "Today's plan is done. Well done!");
   }
 
   @override
@@ -123,6 +156,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void dispose() {
     widget.auth?.removeListener(_authChanged);
+    widget.plans?.removeListener(_planChanged);
     _quiet?.cancel();
     _fly.dispose();
     _scroll.dispose();
@@ -218,10 +252,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    final t = widget.now ?? DateTime.now();
+    final t = _now;
     final greeting = t.hour < 12 ? 'Good morning' : (t.hour < 18 ? 'Good afternoon' : 'Good evening');
     final top = MediaQuery.paddingOf(context).top + 9;
-    final mood = moodFor(sessionsBehind: _sessionsBehind);
+    final today = _Today.of(widget.plans, t);
+    final mood = moodFor(sessionsBehind: today.behind);
     final landed = _fly.isCompleted;
     final cornerBottom = _cornerBottom;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -255,7 +290,56 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ],
                   ),
                   const SizedBox(height: 18),
-                  HifdthCard(key: _cardKey, mood: mood, characterAway: !_fly.isDismissed),
+                  HifdthCard(
+                    key: _cardKey,
+                    mood: mood,
+                    characterAway: !_fly.isDismissed,
+                    title: "TODAY'S PLAN",
+                    subtitle: today.subtitle,
+                    status: today.status,
+                    steps: [
+                      for (final task in today.tasks)
+                        DayStep(
+                          title: task.range,
+                          subtitle: '${task.title}. ${task.subtitle}',
+                          time: task.time,
+                          morning: task.morning,
+                          tags: task.morning ? ['Recite 33×', task.amount] : ['Memorize', task.amount, 'by 22:00'],
+                          done: widget.plans!.isDone(t, task.id),
+                        ),
+                    ],
+                    onToggle: (i) => _toggle(today.tasks, i),
+                    empty: _DayMessage(
+                      icon: today.icon,
+                      title: today.message,
+                      detail: today.detail,
+                      action: today.action,
+                      onAction: widget.onOpenMethod,
+                    ),
+                  ),
+                  if (widget.plans?.plan case final plan?) ...[
+                    const SizedBox(height: 18),
+                    _PlanCard(plan: plan, today: today, onChange: widget.onOpenMethod),
+                  ],
+                  const SizedBox(height: 18),
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: _GoalCard(value: today.goal, caption: today.goalCaption)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _StreakCard(
+                            streak: widget.plans?.streak(t) ?? 0,
+                            days: [
+                              for (final (i, done) in (widget.plans?.week(t) ?? List.filled(7, false)).indexed)
+                                StreakDay(_weekLetters[i], done),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 18),
                   // Signed out, progress can't be changed: the locked card asks to sign in instead.
                   if (_signedIn)
@@ -584,6 +668,339 @@ class _QuranProgressState extends State<_QuranProgress> {
             widget.onOpen();
             showLearnedSheet(context, store: widget.learned, surah: i + 1);
           },
+        ),
+      );
+}
+
+class _GoalCard extends StatelessWidget {
+  const _GoalCard({required this.value, required this.caption});
+
+  final double value;
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        decoration: BoxDecoration(color: HColors.surface, borderRadius: BorderRadius.circular(HRadii.card)),
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            ProgressRing(value: value),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Daily goal', style: HText.inter(size: 14, weight: FontWeight.w600)),
+                  const SizedBox(height: 2),
+                  Text(caption, style: HText.inter(size: 13, color: HColors.ink2)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+}
+
+class _StreakCard extends StatelessWidget {
+  const _StreakCard({required this.streak, required this.days});
+
+  /// Fully done study days in a row.
+  final int streak;
+
+  /// This week, Monday to Sunday.
+  final List<StreakDay> days;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(color: HColors.surface, borderRadius: BorderRadius.circular(HRadii.card)),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Flexible(
+                child: Text('Streak',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: HText.inter(size: 14, weight: FontWeight.w600)),
+              ),
+              const SizedBox(width: 6),
+              Text('$streak ${streak == 1 ? 'day' : 'days'}',
+                  style: HText.inter(size: 13, color: HColors.ink2, tabular: true)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          StreakBars(days: days),
+        ],
+      ),
+    );
+  }
+}
+
+/// Everything Home shows about today's plan.
+class _Today {
+  const _Today({
+    this.tasks = const [],
+    this.subtitle,
+    this.status,
+    this.icon = Icons.event_note_rounded,
+    this.message = '',
+    this.detail,
+    this.action,
+    this.behind = 0,
+    this.goal = 0,
+    this.goalCaption = 'Nothing due today',
+    this.day,
+    this.total = 0,
+  });
+
+  final List<PlanTask> tasks;
+
+  /// "Day 4/50", as a chip.
+  final String? subtitle;
+
+  /// Pill text, when it isn't the mood's own.
+  final String? status;
+
+  /// Shown when there are no tasks: an icon, a short title, one line, maybe a button.
+  final IconData icon;
+  final String message;
+  final String? detail;
+  final String? action;
+
+  /// Tasks whose time has passed unticked: sets Hifdth's mood.
+  final int behind;
+  final double goal;
+  final String goalCaption;
+
+  /// Study day index today (null on a rest day), and the number of lessons.
+  final int? day;
+  final int total;
+
+  static _Today of(PlanStore? store, DateTime now) {
+    final plan = store?.plan;
+    if (store == null || plan == null) {
+      return const _Today(
+        status: 'Hifdth is waiting for your plan',
+        message: 'No plan yet',
+        detail: "Pick where to start; each day's lesson shows up here.",
+        action: 'Set up my plan',
+      );
+    }
+    final total = plan.lessons.length;
+    final k = plan.lessonIndexOn(now);
+    if (k == null) {
+      return _Today(
+        status: 'Rest day. Hifdth is resting too',
+        icon: Icons.self_improvement_rounded,
+        message: 'Rest day',
+        detail: "Read this week's lessons once, if you like.",
+        total: total,
+      );
+    }
+    if (k < 0) {
+      return _Today(
+        icon: Icons.event_rounded,
+        message: 'Starts ${fmtDate(plan.startDate)}',
+        day: k,
+        total: total,
+      );
+    }
+    if (k >= total) {
+      return _Today(
+        icon: Icons.verified_rounded,
+        message: 'Plan complete',
+        detail: '${plan.positions.length} ayahs, ${nameOf(plan.start.s)} → ${nameOf(plan.end.s)}. Keep revising them.',
+        action: 'Set a new range',
+        day: k,
+        total: total,
+      );
+    }
+    final tasks = plan.tasksFor(k);
+    final done = tasks.where((t) => store.isDone(now, t.id)).length;
+    final left = tasks.length - done;
+    return _Today(
+      tasks: tasks,
+      subtitle: 'Day ${k + 1}/$total',
+      status: left == 0 ? "Today's plan is done. Well done!" : null,
+      behind: store.behind(now),
+      goal: done / tasks.length,
+      goalCaption: left == 0 ? 'All done today' : '$left left today',
+      day: k,
+      total: total,
+    );
+  }
+}
+
+/// No tasks today: an icon, why, and maybe a button to My Method.
+class _DayMessage extends StatelessWidget {
+  const _DayMessage({required this.icon, required this.title, this.detail, this.action, this.onAction});
+
+  final IconData icon;
+  final String title;
+  final String? detail;
+  final String? action;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(color: HColors.mintWash, borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, size: 22, color: HColors.accentDeep),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(title, style: HText.inter(size: 15, weight: FontWeight.w600)),
+                if (detail case final d?) ...[
+                  const SizedBox(height: 2),
+                  Text(d, style: HText.inter(size: 13, height: 1.35, color: HColors.ink2)),
+                ],
+              ]),
+            ),
+          ]),
+          if (action case final label?) ...[
+            const SizedBox(height: 14),
+            PrimaryButton(label: label, compact: true, onPressed: onAction),
+          ],
+        ],
+      );
+}
+
+/// Your plan: the method and range, an edit button, a strip of days, and the
+/// pace, finish date and rest day as small chips.
+class _PlanCard extends StatelessWidget {
+  const _PlanCard({required this.plan, required this.today, this.onChange});
+
+  final Plan plan;
+  final _Today today;
+  final VoidCallback? onChange;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = today.total;
+    final cells = total < 40 ? total : 40;
+    final per = total / cells;
+    final day = today.day;
+    // Which cell is today: none before the start or on a rest day; all done once finished.
+    final now = day == null || day < 0 ? -1 : (day >= total ? cells : (day / per).floor());
+    final dayText = day == null || day < 0 ? '0/$total' : '${day >= total ? total : day + 1}/$total';
+    final rest = plan.restWeekday;
+    return Semantics(
+      container: true,
+      label: 'Your plan',
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 14, 10, 16),
+        decoration: BoxDecoration(color: HColors.surface, borderRadius: BorderRadius.circular(HRadii.card)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            const MushafPlayIcon(size: 44),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(Method33.name, style: HText.inter(size: 16, weight: FontWeight.w600)),
+                const SizedBox(height: 1),
+                Text('${nameOf(plan.start.s)} → ${nameOf(plan.end.s)}',
+                    maxLines: 1, overflow: TextOverflow.ellipsis, style: HText.inter(size: 13, color: HColors.ink2)),
+              ]),
+            ),
+            Semantics(
+              button: true,
+              label: 'Change plan',
+              excludeSemantics: true,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onChange,
+                child: SizedBox.square(
+                  dimension: 44,
+                  child: Center(
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: const BoxDecoration(color: HColors.mintWash, shape: BoxShape.circle),
+                      child: const Icon(Icons.edit_rounded, size: 17, color: HColors.accentDeep),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ]),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: Row(children: [
+              Expanded(
+                child: Semantics(
+                  label: day == null ? 'Rest day' : 'Day $dayText',
+                  excludeSemantics: true,
+                  child: SizedBox(
+                    height: 8,
+                    child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                      for (var i = 0; i < cells; i++) ...[
+                        if (i > 0) const SizedBox(width: 2),
+                        Expanded(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: i < now
+                                  ? HColors.accent
+                                  : i == now
+                                      ? HColors.accentDeep
+                                      : HColors.track,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ]),
+                  ),
+                ),
+              ),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            _Fact(Icons.subject_rounded, '${plan.linesPerDay} ${plan.linesPerDay == 1 ? 'line' : 'lines'}/day'),
+            _Fact(Icons.flag_rounded, fmtDate(plan.finishDate()), label: 'Finishes ${fmtDate(plan.finishDate())}'),
+            if (rest != null)
+              _Fact(Icons.weekend_rounded, '${weekdayNames[rest - 1].substring(0, 3)} off',
+                  label: '${weekdayNames[rest - 1]}s off'),
+          ]),
+        ]),
+      ),
+    );
+  }
+}
+
+/// An icon and a few words, on a soft gray pill.
+class _Fact extends StatelessWidget {
+  const _Fact(this.icon, this.text, {this.label});
+
+  final IconData icon;
+  final String text;
+  final String? label;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        label: label ?? text,
+        excludeSemantics: true,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(7, 4, 9, 4),
+          decoration: BoxDecoration(color: HColors.bgTop, borderRadius: BorderRadius.circular(999)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 14, color: HColors.inkMuted),
+            const SizedBox(width: 4),
+            Text(text, style: HText.inter(size: 12, weight: FontWeight.w500, color: HColors.ink2, tabular: true)),
+          ]),
         ),
       );
 }

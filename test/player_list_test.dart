@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:qori_app/app_shell.dart';
 import 'package:qori_app/data/auth_api.dart';
 import 'package:qori_app/data/learned_store.dart';
+import 'package:qori_app/data/plan_store.dart';
 import 'package:qori_app/data/surah_source.dart';
 import 'package:qori_app/player/player_controller.dart';
 import 'package:qori_app/screens/player_screen.dart';
@@ -44,7 +45,7 @@ void main() {
     await player.init();
     final auth = FakeAuthApi()..user = const QoriUser(id: '1', email: 'a@b.co');
     await tester.pumpWidget(MaterialApp(
-      home: AppShell(player: player, learned: LearnedStore.load(prefs), auth: auth),
+      home: AppShell(player: player, learned: LearnedStore.load(prefs), auth: auth, plans: PlanStore.load(prefs)),
     ));
     await tester.tap(find.text('Player'));
     await settle(tester);

@@ -10,6 +10,7 @@ import 'data/api_client.dart';
 import 'data/audio_cache.dart';
 import 'data/auth_api.dart';
 import 'data/learned_store.dart';
+import 'data/plan_store.dart';
 import 'data/progress_sync.dart';
 import 'player/audio_engine.dart';
 import 'player/audio_handler.dart';
@@ -32,10 +33,11 @@ Future<void> main() async {
   final audio = AudioCache(api: api, prefs: prefs);
   final player = PlayerController(JustAudioEngine(handler), prefs, source: RemoteSurahSource(audio));
   final learned = LearnedStore.load(prefs);
+  final plans = PlanStore.load(prefs);
   final sync = ProgressSync(client: api, store: learned, prefs: prefs)..attach();
   final auth = AuthApi(api, onSignedIn: sync.accountChanged, onSignedOut: sync.signedOut, prefs: prefs);
   // Draw first; the audio session, the first ayah and the sync start in the background.
-  runApp(QoriApp(player: player, learned: learned, auth: auth));
+  runApp(QoriApp(player: player, learned: learned, auth: auth, plans: plans));
   // Who is signed in decides everything else: a session that isn't a real
   // account (a guest from an older version) is dropped, then progress syncs.
   unawaited(auth.loadMe().then((_) => auth.dropUnlessSignedIn()).then((_) => sync.sync()));
@@ -50,11 +52,12 @@ Future<void> main() async {
 }
 
 class QoriApp extends StatelessWidget {
-  const QoriApp({super.key, required this.player, required this.learned, required this.auth});
+  const QoriApp({super.key, required this.player, required this.learned, required this.auth, required this.plans});
 
   final PlayerController player;
   final LearnedStore learned;
   final AuthApi auth;
+  final PlanStore plans;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +69,7 @@ class QoriApp extends StatelessWidget {
         scaffoldBackgroundColor: HColors.bgTop,
         textTheme: ThemeData.light().textTheme.apply(fontFamily: HText.inter().fontFamily),
       ),
-      home: AppShell(player: player, learned: learned, auth: auth),
+      home: AppShell(player: player, learned: learned, auth: auth, plans: plans),
     );
   }
 }

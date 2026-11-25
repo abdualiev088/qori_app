@@ -215,7 +215,7 @@ class _BottomGlowPainter extends CustomPainter {
   bool shouldRepaint(_BottomGlowPainter old) => false;
 }
 
-enum HTab { home, player }
+enum HTab { home, player, method }
 
 /// The liquid-glass bottom nav: 68 tall, radius 34, one equal column per tab.
 ///
@@ -377,6 +377,7 @@ class _NavItem extends StatelessWidget {
     final (icon, label) = switch (tab) {
       HTab.home => (HIcon.home(color, active: active), 'Home'),
       HTab.player => (HIcon.player(color, active: active), 'Player'),
+      HTab.method => (HIcon.method(color, active: active), 'My Method'),
     };
     return Semantics(
       button: true,

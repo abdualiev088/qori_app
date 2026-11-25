@@ -70,29 +70,54 @@ The rules are in `lib/data/progress_sync.dart`.
 - **Offline indicator:** while the server can't be reached, a glass cloud icon (crossed out) appears left of the profile icon on Home, in the same style. Tapping it explains that changes are saved on the phone and will sync when back online. It disappears on the next successful request.
 - **The cloud and profile icons are pinned:** they stay at the top right while the page scrolls under them.
 
-## 7. Hifdth's mood (placeholder rules)
+## 7. Hifdth's mood (live)
 
-- The mood comes from **sessions behind**: sessions whose time passed without being done.
+- The mood comes from **tasks behind**: today's plan tasks whose time passed without being ticked (Morning after 12:00, Evening after 22:00).
   - **0 → happy** ("on track")
   - **1 → worried**
   - **2+ → sad**
 - The mood sets Hifdth's face, the card's colour and the status line.
-- Today `sessionsBehind` is hardcoded to `0`, so Hifdth is always happy. The real value will come from the schedule (section 9). The thresholds are in `moodFor` in `lib/widgets/hifdth_mood.dart`.
+- Some days replace the status line: no plan ("Hifdth is waiting for your plan"), the rest day ("Rest day. Hifdth is resting too") and every task ticked ("Today's plan is done. Well done!"). The thresholds are in `moodFor` in `lib/widgets/hifdth_mood.dart`.
 
 ## 8. Home behaviour (live)
 
 - When the user scrolls down, Hifdth flies from its card to the bottom-right corner and follows the page. Scrolling back up returns it to the card.
 - When about half of the Quran progress section is on screen, Hifdth turns blue, looks left and asks: *"How much of the Quran have you memorised? Tap a surah to tell me."* The question hides after 8 seconds or when the user scrolls away. Tapping it scrolls to the Quran progress card.
 
-## 9. Daily plan, goal and streak (planned)
+## 9. Memorization plan: 33 repetitions (live)
 
-Not shown in the first release: until there is a schedule they could only show made-up numbers. Home has the greeting, Hifdth's card (character and status line) and Quran progress. The old cards (today's sessions, daily goal, streak) are in git history before they were removed.
-
-**Planned:**
-- The user sets a schedule.
-- Completed sessions are logged on the server.
-- Goal, streak and sessions behind are computed from that log **in the user's time zone**.
-- Still open: whether a day counts toward the streak with any one session done, or only with all of them. See `docs/BACKEND.md`.
+- **One method: "33 repetitions".** Learn the new portion in the evening (about an hour), then recite it 33 times from memory on each of the next three mornings.
+- **Set up in My Method.** The first visit shows the full explainer once (stepped diagram, At a glance, Tips). Later visits open on **Set your plan**, with the explainer folded behind "How it works".
+- **The plan:**
+  - Reading order: **from the beginning** (Al-Fatihah first) or **from the end** (An-Nas first; surahs backwards, ayahs forwards). Default: from the end.
+  - Start and end ayah. Default: An-Nas 1 → An-Naba 40. The end must come after the start in the reading order, or the plan can't be saved.
+  - **New lines a day**, 1–30, in lines of the 15-line Madani mushaf. Default: 5.
+  - Rest day: none, Friday, Saturday or Sunday. Default: Friday.
+- **Line lengths are estimated** from each ayah's letters (37.18 letters a line), from the app's own Quran text. `tool/gen_ayah_lines.dart` generates `lib/data/ayah_lines.dart`.
+- **Lessons:** one per study day, about the day's lines of whole ayahs.
+  - A short surah is kept whole, as long as the lesson stays within 1.5× the day's lines.
+  - A lesson ends at a surah boundary once it's half full.
+  - Only long surahs are split.
+  - A single very long ayah (Al-Baqarah 282) is a lesson on its own.
+- **Each study day's tasks:**
+  - **Morning** (from day 2): recite the last 1–3 lessons 33 times from memory.
+  - **Evening:** memorize the day's lesson, before 22:00.
+- **The calendar:**
+  - A new plan starts today.
+  - Rest days have no lesson and push the finish date back.
+  - Changing the plan keeps its start date and today's ticks.
+- **Home:**
+  - "Today's plan" lists the tasks, and the user ticks each one. The morning recitation has an amber sun tile, the evening lesson an indigo moon tile, so the time of day shows at a glance.
+  - The "Your plan" card shows the range, a strip of days, and the pace, finish date and rest day as chips. Its edit button opens My Method.
+  - Rest days, the days before the start and a finished plan each have their own message.
+- **Daily goal:** ticked ÷ today's tasks.
+- **Streak:**
+  - The number of study days in a row with every task ticked.
+  - Rest days are skipped and don't break it.
+  - An unfinished today doesn't break it either: counting starts at yesterday.
+  - The week bars show which of this week's days (Monday to Sunday) were fully done.
+- **Saved on this phone only** (`hifdth.plan.v1`, `hifdth.plan.done.v1`, `hifdth.howseen.v1`). The plan works signed out and isn't synced or cleared on log-out.
+- **Planned:** sync the plan and ticks to the account; more methods.
 
 ## 10. Player (live)
 
@@ -110,6 +135,6 @@ Not shown in the first release: until there is a schedule they could only show m
 
 ## 11. Not built yet
 
-- The bottom nav has two tabs, **Home** and **Player**. **My Method** and **Settings** were removed until they have something in them.
+- The bottom nav has three tabs: **Home**, **Player** and **My Method**. **Settings** was removed for the first release until it has something in it.
 - Changing email or password inside the app (password reset by email works).
 - More reciters and translations.

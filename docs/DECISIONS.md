@@ -54,3 +54,17 @@ Picked from a prototype with three directions (`player-list-proto/DECISION.md`).
 - **Android id** is `com.abdualiev088.qori`, the same as the iOS bundle id; Google Play never allows changing it after the first upload. The app is called "Qori" on both home screens.
 - **Rejected:** keeping the cards with a "coming soon" label. Testers would judge the app by numbers that never move.
 
+## Memorization plan: one method, 33 repetitions (2026-11-24)
+
+From the My Method prototype (`~/method-proto`, `FLUTTER_PROMPT_33.md`), cut down to a single method. This brings back the My Method tab and Home's plan, goal and streak that the first-release cut (above) removed while they were placeholders; Settings stays out.
+
+- **One method, no picker.** My Method explains "33 repetitions" in full on the first visit. After that it opens straight on Set your plan, with "How it works" folded at the top. Editing the plan doesn't fold it or restart its diagram.
+- **The pace is in mushaf lines, not ayahs**, because ayah lengths vary from a few words to a page. Each ayah's length is estimated from its letter count, in the 15-line Madani mushaf. Lessons always end on a whole ayah and keep short surahs whole.
+- **Tasks on Home replace the placeholder sessions.**
+  - A study day has a Morning recitation (33× the last three lessons) and an Evening new lesson.
+  - Ticking a task fills the Daily goal and the Streak, and finishing the day says well done.
+  - Hifdth worries when a task's time passes without a tick.
+- **On the device only, for now.** The plan isn't tied to an account, so it works signed out. Syncing it is planned.
+- **Rejected:**
+  - *A list of methods* (the prototype's eight). The spec asks for one, and a single method keeps the setup short.
+  - *Ayahs a day.* An ayah count means very different amounts in Al-Baqarah and Juz ʿAmma.

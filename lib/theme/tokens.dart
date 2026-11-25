@@ -28,6 +28,23 @@ abstract final class HColors {
   static const starFill = Color(0xFFBFEBD3);
   static const numOnMint = Color(0xFF0B3D27);
 
+  /// Revision, beside new memorizing (accent), in the new-vs-revision split.
+  static const revision = Color(0xFF5FA88A);
+
+  /// Inline errors: text and icon, and the card behind them.
+  static const warn = Color(0xFFA23B26);
+  static const warnSoft = Color(0xFFFBEDEA);
+
+  /// Times of day on plan tasks: a warm sunrise for the morning recitation, a
+  /// deep indigo night for the evening lesson. Tile gradient (light → deep),
+  /// then the soft tag fill and its text.
+  static const morning = [Color(0xFFFFD27A), Color(0xFFFFAE3B), Color(0xFFEE8420)];
+  static const morningSoft = Color(0xFFFFF2DC);
+  static const morningInk = Color(0xFF9A5200);
+  static const evening = [Color(0xFF8B97FF), Color(0xFF4A57D6), Color(0xFF26308C)];
+  static const eveningSoft = Color(0xFFECEEFF);
+  static const eveningInk = Color(0xFF3340B0);
+
   static const track = Color(0xFFE3E8EE);
   static const divider = Color(0xFFEEF1F5);
 
