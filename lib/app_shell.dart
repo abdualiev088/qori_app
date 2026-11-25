@@ -2,24 +2,34 @@ import 'package:flutter/material.dart';
 
 import 'data/auth_api.dart';
 import 'data/learned_store.dart';
+import 'data/locale_store.dart';
 import 'data/plan_store.dart';
 import 'player/player_controller.dart';
 import 'screens/home_screen.dart';
 import 'screens/method_screen.dart';
 import 'screens/player_tab.dart';
+import 'screens/settings_screen.dart';
 import 'theme/tokens.dart';
 import 'widgets/glass.dart';
 import 'widgets/mini_player.dart';
 import 'widgets/toast.dart';
 
-/// Page background, bottom glow, the three tabs (Home, Player, My Method) and the floating glass nav.
+/// Page background, bottom glow, the four tabs (Home, Player, My Method, Settings) and the floating glass nav.
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.player, required this.learned, required this.auth, required this.plans});
+  const AppShell({
+    super.key,
+    required this.player,
+    required this.learned,
+    required this.auth,
+    required this.plans,
+    required this.locale,
+  });
 
   final PlayerController player;
   final LearnedStore learned;
   final AuthApi auth;
   final PlanStore plans;
+  final LocaleStore locale;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -111,6 +121,7 @@ class _AppShellState extends State<AppShell> {
                       Toast.show(context, message);
                     },
                   ),
+                  SettingsScreen(locale: widget.locale, player: widget.player, bottomInset: contentInset),
                 ],
               ),
             ),

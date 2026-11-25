@@ -5,6 +5,7 @@ import 'auth_widgets.dart';
 import 'hifdth_card.dart';
 import 'hifdth_mood.dart';
 import 'speech_bubble.dart';
+import '../l10n/l10n.dart';
 
 /// Home's Quran progress card for someone who isn't signed in: a faded,
 /// locked grid, the guide asking them to sign in, and the two buttons.
@@ -31,16 +32,15 @@ class SignedOutCard extends StatelessWidget {
   /// The guide: a man holding the Quran, cut out of its background.
   static const guideAsset = 'assets/images/hifz_guide.png';
 
-  static const bubbleText = 'Sign in to save your Quran progress';
-
   @override
   Widget build(BuildContext context) {
+    final bubbleText = context.l10n.signInBubble;
     return Container(
       decoration: BoxDecoration(color: HColors.surface, borderRadius: BorderRadius.circular(HRadii.list)),
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(children: [
-          Text('QURAN PROGRESS',
+          Text(context.l10n.quranProgressCaps,
               style: HText.inter(size: 12, weight: FontWeight.w600, color: HColors.ink2, letterSpacing: 0.8)),
           const Spacer(),
           Text.rich(TextSpan(children: [
@@ -77,7 +77,7 @@ class SignedOutCard extends StatelessWidget {
                       title: bubbleText,
                       visible: speaking,
                       onTap: onSignIn,
-                      hint: 'Opens sign-in',
+                      hint: context.l10n.opensSignIn,
                       maxWidth: 180,
                       tailGap: 0,
                     ),
@@ -89,7 +89,7 @@ class SignedOutCard extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Row(children: [
-          Expanded(child: PrimaryButton(label: 'Sign in', onPressed: onSignIn, compact: true)),
+          Expanded(child: PrimaryButton(label: context.l10n.signIn, onPressed: onSignIn, compact: true)),
           const SizedBox(width: 12),
           Expanded(
             child: PressableButton(
@@ -97,12 +97,12 @@ class SignedOutCard extends StatelessWidget {
               height: PressableButton.compactHeight,
               background: Colors.white,
               border: const Color(0xFFDCE2E8),
-              child: Text('Register', style: HText.button(compact: true)),
+              child: Text(context.l10n.register, style: HText.button(compact: true)),
             ),
           ),
         ]),
         const SizedBox(height: 18),
-        Text('Sign in, then tap a surah to mark its ayahs.',
+        Text(context.l10n.signedOutHint,
             key: hintKey, style: HText.inter(size: 13, color: HColors.ink2)),
       ]),
     );

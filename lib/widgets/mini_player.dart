@@ -7,6 +7,7 @@ import '../theme/tokens.dart';
 import 'icons.dart';
 import 'ribbed_glass.dart';
 import 'star.dart';
+import '../l10n/l10n.dart';
 
 /// The bar above the nav while a surah is active and the player is closed:
 /// the surah, where playback is, play/pause and ×. Tapping the left side
@@ -94,7 +95,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
                 Expanded(
                   child: Semantics(
                     button: true,
-                    label: 'Open player. $name, $_summary',
+                    label: context.l10n.openPlayerLabel(name, _summary),
                     excludeSemantics: true,
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
@@ -152,7 +153,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
                 _PlayPause(c: c),
                 Semantics(
                   button: true,
-                  label: 'Stop and close $name',
+                  label: context.l10n.stopAndClose(name),
                   excludeSemantics: true,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
@@ -198,7 +199,7 @@ class _PlayPause extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: enabled,
-      label: c.playing ? 'Pause' : 'Play',
+      label: c.playing ? context.l10n.pause : context.l10n.play,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

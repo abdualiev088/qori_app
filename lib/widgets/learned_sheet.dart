@@ -12,11 +12,11 @@ import '../theme/tokens.dart';
 import 'quran_progress_card.dart' show PercentRing;
 import 'star.dart';
 import 'toast.dart';
+import '../l10n/l10n.dart';
 
 const _tabular = [FontFeature.tabularFigures()];
 const _discardRed = Color(0xFFA23B26);
 
-String _ayahs(int n) => n == 1 ? 'ayah' : 'ayahs';
 
 /// Opens the sheet for marking [surah]'s ayahs learned. Edits stay in a draft
 /// until the user saves them in the "Save changes?" dialog.
@@ -128,7 +128,7 @@ class _LearnedSheetState extends State<_LearnedSheet> {
     _setDraft(on ? {for (var a = 1; a <= _count; a++) a} : {});
     Toast.show(
       context,
-      on ? 'All $_count ${_ayahs(_count)} marked' : 'All ayahs cleared',
+      on ? context.l10n.allAyahsMarked(_count) : context.l10n.allAyahsCleared,
       onUndo: () {
         if (mounted) _setDraft(before);
       },
@@ -153,10 +153,10 @@ class _LearnedSheetState extends State<_LearnedSheet> {
         final learned = _draft.length;
         await widget.store.commit(widget.surah, _draft);
         if (!mounted) return;
-        Toast.show(context, 'Saved · $_name, $learned of $_count ${_ayahs(_count)} learned');
+        Toast.show(context, context.l10n.savedLearned(_name, learned, _count));
         _close();
       case _Choice.discard:
-        Toast.show(context, 'Changes discarded');
+        Toast.show(context, context.l10n.changesDiscarded);
         _close();
       case _Choice.keep || null:
         _doneFocus.requestFocus();
@@ -168,10 +168,10 @@ class _LearnedSheetState extends State<_LearnedSheet> {
     final learned = _draft.length;
     final fraction = learned / _count;
     final status = learned == 0
-        ? 'Not started · $_count ${_ayahs(_count)}'
+        ? context.l10n.learnedNotStarted(_count)
         : learned == _count
-            ? 'Learned · all $_count ${_ayahs(_count)}'
-            : '$learned of $_count ${_ayahs(_count)} learned';
+            ? context.l10n.learnedAll(_count)
+            : context.l10n.learnedSome(learned, _count);
     final (Color stroke, Color? fill, Color numColor) = learned == 0
         ? (HColors.inkMuted, null, HColors.ink2)
         : learned == _count
@@ -205,7 +205,7 @@ class _LearnedSheetState extends State<_LearnedSheet> {
               child: Semantics(
                 header: true,
                 container: true,
-                label: 'Surah ${widget.surah}, $_name. $status',
+                label: context.l10n.surahStatusLabel(widget.surah, _name, status),
                 excludeSemantics: true,
                 child: Row(
                   children: [
@@ -249,7 +249,7 @@ class _LearnedSheetState extends State<_LearnedSheet> {
           const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text('Tap an ayah to mark it, or slide across ayahs to mark several. The dashed one is next.',
+            child: Text(context.l10n.learnedSheetHint,
                 style: HText.inter(size: 13, color: HColors.inkMuted)),
           ),
           const SizedBox(height: 14),
@@ -267,7 +267,7 @@ class _LearnedSheetState extends State<_LearnedSheet> {
               focusNode: _doneFocus,
               onPressed: _attemptClose,
               style: _primaryButton,
-              child: const Text('Done'),
+              child: Text(context.l10n.done),
             ),
           ),
         ],
@@ -296,7 +296,7 @@ class _WholeSurahRow extends StatelessWidget {
     return Semantics(
       button: true,
       toggled: on,
-      label: 'Whole surah learned. Marks all $count ${_ayahs(count)} at once',
+      label: '${context.l10n.wholeSurahLearned}. ${context.l10n.marksAll(count)}',
       excludeSemantics: true,
       child: Material(
         color: HColors.bgTop,
@@ -315,9 +315,9 @@ class _WholeSurahRow extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Whole surah learned', style: HText.inter(size: 15, weight: FontWeight.w600)),
+                        Text(context.l10n.wholeSurahLearned, style: HText.inter(size: 15, weight: FontWeight.w600)),
                         const SizedBox(height: 1),
-                        Text('Marks all $count ${_ayahs(count)} at once',
+                        Text(context.l10n.marksAll(count),
                             style: HText.inter(size: 13, color: HColors.ink2)),
                       ],
                     ),
@@ -605,7 +605,7 @@ class _AyahTile extends StatelessWidget {
     return Semantics(
       button: true,
       toggled: learned,
-      label: 'Ayah $number, ${learned ? 'learned' : 'not learned'}',
+      label: learned ? context.l10n.ayahLearned(number) : context.l10n.ayahNotLearned(number),
       excludeSemantics: true,
       onTap: onToggle,
       child: AnimatedScale(
@@ -704,10 +704,10 @@ class _SaveDialog extends StatelessWidget {
     final marked = draft.difference(saved).length;
     final unmarked = saved.difference(draft).length;
     final changes = [
-      if (marked > 0) '$marked ${_ayahs(marked)} marked learned',
-      if (unmarked > 0) marked > 0 ? '$unmarked unmarked' : '$unmarked ${_ayahs(unmarked)} unmarked',
+      if (marked > 0) context.l10n.markedLearned(marked),
+      if (unmarked > 0) marked > 0 ? context.l10n.unmarkedShort(unmarked) : context.l10n.unmarkedLong(unmarked),
     ].join(', ');
-    final summary = '$changes. You\'ll have ${draft.length} of $count ${_ayahs(count)} learned.';
+    final summary = context.l10n.willHaveLearned(changes, draft.length, count);
 
     return Center(
       child: Padding(
@@ -735,7 +735,7 @@ class _SaveDialog extends StatelessWidget {
                     const SizedBox(height: 12),
                     Semantics(
                       header: true,
-                      child: Text('Save changes?',
+                      child: Text(context.l10n.saveChangesQ,
                           textAlign: TextAlign.center,
                           style: HText.inter(size: 20, weight: FontWeight.w700, letterSpacing: -0.3)),
                     ),
@@ -753,7 +753,7 @@ class _SaveDialog extends StatelessWidget {
                       autofocus: true,
                       onPressed: () => Navigator.of(context).pop(_Choice.save),
                       style: _primaryButton,
-                      child: const Text('Save changes'),
+                      child: Text(context.l10n.saveChanges),
                     ),
                     const SizedBox(height: 8),
                     OutlinedButton(
@@ -765,7 +765,7 @@ class _SaveDialog extends StatelessWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         textStyle: HText.inter(size: 15, weight: FontWeight.w600),
                       ),
-                      child: const Text('Keep editing'),
+                      child: Text(context.l10n.keepEditing),
                     ),
                     const SizedBox(height: 8),
                     TextButton(
@@ -775,7 +775,7 @@ class _SaveDialog extends StatelessWidget {
                         minimumSize: const Size.fromHeight(44),
                         textStyle: HText.inter(size: 14, weight: FontWeight.w600, color: _discardRed),
                       ),
-                      child: const Text('Discard changes'),
+                      child: Text(context.l10n.discardChanges),
                     ),
                   ],
                 ),

@@ -5,9 +5,9 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:qori_app/data/api_client.dart';
-import 'package:qori_app/data/audio_cache.dart';
-import 'package:qori_app/data/surah_source.dart';
+import 'package:hifz_app/data/api_client.dart';
+import 'package:hifz_app/data/audio_cache.dart';
+import 'package:hifz_app/data/surah_source.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// The server's content endpoints and media files, in memory.
@@ -79,7 +79,7 @@ void main() {
 
   setUp(() async {
     server = FakeContentServer();
-    dir = await Directory.systemTemp.createTemp('qori_audio_test');
+    dir = await Directory.systemTemp.createTemp('hifz_audio_test');
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
   });

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:qori_app/data/ayah_lines.dart';
-import 'package:qori_app/data/plan.dart';
+import 'package:hifz_app/data/ayah_lines.dart';
+import 'package:hifz_app/data/plan.dart';
 
 Plan plan({
   ReadingOrder order = ReadingOrder.fromEnd,

@@ -10,11 +10,13 @@ import 'data/api_client.dart';
 import 'data/audio_cache.dart';
 import 'data/auth_api.dart';
 import 'data/learned_store.dart';
+import 'data/locale_store.dart';
 import 'data/plan_store.dart';
 import 'data/progress_sync.dart';
 import 'player/audio_engine.dart';
 import 'player/audio_handler.dart';
 import 'player/player_controller.dart';
+import 'l10n/l10n.dart';
 import 'theme/tokens.dart';
 
 Future<void> main() async {
@@ -22,7 +24,7 @@ Future<void> main() async {
   final handler = await AudioService.init(
     builder: HifdthAudioHandler.new,
     config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.abdualiev088.qori.playback',
+      androidNotificationChannelId: 'com.abdualiev088.hifz.playback',
       androidNotificationChannelName: 'Hifdth playback',
       androidNotificationOngoing: true,
     ),
@@ -34,10 +36,15 @@ Future<void> main() async {
   final player = PlayerController(JustAudioEngine(handler), prefs, source: RemoteSurahSource(audio));
   final learned = LearnedStore.load(prefs);
   final plans = PlanStore.load(prefs);
+  final locale = LocaleStore.load(prefs);
+  // The player's own texts (status line, lock screen) follow the language too.
+  void strings() => player.setStrings(lookupAppLocalizations(locale.locale));
+  strings();
+  locale.addListener(strings);
   final sync = ProgressSync(client: api, store: learned, prefs: prefs)..attach();
   final auth = AuthApi(api, onSignedIn: sync.accountChanged, onSignedOut: sync.signedOut, prefs: prefs);
   // Draw first; the audio session, the first ayah and the sync start in the background.
-  runApp(QoriApp(player: player, learned: learned, auth: auth, plans: plans));
+  runApp(HifzApp(player: player, learned: learned, auth: auth, plans: plans, locale: locale));
   // Who is signed in decides everything else: a session that isn't a real
   // account (a guest from an older version) is dropped, then progress syncs.
   unawaited(auth.loadMe().then((_) => auth.dropUnlessSignedIn()).then((_) => sync.sync()));
@@ -51,25 +58,38 @@ Future<void> main() async {
   await player.init();
 }
 
-class QoriApp extends StatelessWidget {
-  const QoriApp({super.key, required this.player, required this.learned, required this.auth, required this.plans});
+class HifzApp extends StatelessWidget {
+  const HifzApp({
+    super.key,
+    required this.player,
+    required this.learned,
+    required this.auth,
+    required this.plans,
+    required this.locale,
+  });
 
   final PlayerController player;
   final LearnedStore learned;
   final AuthApi auth;
   final PlanStore plans;
+  final LocaleStore locale;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ListenableBuilder(listenable: locale, builder: (context, _) => _app());
+
+  Widget _app() {
     return MaterialApp(
-      title: 'Qori',
+      title: 'Hifz',
       debugShowCheckedModeBanner: false,
+      locale: locale.locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: HColors.accent),
         scaffoldBackgroundColor: HColors.bgTop,
         textTheme: ThemeData.light().textTheme.apply(fontFamily: HText.inter().fontFamily),
       ),
-      home: AppShell(player: player, learned: learned, auth: auth, plans: plans),
+      home: AppShell(player: player, learned: learned, auth: auth, plans: plans, locale: locale),
     );
   }
 }

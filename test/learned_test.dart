@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:qori_app/data/learned_store.dart';
-import 'package:qori_app/screens/home_screen.dart';
-import 'package:qori_app/theme/tokens.dart';
-import 'package:qori_app/widgets/glass.dart';
-import 'package:qori_app/widgets/hifdth_card.dart';
-import 'package:qori_app/widgets/hifdth_mood.dart';
-import 'package:qori_app/widgets/hifdth_painter.dart';
-import 'package:qori_app/widgets/quran_progress_card.dart';
+import 'package:hifz_app/data/learned_store.dart';
+import 'package:hifz_app/screens/home_screen.dart';
+import 'package:hifz_app/theme/tokens.dart';
+import 'package:hifz_app/widgets/glass.dart';
+import 'package:hifz_app/widgets/hifdth_card.dart';
+import 'package:hifz_app/widgets/hifdth_mood.dart';
+import 'package:hifz_app/widgets/hifdth_painter.dart';
+import 'package:hifz_app/widgets/quran_progress_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'l10n_en.dart';
 
 void main() {
   setUp(() => HText.useGoogleFonts = false);
@@ -241,7 +242,7 @@ void main() {
 
     double bubbleOpacity(WidgetTester tester) => tester
         .widget<AnimatedOpacity>(
-            find.ancestor(of: find.text(HomeScreen.askTitle), matching: find.byType(AnimatedOpacity)).first)
+            find.ancestor(of: find.text(en.askTitle), matching: find.byType(AnimatedOpacity)).first)
         .opacity;
 
     /// The small Hifdth flying or sitting in the corner (the card's own character isn't a HifdthAvatar).
@@ -304,7 +305,7 @@ void main() {
       expect(speaking(tester), isTrue);
       expect(bodyColor(tester), MoodStyle.happy.speaking().body[1]); // blue
 
-      await tester.tap(find.text(HomeScreen.askTitle));
+      await tester.tap(find.text(en.askTitle));
       await tester.pumpAndSettle();
       expect(bubbleOpacity(tester), 0);
       expect(look(tester), 0);
@@ -351,27 +352,27 @@ void main() {
             for (final span in (tester.widget<Text>(find.text(text)).textSpan! as TextSpan).children!)
               (span as TextSpan).style!.color!.a,
           ];
-      final bubble = find.ancestor(of: find.text(HomeScreen.askTitle), matching: find.byType(Container)).first;
+      final bubble = find.ancestor(of: find.text(en.askTitle), matching: find.byType(Container)).first;
 
       await tester.pump(const Duration(milliseconds: 120));
-      final early = alphas(HomeScreen.askTitle);
+      final early = alphas(en.askTitle);
       final size = tester.getSize(bubble);
       expect(early.first, greaterThan(0)); // the first words are in
       expect(early.last, 0); // the rest are still to come
-      expect(alphas(HomeScreen.askBody).every((a) => a == 0), isTrue);
+      expect(alphas(en.askBody).every((a) => a == 0), isTrue);
 
       await tester.pump(const Duration(milliseconds: 400));
-      final later = alphas(HomeScreen.askTitle);
+      final later = alphas(en.askTitle);
       for (var i = 0; i < later.length; i++) {
         expect(later[i], greaterThanOrEqualTo(early[i]));
       }
 
       await tester.pump(const Duration(milliseconds: 800));
-      expect(alphas(HomeScreen.askTitle).every((a) => a == 1), isTrue);
-      expect(alphas(HomeScreen.askBody).last, closeTo(0.9, 0.01)); // the body's slightly softer white
+      expect(alphas(en.askTitle).every((a) => a == 1), isTrue);
+      expect(alphas(en.askBody).last, closeTo(0.9, 0.01)); // the body's slightly softer white
       expect(tester.getSize(bubble), size); // laid out in full from the start
       final glass = tester
-          .widget<LiquidGlass>(find.ancestor(of: find.text(HomeScreen.askTitle), matching: find.byType(LiquidGlass)));
+          .widget<LiquidGlass>(find.ancestor(of: find.text(en.askTitle), matching: find.byType(LiquidGlass)));
       final tint = (glass.fill as LinearGradient).colors[1];
       expect(tint.b, greaterThan(tint.r)); // tinted blue
       expect(tint.a, lessThan(1)); // still see-through glass

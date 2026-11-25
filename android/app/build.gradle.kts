@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.abdualiev088.qori"
+    namespace = "com.abdualiev088.hifz"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -18,7 +18,7 @@ android {
 
     defaultConfig {
         // Same as the iOS bundle id. Google Play never lets it change after the first upload.
-        applicationId = "com.abdualiev088.qori"
+        applicationId = "com.abdualiev088.hifz"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

@@ -4,6 +4,7 @@ import '../data/auth_api.dart';
 import '../theme/tokens.dart';
 import '../widgets/auth_widgets.dart';
 import 'account_screen.dart';
+import '../l10n/l10n.dart';
 
 enum _Step { email, password, create }
 
@@ -36,11 +37,11 @@ class _AuthScreenState extends State<AuthScreen> {
 
   String? _serverError(String field) => _server?.field == field ? _server!.message : null;
 
-  String? get _emailError => (_tried ? validateEmail(_email.text) : null) ?? _serverError('email');
-  String? get _nameError => (_tried && _name.text.trim().isEmpty ? 'Enter your name' : null) ?? _serverError('name');
+  String? get _emailError => (_tried ? validateEmail(context.l10n, _email.text) : null) ?? _serverError('email');
+  String? get _nameError => (_tried && _name.text.trim().isEmpty ? context.l10n.enterName : null) ?? _serverError('name');
   String? get _passwordError {
-    if (_tried && _password.text.isEmpty) return 'Enter your password';
-    if (_tried && _step == _Step.create && _password.text.length < 8) return 'Use at least 8 characters';
+    if (_tried && _password.text.isEmpty) return context.l10n.enterPassword;
+    if (_tried && _step == _Step.create && _password.text.length < 8) return context.l10n.passwordMin8;
     return _serverError('password');
   }
 
@@ -73,7 +74,7 @@ class _AuthScreenState extends State<AuthScreen> {
     } catch (e, stack) {
       // Never fail silently: anything unexpected still gets a message.
       debugPrint('Sign-in failed: $e\n$stack');
-      if (mounted) _snack('Something went wrong. Please try again.');
+      if (mounted) _snack(context.l10n.somethingWrong);
       return false;
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -125,7 +126,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _forgot() async {
     if (_loading) return;
     final email = _email.text.trim();
-    if (await _call(() => widget.api.sendPasswordReset(email)) && mounted) _snack('We sent a reset link to $email');
+    if (await _call(() => widget.api.sendPasswordReset(email)) && mounted) _snack(context.l10n.resetLinkSent(email));
   }
 
   void _back() => setState(() {
@@ -162,7 +163,7 @@ class _AuthScreenState extends State<AuthScreen> {
           TextButton(
             onPressed: _back,
             style: TextButton.styleFrom(foregroundColor: HColors.accentDeep, minimumSize: const Size(44, 40)),
-            child: Text('Change', style: HText.inter(size: 14, weight: FontWeight.w600, color: HColors.accentDeep)),
+            child: Text(context.l10n.change, style: HText.inter(size: 14, weight: FontWeight.w600, color: HColors.accentDeep)),
           ),
         ]),
       );
@@ -170,8 +171,8 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget _emailStep() => Column(key: const ValueKey(_Step.email), children: [
         AutofillGroup(
           child: AuthField(
-            label: 'Email',
-            hint: 'you@example.com',
+            label: context.l10n.email,
+            hint: context.l10n.emailHint,
             icon: Icons.mail_outline_rounded,
             controller: _email,
             keyboardType: TextInputType.emailAddress,
@@ -183,13 +184,13 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         ),
         const SizedBox(height: 20),
-        PrimaryButton(label: 'Continue', loading: _loading, onPressed: _continue),
+        PrimaryButton(label: context.l10n.continueLabel, loading: _loading, onPressed: _continue),
         const SizedBox(height: 28),
-        const OrDivider(text: 'or'),
+        OrDivider(text: context.l10n.orWord),
         const SizedBox(height: 20),
-        AppleButton(label: 'Continue with Apple', onPressed: () => _social(widget.api.signInWithApple)),
+        AppleButton(label: context.l10n.continueApple, onPressed: () => _social(widget.api.signInWithApple)),
         const SizedBox(height: 12),
-        GoogleButton(label: 'Continue with Google', onPressed: () => _social(widget.api.signInWithGoogle)),
+        GoogleButton(label: context.l10n.continueGoogle, onPressed: () => _social(widget.api.signInWithGoogle)),
       ]);
 
   Widget _passwordStep() {
@@ -201,8 +202,8 @@ class _AuthScreenState extends State<AuthScreen> {
         const SizedBox(height: 20),
         if (create) ...[
           AuthField(
-            label: 'Name',
-            hint: 'Your name',
+            label: context.l10n.name,
+            hint: context.l10n.yourName,
             icon: Icons.person_outline_rounded,
             controller: _name,
             autofocus: true,
@@ -215,8 +216,8 @@ class _AuthScreenState extends State<AuthScreen> {
           const SizedBox(height: 16),
         ],
         AuthField(
-          label: 'Password',
-          hint: create ? 'Create a password' : 'Your password',
+          label: context.l10n.password,
+          hint: create ? context.l10n.createPassword : context.l10n.yourPassword,
           icon: Icons.lock_outline_rounded,
           controller: _password,
           focusNode: _passwordFocus,
@@ -233,14 +234,14 @@ class _AuthScreenState extends State<AuthScreen> {
                   onTap: _forgot,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Text('Forgot password?',
+                    child: Text(context.l10n.forgotPassword,
                         style: HText.inter(size: 14, weight: FontWeight.w600, color: HColors.accentDeep)),
                   ),
                 ),
         ),
         if (create && _passwordError == null) PasswordRules(password: _password.text),
         const SizedBox(height: 24),
-        PrimaryButton(label: create ? 'Create account' : 'Sign in', loading: _loading, onPressed: _submit),
+        PrimaryButton(label: create ? context.l10n.createAccount : context.l10n.signIn, loading: _loading, onPressed: _submit),
       ]),
     );
   }
@@ -248,9 +249,9 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final (title, subtitle) = switch (_step) {
-      _Step.email => ('Sign in or sign up', 'Enter your email and Hifdth will take it from there.'),
-      _Step.password => ('Welcome back', 'Enter your password to pick up where you left off.'),
-      _Step.create => ('Nice to meet you', 'Two more things and your progress is saved everywhere.'),
+      _Step.email => (context.l10n.authEmailTitle, context.l10n.authEmailBody),
+      _Step.password => (context.l10n.authPasswordTitle, context.l10n.authPasswordBody),
+      _Step.create => (context.l10n.authCreateTitle, context.l10n.authCreateBody),
     };
     return Scaffold(
       body: AuthBackground(

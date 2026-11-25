@@ -4,26 +4,15 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
+import '../l10n/l10n.dart';
 
 /// What the "33 repetitions" method is, for the explainer and "How it works".
+/// The words come from the app's language; only the numbers live here.
 abstract final class Method33 {
-  static const name = '33 repetitions';
-  static const origin = 'Your Hifz plan';
-  static const summary = 'Memorize the new portion in the evening for about an hour and sleep on it. On each of the '
-      'next three mornings recite it 33 times from memory. Each lesson ends up with about 100 recitations spread '
-      'over three days.';
-  static const steps = [
-    'Evening: memorize the new portion, about one hour, and make it the last thing you do.',
-    'Morning 1: recite it 33 times from memory.',
-    'Morning 2: another 33 times from memory.',
-    "Morning 3: 33 more. That's about 100 recitations in three days.",
-  ];
-  static const tips = [
-    'Finish the evening lesson before 22:00 so the mornings stay possible.',
-    "Friday is a rest day: read the week's lessons once or twice.",
-  ];
+  static List<String> steps(AppLocalizations l) => [l.step1, l.step2, l.step3, l.step4];
+  static List<String> tips(AppLocalizations l) => [l.tip1, l.tip2];
+  static const stepCount = 4;
   static const minutes = 80;
-  static const newShare = 50;
 }
 
 /// Small caps section label, as on Home ("TODAY'S PROGRESS").
@@ -38,41 +27,37 @@ class SectionLabel extends StatelessWidget {
       );
 }
 
-/// How it works, At a glance and Tips, stacked. [playing] runs the diagram.
+/// The stepped diagram, At a glance (three facts) and Tips. [playing] runs
+/// the diagram; [heading] puts "HOW IT WORKS" above it (the first-visit explainer).
 class MethodDetails extends StatelessWidget {
-  const MethodDetails({super.key, required this.playing, this.summary = false});
+  const MethodDetails({super.key, required this.playing, this.heading = true});
 
   final bool playing;
-
-  /// Starts with the summary paragraph (inside "How it works").
-  final bool summary;
+  final bool heading;
 
   @override
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (summary) ...[
-            Text(Method33.summary, style: HText.inter(size: 14, height: 1.5, color: HColors.ink3)),
-            const SizedBox(height: 16),
-          ] else ...[
-            const SectionLabel('HOW IT WORKS'),
+          if (heading) ...[
+            SectionLabel(context.l10n.howItWorksCaps),
             const SizedBox(height: 8),
           ],
           StepPlayer(playing: playing),
-          const SizedBox(height: 18),
-          const SectionLabel('AT A GLANCE'),
+          const SizedBox(height: 20),
+          SectionLabel(context.l10n.atAGlanceCaps),
           const SizedBox(height: 8),
           const _Glance(),
-          const SizedBox(height: 18),
-          const SectionLabel('TIPS'),
+          const SizedBox(height: 20),
+          SectionLabel(context.l10n.tipsCaps),
           const SizedBox(height: 8),
-          for (final (i, t) in Method33.tips.indexed) ...[
+          for (final (i, t) in Method33.tips(context.l10n).indexed) ...[
             if (i > 0) const SizedBox(height: 8),
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Container(
                 width: 6,
                 height: 6,
-                margin: const EdgeInsets.only(top: 8, right: 8),
+                margin: const EdgeInsets.only(top: 8, right: 10),
                 decoration: const BoxDecoration(color: HColors.accent, shape: BoxShape.circle),
               ),
               Expanded(child: Text(t, style: HText.inter(size: 14, height: 1.45, color: HColors.ink3))),
@@ -102,7 +87,7 @@ class _StepPlayerState extends State<StepPlayer> {
   int _step = 0;
   Timer? _timer;
 
-  int get _count => Method33.steps.length;
+  int get _count => Method33.stepCount;
   bool get _reduce => MediaQuery.disableAnimationsOf(context);
 
   @override
@@ -153,7 +138,7 @@ class _StepPlayerState extends State<StepPlayer> {
       children: [
         Semantics(
           image: true,
-          label: '${Method33.name}, step ${_step + 1}: ${Method33.steps[_step]}',
+          label: context.l10n.stepLabel(context.l10n.methodName, _step + 1, Method33.steps(context.l10n)[_step]),
           excludeSemantics: true,
           child: _Diagram(step: _step),
         ),
@@ -179,7 +164,7 @@ class _StepPlayerState extends State<StepPlayer> {
                   switchOutCurve: Curves.easeIn,
                   layoutBuilder: (current, previous) =>
                       Stack(alignment: Alignment.topLeft, children: [...previous, if (current != null) current]),
-                  child: Text(Method33.steps[_step],
+                  child: Text(Method33.steps(context.l10n)[_step],
                       key: ValueKey(_step), style: HText.inter(size: 14, height: 1.45)),
                 ),
               ),
@@ -189,7 +174,7 @@ class _StepPlayerState extends State<StepPlayer> {
         const SizedBox(height: 10),
         Row(children: [
           _SquareButton(
-            label: 'Previous step',
+            label: context.l10n.previousStep,
             onTap: _step == 0 && !playing ? null : () => _go(_step - 1),
             icon: Icons.chevron_left_rounded,
           ),
@@ -199,7 +184,7 @@ class _StepPlayerState extends State<StepPlayer> {
                 Semantics(
                   button: true,
                   selected: i == _step,
-                  label: 'Step ${i + 1} of $_count',
+                  label: context.l10n.stepNOfM(i + 1, _count),
                   excludeSemantics: true,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
@@ -226,13 +211,13 @@ class _StepPlayerState extends State<StepPlayer> {
           ),
           if (!_reduce) ...[
             _SquareButton(
-              label: playing ? 'Pause steps' : 'Play steps',
+              label: playing ? context.l10n.pauseSteps : context.l10n.playSteps,
               onTap: playing ? _stop : _start,
               icon: playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
             ),
             const SizedBox(width: 6),
           ],
-          _SquareButton(label: 'Next step', onTap: () => _go(_step + 1), icon: Icons.chevron_right_rounded),
+          _SquareButton(label: context.l10n.nextStep, onTap: () => _go(_step + 1), icon: Icons.chevron_right_rounded),
         ]),
       ],
     );
@@ -317,11 +302,11 @@ class _Diagram extends StatelessWidget {
         Align(
           alignment: Alignment.topCenter,
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            day('Evening', 'learn · ~1 h', const Icon(Icons.nightlight_round, size: 26, color: HColors.accentDeep),
+            day(context.l10n.evening, context.l10n.learnAboutHour, const Icon(Icons.nightlight_round, size: 26, color: HColors.accentDeep),
                 true),
             for (var m = 1; m <= 3; m++) ...[
               const SizedBox(width: 8),
-              day('Morning $m', 'from memory', _Ring(on: step >= m), step >= m),
+              day(context.l10n.morningN(m), context.l10n.fromMemory, _Ring(on: step >= m), step >= m),
             ],
           ]),
         ),
@@ -339,7 +324,7 @@ class _Diagram extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: HColors.mintWash, borderRadius: BorderRadius.circular(999)),
-                child: Text('≈ 100 recitations',
+                child: Text(context.l10n.about100,
                     style: HText.inter(size: 12, weight: FontWeight.w600, color: HColors.accentDeep)),
               ),
             ),
@@ -394,137 +379,40 @@ class _RingPainter extends CustomPainter {
 
 // ---------------------------------------------------------------- at a glance
 
+/// Three facts side by side: time a day, effort, and no teacher needed.
 class _Glance extends StatelessWidget {
   const _Glance();
 
   @override
   Widget build(BuildContext context) {
-    Widget tile(String k, List<Widget> body, {String? label}) => Semantics(
-          container: true,
-          label: label,
-          excludeSemantics: label != null,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(color: HColors.bgTop, borderRadius: BorderRadius.circular(14)),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Text(k, style: HText.inter(size: 11, weight: FontWeight.w600, letterSpacing: 0.4, color: HColors.inkMuted)),
-              const SizedBox(height: 6),
-              ...body,
-            ]),
-          ),
-        );
-    Widget value(String v) => Text(v, style: HText.inter(size: 13, weight: FontWeight.w600, height: 1.3));
-    Widget bar(double share, Color color) => ClipRRect(
-          borderRadius: BorderRadius.circular(3),
-          child: SizedBox(
-            height: 6,
-            child: ColoredBox(
-              color: HColors.track,
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: share,
-                child: ColoredBox(color: color),
-              ),
-            ),
-          ),
-        );
-    Widget pair(Widget a, Widget b) => IntrinsicHeight(
-          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Expanded(child: a),
-            const SizedBox(width: 8),
-            Expanded(child: b),
-          ]),
-        );
-
-    const n = Method33.newShare;
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      pair(
-        tile('DAILY TIME', [value('${Method33.minutes} min'), const SizedBox(height: 6), bar(Method33.minutes / 120, HColors.accent)],
-            label: 'Daily time: about ${Method33.minutes} minutes'),
-        tile('EFFORT', [
-          value('Demanding'),
-          const SizedBox(height: 6),
-          Row(children: [
-            for (var i = 0; i < 3; i++)
-              Container(
-                width: 18,
-                height: 6,
-                margin: const EdgeInsets.only(right: 3),
-                decoration: BoxDecoration(color: HColors.accentDeep, borderRadius: BorderRadius.circular(3)),
-              ),
-          ]),
-        ], label: 'Effort: demanding'),
-      ),
-      const SizedBox(height: 8),
-      tile('NEW VS REVISION', [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(3),
-          child: SizedBox(
-            height: 6,
-            child: Row(children: [
-              const Expanded(flex: n, child: ColoredBox(color: HColors.accent)),
-              const SizedBox(width: 2),
-              const Expanded(flex: 100 - n, child: ColoredBox(color: HColors.revision)),
-            ]),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text.rich(TextSpan(children: [
-            TextSpan(text: '$n%', style: HText.inter(size: 11, weight: FontWeight.w600, color: HColors.accentDeep)),
-            TextSpan(text: ' new', style: HText.inter(size: 11, weight: FontWeight.w500, color: HColors.ink2)),
-          ])),
-          Text.rich(TextSpan(children: [
-            TextSpan(text: 'revision ', style: HText.inter(size: 11, weight: FontWeight.w500, color: HColors.ink2)),
-            TextSpan(text: '${100 - n}%', style: HText.inter(size: 11, weight: FontWeight.w600, color: HColors.revision)),
-          ])),
-        ]),
-      ], label: '$n% new memorizing, ${100 - n}% revision'),
-      const SizedBox(height: 8),
-      pair(
-        tile('TEACHER', [
-          Row(children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(color: HColors.surface, borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.person_outline_rounded, size: 18, color: HColors.inkMuted),
-            ),
-            const SizedBox(width: 8),
-            Flexible(child: value('On your own')),
-          ]),
-        ], label: 'Teacher: on your own'),
-        tile('BEST FOR', [value('Disciplined learners with free evenings')]),
-      ),
-      const SizedBox(height: 8),
-      tile('WHAT YOU USE', [
-        Row(children: [
-          for (final (label, icon, on) in const [
-            ('Listening', Icons.headphones_rounded, false),
-            ('Seeing', Icons.visibility_outlined, false),
-            ('Reciting', Icons.record_voice_over_outlined, true),
-            ('Writing', Icons.edit_outlined, false),
-          ])
-            Expanded(
-              child: Column(children: [
+    Widget tile(IconData icon, String value, String label) => Expanded(
+          child: Semantics(
+            container: true,
+            label: '$value, $label',
+            excludeSemantics: true,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+              decoration: BoxDecoration(color: HColors.bgTop, borderRadius: BorderRadius.circular(14)),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: on ? HColors.mintWash : HColors.surface,
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  child: Icon(icon, size: 18, color: on ? HColors.accentDeep : const Color(0xFFB4BCC5)),
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(color: HColors.mintWash, borderRadius: BorderRadius.circular(9)),
+                  child: Icon(icon, size: 16, color: HColors.accentDeep),
                 ),
-                const SizedBox(height: 3),
-                Text(label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: HText.inter(size: 10, weight: FontWeight.w500, color: on ? HColors.ink : HColors.inkMuted)),
+                const SizedBox(height: 8),
+                Text(value, maxLines: 1, style: HText.inter(size: 14, weight: FontWeight.w700, tabular: true)),
+                Text(label, maxLines: 1, style: HText.inter(size: 11, weight: FontWeight.w500, color: HColors.inkMuted)),
               ]),
             ),
-        ]),
-      ], label: 'Uses reciting'),
+          ),
+        );
+    return Row(children: [
+      tile(Icons.schedule_rounded, context.l10n.minutesShort(Method33.minutes), context.l10n.aDay),
+      const SizedBox(width: 8),
+      tile(Icons.bolt_rounded, context.l10n.demanding, context.l10n.effort),
+      const SizedBox(width: 8),
+      tile(Icons.person_outline_rounded, context.l10n.solo, context.l10n.noTeacher),
     ]);
   }
 }

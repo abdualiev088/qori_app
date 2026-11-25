@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:qori_app/data/auth_api.dart';
-import 'package:qori_app/screens/account_screen.dart';
-import 'package:qori_app/theme/tokens.dart';
+import 'package:hifz_app/data/auth_api.dart';
+import 'package:hifz_app/screens/account_screen.dart';
+import 'package:hifz_app/theme/tokens.dart';
 
 import 'fake_auth_api.dart';
+import 'l10n_en.dart';
 
 /// Hifdth's idle loop never stops, so pumpAndSettle can't be used.
 Future<void> settle(WidgetTester tester) async {
@@ -16,7 +17,7 @@ void main() {
   setUp(() => HText.useGoogleFonts = false);
 
   FakeAuthApi signedIn({bool hasPassword = true}) =>
-      FakeAuthApi()..user = QoriUser(id: '1', email: 'aziz@mail.com', displayName: 'Aziz', hasPassword: hasPassword);
+      FakeAuthApi()..user = HifzUser(id: '1', email: 'aziz@mail.com', displayName: 'Aziz', hasPassword: hasPassword);
 
   Future<void> open(WidgetTester tester, AuthApi api) async {
     tester.view
@@ -106,7 +107,7 @@ void main() {
     await open(tester, api);
     expect(find.byType(AccountScreen), findsOneWidget);
     expect(find.text('Aziz'), findsNWidgets(2));
-    expect(find.text(accountOfflineNotice), findsOneWidget);
+    expect(find.text(en.accountOffline), findsOneWidget);
     await tester.pump(const Duration(seconds: 6)); // let the notice time out
   });
 }

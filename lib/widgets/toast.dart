@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
+import '../l10n/l10n.dart';
 
 /// A dark pill floating above the bottom nav, with an optional Undo button.
 /// One at a time: a new toast replaces the one showing.
@@ -98,7 +99,7 @@ class _ToastView extends StatelessWidget {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           textStyle: HText.inter(size: 14, weight: FontWeight.w600, color: Colors.white),
                         ),
-                        child: const Text('Undo'),
+                        child: Text(context.l10n.undo),
                       ),
                     ],
                   ],

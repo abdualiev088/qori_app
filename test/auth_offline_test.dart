@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:qori_app/data/api_client.dart';
-import 'package:qori_app/data/auth_api.dart';
+import 'package:hifz_app/data/api_client.dart';
+import 'package:hifz_app/data/auth_api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _user = {'id': 'u1', 'email': 'aziz@mail.com', 'display_name': 'Aziz', 'is_guest': false, 'has_password': true};

@@ -1,6 +1,6 @@
-# Qori backend: handoff
+# Hifz backend: handoff
 
-This is the starting brief for the backend of Qori (the Hifdth app). It covers what the app does today, which data is real or placeholder, what the backend has to provide, and a first API shape. The code wins wherever this doc and the code disagree.
+This is the starting brief for the backend of Hifz (the Hifdth app). It covers what the app does today, which data is real or placeholder, what the backend has to provide, and a first API shape. The code wins wherever this doc and the code disagree.
 
 ## Where the backend lives
 

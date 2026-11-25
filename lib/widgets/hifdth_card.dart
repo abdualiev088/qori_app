@@ -9,6 +9,7 @@ import 'hifdth_mood.dart';
 import 'hifdth_painter.dart';
 import 'progress_indicators.dart';
 import 'ribbed_glass.dart';
+import '../l10n/l10n.dart';
 
 /// Home's main card: Hifdth, the status pill and today's progress on a ribbed
 /// background. Everything follows [mood] and morphs when it changes.
@@ -18,7 +19,7 @@ class HifdthCard extends StatefulWidget {
     required this.mood,
     this.steps = const [],
     this.characterAway = false,
-    this.title = "TODAY'S PROGRESS",
+    this.title,
     this.subtitle,
     this.status,
     this.onToggle,
@@ -29,7 +30,8 @@ class HifdthCard extends StatefulWidget {
   final List<DayStep> steps;
 
   /// The white panel's label, and the line under it ("Day 4 of 50").
-  final String title;
+  /// Defaults to "TODAY'S PROGRESS" in the current language.
+  final String? title;
   final String? subtitle;
 
   /// Replaces the mood's pill text (no plan, rest day, all done).
@@ -151,7 +153,7 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
                 children: [
                   hifdth,
                   const SizedBox(height: 16),
-                  _StatusPill(text: widget.status ?? style.status, dot: style.accent),
+                  _StatusPill(text: widget.status ?? style.status(context.l10n), dot: style.accent),
                   const SizedBox(height: 16),
                   Container(
                     decoration: BoxDecoration(
@@ -165,7 +167,7 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
                         Row(
                           children: [
                             Expanded(
-                              child: Text(widget.title,
+                              child: Text(widget.title ?? context.l10n.todaysProgress,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: HText.inter(
@@ -186,7 +188,7 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
                         if (widget.steps.isNotEmpty) ...[
                           const SizedBox(height: 12),
                           Semantics(
-                            label: '$done of ${widget.steps.length} done',
+                            label: context.l10n.stepsDone(done, widget.steps.length),
                             excludeSemantics: true,
                             child: SegmentedProgressBar(
                               fills: [for (final s in widget.steps) s.done ? 1 : 0],
@@ -215,10 +217,16 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
 /// Hifdth on its own at [size], with the mood's idle motion. Used for the
 /// small Hifdth that follows the screen on Home.
 class HifdthAvatar extends StatefulWidget {
-  const HifdthAvatar({super.key, required this.mood, this.size = 56, this.look = 0, this.speaking = false});
+  const HifdthAvatar(
+      {super.key, required this.mood, this.size = 56, this.look = 0, this.speaking = false, this.calm});
 
   final HifdthMood mood;
   final double size;
+
+  /// 0–1: how far the look has turned from [mood] to happy. Home drives it with
+  /// the flight to the corner, so the small Hifdth is always the green one and
+  /// takes its real mood back as it lands in the card.
+  final Animation<double>? calm;
 
   /// Where Hifdth looks: -1 left, 0 ahead. Changes glide over 320 ms.
   final double look;
@@ -250,7 +258,7 @@ class _HifdthAvatarState extends State<HifdthAvatar> with SingleTickerProviderSt
       _idle.stop();
       return;
     }
-    final half = MoodStyle.of(widget.mood).idle.period ~/ 2;
+    final half = (widget.calm == null ? MoodStyle.of(widget.mood) : MoodStyle.happy).idle.period ~/ 2;
     if (_idle.duration == half && _idle.isAnimating) return;
     _idle
       ..duration = half
@@ -274,16 +282,21 @@ class _HifdthAvatarState extends State<HifdthAvatar> with SingleTickerProviderSt
           tween: Tween(end: widget.speaking ? 1 : 0),
           duration: reduce ? Duration.zero : const Duration(milliseconds: 280),
           curve: Curves.easeInOut,
-          builder: (context, blue, _) {
-            final style = blue == 0 ? mood : MoodStyle.lerp(mood, mood.speaking(), blue);
-            return TweenAnimationBuilder<double>(
-              tween: Tween(end: widget.look),
-              duration: reduce ? Duration.zero : const Duration(milliseconds: 320),
-              curve: Curves.easeInOutCubic,
-              builder: (context, look, _) =>
-                  _Hifdth(style: style, from: style.idle, to: style.idle, morph: 1, idle: _idle, look: look),
-            );
-          },
+          builder: (context, blue, _) => AnimatedBuilder(
+            animation: widget.calm ?? kAlwaysDismissedAnimation,
+            builder: (context, _) {
+              final c = Curves.easeInOut.transform(widget.calm?.value ?? 0);
+              final base = c == 0 ? mood : MoodStyle.lerp(mood, MoodStyle.happy, c);
+              final style = blue == 0 ? base : MoodStyle.lerp(base, base.speaking(), blue);
+              return TweenAnimationBuilder<double>(
+                tween: Tween(end: widget.look),
+                duration: reduce ? Duration.zero : const Duration(milliseconds: 320),
+                curve: Curves.easeInOutCubic,
+                builder: (context, look, _) =>
+                    _Hifdth(style: style, from: style.idle, to: style.idle, morph: 1, idle: _idle, look: look),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -321,7 +334,7 @@ class _Hifdth extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       image: true,
-      label: 'Hifdth assistant',
+      label: context.l10n.hifdthAssistant,
       child: SizedBox.square(
         dimension: _box,
         child: Stack(

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' show Locale;
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
@@ -10,6 +11,7 @@ import '../data/api_client.dart';
 import '../data/surah_meta.dart';
 import '../data/surah_source.dart';
 import '../data/surahs.dart';
+import '../l10n/app_localizations.dart';
 import 'audio_engine.dart';
 import 'playback_rules.dart';
 
@@ -46,6 +48,15 @@ class PlayerController extends ChangeNotifier {
   List<Ayah> ayat = const [];
   bool textLoading = false;
   Object? textError;
+
+  /// Texts in the app's language; the app swaps it when the language changes.
+  AppLocalizations l10n = lookupAppLocalizations(const Locale('en'));
+
+  void setStrings(AppLocalizations l) {
+    if (identical(l, l10n)) return;
+    l10n = l;
+    notifyListeners();
+  }
 
   int current = 1;
   late int repeat;
@@ -188,34 +199,34 @@ class PlayerController extends ChangeNotifier {
 
   /// "Then next ayah" without a selection, "Loop selected" with one.
   bool get autoOn => hasQueue ? loopSelected : autoNext;
-  String get autoLabel => hasQueue ? 'Loop selected' : 'Then next ayah';
+  String get autoLabel => hasQueue ? l10n.loopSelected : l10n.thenNextAyah;
 
   /// Position of the current ayah in the selection, e.g. "2 of 5".
   String get queuePosition {
     final i = queue.indexOf(current);
-    return i >= 0 ? '${i + 1} of ${queue.length}' : '';
+    return i >= 0 ? l10n.nOfM(i + 1, queue.length) : '';
   }
 
   /// Repeat counter as (before, bold, after).
   (String, String, String) get counter {
     if (!hasAudio) return ('', '', '');
-    if (finished) return (hasQueue ? 'Finished · ${selected.length} ayat' : 'Finished', '', '');
-    if (repeat == 1) return (playing ? 'Playing once' : 'Plays once', '', '');
-    if (repeat == 0) return ('Repeating ', '${plays + 1}', ' · ∞');
-    return ('Repeat ', '${math.min(plays + 1, repeat)}', ' of $repeat');
+    if (finished) return (hasQueue ? l10n.finishedAyat(selected.length) : l10n.finished, '', '');
+    if (repeat == 1) return (playing ? l10n.playingOnce : l10n.playsOnce, '', '');
+    if (repeat == 0) return (l10n.repeating, '${plays + 1}', ' · ∞');
+    return (l10n.repeatWord, '${math.min(plays + 1, repeat)}', l10n.ofCount(repeat));
   }
 
   /// "Ayah 30 of 52 · repeat 2 of 3", for the mini-player.
   String get summary {
-    final where = current == 0 ? 'Basmala' : 'Ayah $current of $ayahCount';
+    final where = current == 0 ? l10n.basmala : l10n.ayahNOfM(current, ayahCount);
     if (!hasAudio) return where;
     final (pre, strong, post) = counter;
     return '$where · ${'$pre$strong$post'.toLowerCase()}';
   }
 
   String get selectionHint => selected.isNotEmpty
-      ? '${selected.length} selected · each plays ${repeat == 0 ? 'on repeat' : '$repeat×'}, then the next selected one'
-      : 'Tap the ayat you want to repeat';
+      ? l10n.selectionHintSome(selected.length, repeat == 0 ? l10n.onRepeat : l10n.timesShort(repeat))
+      : l10n.selectionHintNone;
 
   /// One fill value (0–1) per repetition segment.
   List<double> segmentFills(double p) {
@@ -281,7 +292,7 @@ class PlayerController extends ChangeNotifier {
       if (token == _loadToken) _failLoad(e.message);
       return;
     } catch (e) {
-      if (token == _loadToken) _failLoad("Couldn't load this ayah.");
+      if (token == _loadToken) _failLoad(l10n.couldntLoadAyah);
       return;
     }
     if (token != _loadToken || surah != s) return; // the user moved on meanwhile
@@ -292,9 +303,9 @@ class PlayerController extends ChangeNotifier {
     }
     _audio.setItem(MediaItem(
       id: '${s}_$n',
-      title: n == 0 ? 'Basmala' : 'Ayah $n',
+      title: n == 0 ? l10n.basmala : l10n.ayahN(n),
       artist: reciterName,
-      album: 'Surah ${surahNames[s - 1]}',
+      album: l10n.surahName(surahNames[s - 1]),
       duration: Duration(milliseconds: (source.ayahSeconds(s, n) * 1000).round()),
     ));
     try {
@@ -306,7 +317,7 @@ class PlayerController extends ChangeNotifier {
       return;
     } catch (e) {
       debugPrint('Could not load ayah $n: $e');
-      if (token == _loadToken) _failLoad("Couldn't play this ayah.");
+      if (token == _loadToken) _failLoad(l10n.couldntPlayAyah);
       return;
     }
     if (token != _loadToken) return;
@@ -443,6 +454,14 @@ class PlayerController extends ChangeNotifier {
     _prefs.setInt('$_k.repeat', r);
     plays = r != 0 && plays >= r ? r - 1 : plays;
     repeat = r;
+    notifyListeners();
+  }
+
+  /// Settings' "Then next ayah" switch: always the no-selection behaviour.
+  void setAutoNext(bool on) {
+    if (on == autoNext) return;
+    autoNext = on;
+    _prefs.setBool('$_k.autoNext', autoNext);
     notifyListeners();
   }
 

@@ -16,7 +16,7 @@ import '../widgets/glass.dart';
 import '../widgets/hifdth_card.dart';
 import '../widgets/hifdth_mood.dart';
 import '../widgets/learned_sheet.dart';
-import '../widgets/method_explainer.dart' show Method33;
+import '../l10n/plan_text.dart';
 import '../widgets/mushaf_icon.dart';
 import '../widgets/progress_indicators.dart';
 import '../widgets/quran_progress_card.dart';
@@ -25,14 +25,9 @@ import '../widgets/speech_bubble.dart';
 import '../widgets/toast.dart';
 import 'account_screen.dart';
 import 'auth_screen.dart';
+import '../l10n/l10n.dart';
 
-const _weekLetters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-const _weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const _months = [
-  'January', 'February', 'March', 'April', 'May', 'June', //
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen(
@@ -61,10 +56,6 @@ class HomeScreen extends StatefulWidget {
 
   /// Overrides the clock (tests).
   final DateTime? now;
-
-  /// What the small Hifdth says when it asks about memorisation.
-  static const askTitle = 'How much of the Quran have you memorised?';
-  static const askBody = 'Tap a surah to tell me.';
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -141,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final now = _now;
     final wasDone = store.allDone(now);
     await store.toggle(now, tasks[i].id);
-    if (!wasDone && store.allDone(now) && mounted) Toast.show(context, "Today's plan is done. Well done!");
+    if (!wasDone && store.allDone(now) && mounted) Toast.show(context, context.l10n.planDoneToast);
   }
 
   @override
@@ -253,9 +244,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final t = _now;
-    final greeting = t.hour < 12 ? 'Good morning' : (t.hour < 18 ? 'Good afternoon' : 'Good evening');
+    final l = context.l10n;
+    final greeting = t.hour < 12 ? l.goodMorning : (t.hour < 18 ? l.goodAfternoon : l.goodEvening);
     final top = MediaQuery.paddingOf(context).top + 9;
-    final today = _Today.of(widget.plans, t);
+    final today = _Today.of(l, widget.plans, t);
     final mood = moodFor(sessionsBehind: today.behind);
     final landed = _fly.isCompleted;
     final cornerBottom = _cornerBottom;
@@ -279,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('${_weekdays[t.weekday - 1]}, ${t.day} ${_months[t.month - 1]}',
+                            Text(dateLong(l, t),
                                 style: HText.inter(size: 13, weight: FontWeight.w500, color: HColors.ink2)),
                             const SizedBox(height: 2),
                             Text(greeting, style: HText.inter(size: 24, weight: FontWeight.w700, letterSpacing: -0.4)),
@@ -294,17 +286,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     key: _cardKey,
                     mood: mood,
                     characterAway: !_fly.isDismissed,
-                    title: "TODAY'S PLAN",
+                    title: l.todaysPlanCaps,
                     subtitle: today.subtitle,
                     status: today.status,
                     steps: [
                       for (final task in today.tasks)
                         DayStep(
                           title: task.range,
-                          subtitle: '${task.title}. ${task.subtitle}',
-                          time: task.time,
+                          subtitle: task.morning
+                              ? '${l.taskRecite(task.range)}. ${l.taskReciteSub(linesText(l, task.lines), task.lessons)}'
+                              : '${l.taskMemorize(task.range)}. ${l.taskMemorizeSub(linesText(l, task.lines))}',
+                          time: task.morning ? l.morning : l.evening,
                           morning: task.morning,
-                          tags: task.morning ? ['Recite 33×', task.amount] : ['Memorize', task.amount, 'by 22:00'],
+                          tags: task.morning
+                              ? [l.tagRecite33, linesText(l, task.lines)]
+                              : [l.tagMemorize, linesText(l, task.lines), l.tagBy22],
                           done: widget.plans!.isDone(t, task.id),
                         ),
                     ],
@@ -333,7 +329,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             streak: widget.plans?.streak(t) ?? 0,
                             days: [
                               for (final (i, done) in (widget.plans?.week(t) ?? List.filled(7, false)).indexed)
-                                StreakDay(_weekLetters[i], done),
+                                StreakDay(weekdayLetter(l, i + 1), done),
                             ],
                           ),
                         ),
@@ -371,11 +367,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               child: Align(
                 alignment: Alignment.bottomRight,
                 child: SpeechBubbleSlot(
-                  title: HomeScreen.askTitle,
-                  body: HomeScreen.askBody,
+                  title: l.askTitle,
+                  body: l.askBody,
                   visible: landed && _talking,
                   onTap: _showQuranCard,
-                  hint: 'Shows your Quran progress',
+                  hint: l.showsQuranProgress,
                 ),
               ),
             ),
@@ -456,14 +452,21 @@ class _FlyingHifdth extends StatelessWidget {
       },
       child: Semantics(
         button: true,
-        label: 'Hifdth',
-        hint: talking ? 'Hide message' : 'Talk to Hifdth',
+        label: context.l10n.hifdth,
+        hint: talking ? context.l10n.hideMessage : context.l10n.talkToHifdth,
         excludeSemantics: true,
         child: GestureDetector(
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: LayoutBuilder(
-            builder: (context, box) => HifdthAvatar(mood: mood, size: box.maxWidth, look: look, speaking: speaking),
+            builder: (context, box) => HifdthAvatar(
+              mood: mood,
+              size: box.maxWidth,
+              look: look,
+              speaking: speaking,
+              // Green by the time it reaches the corner; its real mood again back in the card.
+              calm: flight,
+            ),
           ),
         ),
       ),
@@ -480,8 +483,6 @@ class _HeaderButtons extends StatefulWidget {
   final ValueListenable<bool>? online;
   final VoidCallback onProfile;
 
-  static const offlineMessage = "You're offline. Changes are saved on this phone and sync when you're back online.";
-  static const backOnlineMessage = "You're back online. Your changes are syncing.";
   static const backOnlineFor = Duration(seconds: 2);
 
   @override
@@ -537,15 +538,15 @@ class _HeaderButtonsState extends State<_HeaderButtons> {
         _Cloud.offline => _Pulse(
             key: const ValueKey(_Cloud.offline),
             child: GlassCircleButton(
-              label: 'Offline',
-              onTap: () => Toast.show(context, _HeaderButtons.offlineMessage),
+              label: context.l10n.offline,
+              onTap: () => Toast.show(context, context.l10n.offlineMessage),
               child: const Icon(Icons.cloud_off_rounded, size: 22, color: HColors.ink),
             ),
           ),
         _Cloud.backOnline => GlassCircleButton(
             key: const ValueKey(_Cloud.backOnline),
-            label: 'Back online',
-            onTap: () => Toast.show(context, _HeaderButtons.backOnlineMessage),
+            label: context.l10n.backOnline,
+            onTap: () => Toast.show(context, context.l10n.backOnlineMessage),
             fill: const RadialGradient(
               center: Alignment(-0.4, -0.6),
               radius: 1.1,
@@ -690,7 +691,7 @@ class _GoalCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Daily goal', style: HText.inter(size: 14, weight: FontWeight.w600)),
+                  Text(context.l10n.dailyGoalTitle, style: HText.inter(size: 14, weight: FontWeight.w600)),
                   const SizedBox(height: 2),
                   Text(caption, style: HText.inter(size: 13, color: HColors.ink2)),
                 ],
@@ -720,17 +721,16 @@ class _StreakCard extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
+            // Centred, not baseline: IntrinsicHeight measures a baseline row a fraction short.
             children: [
               Flexible(
-                child: Text('Streak',
+                child: Text(context.l10n.streak,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: HText.inter(size: 14, weight: FontWeight.w600)),
               ),
               const SizedBox(width: 6),
-              Text('$streak ${streak == 1 ? 'day' : 'days'}',
+              Text(context.l10n.daysCount(streak),
                   style: HText.inter(size: 13, color: HColors.ink2, tabular: true)),
             ],
           ),
@@ -754,7 +754,7 @@ class _Today {
     this.action,
     this.behind = 0,
     this.goal = 0,
-    this.goalCaption = 'Nothing due today',
+    this.goalCaption = '',
     this.day,
     this.total = 0,
   });
@@ -782,31 +782,34 @@ class _Today {
   final int? day;
   final int total;
 
-  static _Today of(PlanStore? store, DateTime now) {
+  static _Today of(AppLocalizations l, PlanStore? store, DateTime now) {
     final plan = store?.plan;
     if (store == null || plan == null) {
-      return const _Today(
-        status: 'Hifdth is waiting for your plan',
-        message: 'No plan yet',
-        detail: "Pick where to start; each day's lesson shows up here.",
-        action: 'Set up my plan',
+      return _Today(
+        status: l.waitingForPlan,
+        message: l.noPlanYet,
+        detail: l.noPlanDetail,
+        action: l.setUpMyPlan,
+        goalCaption: l.nothingDue,
       );
     }
     final total = plan.lessons.length;
     final k = plan.lessonIndexOn(now);
     if (k == null) {
       return _Today(
-        status: 'Rest day. Hifdth is resting too',
+        status: l.restDayStatus,
         icon: Icons.self_improvement_rounded,
-        message: 'Rest day',
-        detail: "Read this week's lessons once, if you like.",
+        message: l.restDay,
+        detail: l.restDayDetail,
+        goalCaption: l.nothingDue,
         total: total,
       );
     }
     if (k < 0) {
       return _Today(
         icon: Icons.event_rounded,
-        message: 'Starts ${fmtDate(plan.startDate)}',
+        message: l.startsOn(dateShort(l, plan.startDate)),
+        goalCaption: l.nothingDue,
         day: k,
         total: total,
       );
@@ -814,9 +817,10 @@ class _Today {
     if (k >= total) {
       return _Today(
         icon: Icons.verified_rounded,
-        message: 'Plan complete',
-        detail: '${plan.positions.length} ayahs, ${nameOf(plan.start.s)} → ${nameOf(plan.end.s)}. Keep revising them.',
-        action: 'Set a new range',
+        message: l.planComplete,
+        detail: l.planCompleteDetail(plan.positions.length, nameOf(plan.start.s), nameOf(plan.end.s)),
+        action: l.setNewRange,
+        goalCaption: l.nothingDue,
         day: k,
         total: total,
       );
@@ -826,11 +830,11 @@ class _Today {
     final left = tasks.length - done;
     return _Today(
       tasks: tasks,
-      subtitle: 'Day ${k + 1}/$total',
-      status: left == 0 ? "Today's plan is done. Well done!" : null,
+      subtitle: l.dayOf(k + 1, total),
+      status: left == 0 ? l.planDoneToast : null,
       behind: store.behind(now),
       goal: done / tasks.length,
-      goalCaption: left == 0 ? 'All done today' : '$left left today',
+      goalCaption: left == 0 ? l.allDoneToday : l.leftToday(left),
       day: k,
       total: total,
     );
@@ -898,7 +902,7 @@ class _PlanCard extends StatelessWidget {
     final rest = plan.restWeekday;
     return Semantics(
       container: true,
-      label: 'Your plan',
+      label: context.l10n.yourPlanTitle,
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 14, 10, 16),
         decoration: BoxDecoration(color: HColors.surface, borderRadius: BorderRadius.circular(HRadii.card)),
@@ -908,7 +912,7 @@ class _PlanCard extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(Method33.name, style: HText.inter(size: 16, weight: FontWeight.w600)),
+                Text(context.l10n.methodName, style: HText.inter(size: 16, weight: FontWeight.w600)),
                 const SizedBox(height: 1),
                 Text('${nameOf(plan.start.s)} → ${nameOf(plan.end.s)}',
                     maxLines: 1, overflow: TextOverflow.ellipsis, style: HText.inter(size: 13, color: HColors.ink2)),
@@ -916,7 +920,7 @@ class _PlanCard extends StatelessWidget {
             ),
             Semantics(
               button: true,
-              label: 'Change plan',
+              label: context.l10n.changePlan,
               excludeSemantics: true,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
@@ -941,7 +945,7 @@ class _PlanCard extends StatelessWidget {
             child: Row(children: [
               Expanded(
                 child: Semantics(
-                  label: day == null ? 'Rest day' : 'Day $dayText',
+                  label: day == null ? context.l10n.restDay : context.l10n.dayText(dayText),
                   excludeSemantics: true,
                   child: SizedBox(
                     height: 8,
@@ -969,11 +973,11 @@ class _PlanCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Wrap(spacing: 6, runSpacing: 6, children: [
-            _Fact(Icons.subject_rounded, '${plan.linesPerDay} ${plan.linesPerDay == 1 ? 'line' : 'lines'}/day'),
-            _Fact(Icons.flag_rounded, fmtDate(plan.finishDate()), label: 'Finishes ${fmtDate(plan.finishDate())}'),
+            _Fact(Icons.subject_rounded, context.l10n.linesPerDayFact(plan.linesPerDay)),
+            _Fact(Icons.flag_rounded, dateShort(context.l10n, plan.finishDate()),
+                label: context.l10n.finishesOn(dateShort(context.l10n, plan.finishDate()))),
             if (rest != null)
-              _Fact(Icons.weekend_rounded, '${weekdayNames[rest - 1].substring(0, 3)} off',
-                  label: '${weekdayNames[rest - 1]}s off'),
+              _Fact(Icons.weekend_rounded, context.l10n.dayOff(weekdayTitle(context.l10n, rest))),
           ]),
         ]),
       ),

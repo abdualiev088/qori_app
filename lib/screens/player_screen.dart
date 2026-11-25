@@ -14,6 +14,7 @@ import '../widgets/mini_player.dart';
 import '../widgets/progress_indicators.dart';
 import '../widgets/ribbed_glass.dart';
 import '../widgets/star.dart';
+import '../l10n/l10n.dart';
 
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key, required this.controller, required this.bottomInset, this.viewing, this.onBack});
@@ -376,7 +377,7 @@ class _Header extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text('$reciterName · Surah $surah · ${surahAyahCounts[surah - 1]} ayahs',
+                Text(context.l10n.reciterLine(reciterName, surah, surahAyahCounts[surah - 1]),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: HText.inter(size: 13, weight: FontWeight.w500, color: HColors.ink2)),
@@ -385,9 +386,9 @@ class _Header extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           if (!browsing) ...[
-            if (c.selecting && count == 0) textButton('All', c.selectAll),
-            if (c.selecting && count > 0) textButton('Clear', c.clearSelection),
-            if (!c.selecting && count > 0) textButton('Cancel', c.cancelSelection),
+            if (c.selecting && count == 0) textButton(context.l10n.all, c.selectAll),
+            if (c.selecting && count > 0) textButton(context.l10n.clear, c.clearSelection),
+            if (!c.selecting && count > 0) textButton(context.l10n.cancel, c.cancelSelection),
             const SizedBox(width: 2),
             _SelectPill(c: c),
           ],
@@ -407,10 +408,12 @@ class _SelectPill extends StatelessWidget {
     final count = c.selected.length;
     final on = c.selecting;
     final color = on ? Colors.white : HColors.ink;
-    final label = on ? 'Done' : (count > 0 ? 'Selected' : 'Select');
+    final label = on ? context.l10n.done : (count > 0 ? context.l10n.selected : context.l10n.select);
     return Semantics(
       button: true,
-      label: on ? 'Done selecting' : (count > 0 ? 'Selected, $count ayat. Tap to change' : 'Select ayat'),
+      label: on
+          ? context.l10n.doneSelecting
+          : (count > 0 ? context.l10n.selectedAyatChange(count) : context.l10n.selectAyat),
       excludeSemantics: true,
       child: GestureDetector(
         onTap: () => c.setSelecting(!on),
@@ -522,7 +525,7 @@ class _AyahList extends StatelessWidget {
                       _RowSurface(
                         key: rowKey(0),
                         current: basmalaCurrent,
-                        semanticLabel: 'Basmala. Tap to listen',
+                        semanticLabel: context.l10n.basmalaTapToListen,
                         onTap: b == null ? () => c.tapAyah(0) : () => b.onTap(0),
                         padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
                         child: Column(
@@ -532,7 +535,7 @@ class _AyahList extends StatelessWidget {
                                 textDirection: TextDirection.rtl,
                                 style: HText.arabic(size: 22, height: 1.9)),
                             const SizedBox(height: 2),
-                            Text('Tap to listen to the Basmala',
+                            Text(context.l10n.tapToListenBasmala,
                                 style: HText.inter(size: 13, height: 1.4, color: HColors.ink2)),
                           ],
                         ),
@@ -566,7 +569,7 @@ class _ListState extends StatelessWidget {
     if (!failed) {
       return Center(
         child: Semantics(
-          label: 'Loading $name',
+          label: context.l10n.loadingName(name),
           child: const SizedBox.square(
             dimension: 28,
             child: CircularProgressIndicator(strokeWidth: 2.4, color: HColors.accent),
@@ -578,9 +581,9 @@ class _ListState extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text("Couldn't load $name", style: HText.inter(size: 16, weight: FontWeight.w600)),
+          Text(context.l10n.couldntLoadName(name), style: HText.inter(size: 16, weight: FontWeight.w600)),
           const SizedBox(height: 6),
-          Text('Check the app is up to date, then try again.',
+          Text(context.l10n.checkUpToDate,
               textAlign: TextAlign.center, style: HText.inter(size: 14, color: HColors.ink2)),
           const SizedBox(height: 12),
           TextButton(
@@ -590,7 +593,7 @@ class _ListState extends StatelessWidget {
               foregroundColor: HColors.accentDeep,
               textStyle: HText.button(),
             ),
-            child: const Text('Try again'),
+            child: Text(context.l10n.tryAgain),
           ),
         ]),
       ),
@@ -672,7 +675,7 @@ class _AyahRow extends StatelessWidget {
         child: _RowSurface(
           current: cur,
           tint: selecting && checked ? HColors.mintSelected : null,
-          semanticLabel: 'Ayah ${ayah.n}. ${ayah.en}',
+          semanticLabel: context.l10n.ayahWithText(ayah.n, ayah.en),
           checked: selecting ? checked : null,
           onTap: browsing ? () => onTap!(ayah.n) : () => c.tapAyah(ayah.n),
           padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
@@ -774,7 +777,7 @@ class _PlayerPanel extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: 'Player',
+      label: context.l10n.tabPlayer,
       child: DecoratedBox(
         decoration: const BoxDecoration(
           borderRadius: radius,
@@ -797,7 +800,7 @@ class _PlayerPanel extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Text(c.current == 0 ? 'Basmala' : 'Ayah ${c.current}',
+                      Text(c.current == 0 ? context.l10n.basmala : context.l10n.ayahN(c.current),
                           style:
                               HText.inter(size: 15, weight: FontWeight.w600, letterSpacing: -0.2, color: Colors.white)),
                       if (c.current != 0) ...[
@@ -837,7 +840,7 @@ class _PlayerPanel extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Flexible(
-                          child: Text('REPEAT EACH AYAH',
+                          child: Text(context.l10n.repeatEachAyahCaps,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style:
@@ -873,7 +876,7 @@ class _NoAudio extends StatelessWidget {
   Widget build(BuildContext context) => SizedBox(
         height: 16,
         child: Center(
-          child: Text('Audio for $name is coming soon',
+          child: Text(context.l10n.audioComingSoon(name),
               style: HText.inter(size: 13, color: Colors.white.withValues(alpha: 0.72))),
         ),
       );
@@ -899,7 +902,7 @@ class _SeekBar extends StatelessWidget {
       valueListenable: c.progress,
       builder: (context, p, _) => Semantics(
         slider: true,
-        label: 'Position',
+        label: context.l10n.position,
         value: '${(p * 100).round()}%',
         increasedValue: '${(p * 100).round() + 5 > 100 ? 100 : (p * 100).round() + 5}%',
         decreasedValue: '${(p * 100).round() - 5 < 0 ? 0 : (p * 100).round() - 5}%',
@@ -954,12 +957,12 @@ class _Transport extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        skip('Previous ayah', c.canGoPrevious, c.goPrevious, HIcon.previous),
+        skip(context.l10n.previousAyah, c.canGoPrevious, c.goPrevious, HIcon.previous),
         const SizedBox(width: 26),
         Semantics(
           button: true,
           enabled: c.hasAudio,
-          label: c.playing ? 'Pause' : 'Play',
+          label: c.playing ? context.l10n.pause : context.l10n.play,
           excludeSemantics: true,
           child: GestureDetector(
             onTap: c.hasAudio ? c.toggle : null,
@@ -999,7 +1002,7 @@ class _Transport extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 26),
-        skip('Next ayah', c.canGoNext, c.goNext, HIcon.next),
+        skip(context.l10n.nextAyah, c.canGoNext, c.goNext, HIcon.next),
       ],
     );
   }
@@ -1132,7 +1135,7 @@ class _RepeatChip extends StatelessWidget {
     return Semantics(
       button: true,
       selected: on,
-      label: value == 0 ? 'Repeat forever' : 'Repeat $value times',
+      label: value == 0 ? context.l10n.repeatForever : context.l10n.repeatTimes(value),
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

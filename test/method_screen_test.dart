@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:qori_app/data/plan.dart';
-import 'package:qori_app/data/plan_store.dart';
-import 'package:qori_app/screens/method_screen.dart';
-import 'package:qori_app/theme/tokens.dart';
-import 'package:qori_app/widgets/method_explainer.dart';
+import 'package:hifz_app/data/plan.dart';
+import 'package:hifz_app/data/plan_store.dart';
+import 'package:hifz_app/screens/method_screen.dart';
+import 'package:hifz_app/theme/tokens.dart';
+import 'package:hifz_app/widgets/auth_widgets.dart';
+import 'package:hifz_app/widgets/method_explainer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'l10n_en.dart';
 
 void main() {
   setUp(() => HText.useGoogleFonts = false);
@@ -29,14 +31,14 @@ void main() {
 
   testWidgets('the first visit explains the method once, then opens on the plan form', (tester) async {
     await open(tester);
-    expect(find.text(Method33.name), findsWidgets);
+    expect(find.text(en.methodName), findsWidgets);
     expect(find.text('HOW IT WORKS'), findsOneWidget);
-    expect(find.text(Method33.steps[0]), findsOneWidget);
+    expect(find.text(Method33.steps(en)[0]), findsOneWidget);
     expect(store.howSeen, isTrue);
 
     // It plays: the next step after 2.6 s.
     await tester.pump(StepPlayer.interval);
-    expect(find.text(Method33.steps[1]), findsOneWidget);
+    expect(find.text(Method33.steps(en)[1]), findsOneWidget);
 
     await tester.tap(find.text('Set up my plan'));
     await tester.pump();
@@ -53,7 +55,7 @@ void main() {
     expect(find.text('An-Nas'), findsWidgets);
     expect(find.text('An-Naba'), findsWidgets);
     expect(find.text('50'), findsOneWidget); // days
-    expect(find.textContaining('Day 1: '), findsOneWidget);
+    expect(find.textContaining('Day 1'), findsOneWidget);
     expect(find.text('5 of 15 lines on a page'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
@@ -72,19 +74,48 @@ void main() {
     expect(find.text('Update my plan'), findsOneWidget);
   });
 
+  testWidgets('Update my plan is enabled only while there are unsaved changes', (tester) async {
+    await open(tester, prefs: {PlanStore.howSeenKey: true});
+    bool enabled() => tester.widget<PrimaryButton>(find.byType(PrimaryButton)).onPressed != null;
+    await tester.tap(find.text('Create my plan'));
+    await tester.pump();
+    expect(find.text('Your plan'), findsOneWidget);
+    expect(find.text('Update my plan'), findsOneWidget);
+    expect(enabled(), isFalse); // just saved
+
+    await tester.tap(find.text('1 page'));
+    await tester.pump();
+    expect(enabled(), isTrue);
+    await tester.tap(find.text('5 lines'));
+    await tester.pump();
+    expect(enabled(), isFalse); // back to what's saved
+
+    await tester.ensureVisible(find.text('Sunday'));
+    await tester.tap(find.text('Sunday'));
+    await tester.pump();
+    expect(enabled(), isTrue);
+    await tester.tap(find.text('Update my plan'));
+    await tester.pump();
+    expect(store.plan!.restWeekday, DateTime.sunday);
+    expect(saved.last, 'Plan updated');
+    expect(enabled(), isFalse);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('How it works stays open while the plan is edited', (tester) async {
     await open(tester, prefs: {PlanStore.howSeenKey: true});
     await tester.tap(find.text('How it works'));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('AT A GLANCE'), findsOneWidget);
     await tester.pump(StepPlayer.interval);
-    expect(find.text(Method33.steps[1]), findsOneWidget);
+    expect(find.text(Method33.steps(en)[1]), findsOneWidget);
 
     await tester.ensureVisible(find.text('Saturday'));
     await tester.tap(find.text('Saturday'));
     await tester.pump();
     expect(find.text('AT A GLANCE'), findsOneWidget);
-    expect(find.text(Method33.steps[1]), findsOneWidget); // not restarted
+    expect(find.text(Method33.steps(en)[1]), findsOneWidget); // not restarted
 
     await tester.ensureVisible(find.text('How it works'));
     await tester.tap(find.text('How it works'));
@@ -100,8 +131,8 @@ void main() {
     await tester.tap(find.text('From the beginning'));
     await tester.pump();
     // An-Naba 1 → An-Nas 6.
-    expect(find.bySemanticsLabel(RegExp(r'^START surah: 78')), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp(r'^END surah: 114')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'^Start surah: 78')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'^End surah: 114')), findsOneWidget);
     expect(find.textContaining('The end must come after'), findsNothing);
 
     // Reading from the end with An-Naba first is backwards.
@@ -109,10 +140,10 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('From the end')); // no change on the same option
     await tester.pump();
-    expect(find.bySemanticsLabel(RegExp(r'^START surah: 114')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'^Start surah: 114')), findsOneWidget);
 
     // From the end, starting at Al-Fatihah can't reach An-Naba.
-    await tester.tap(find.bySemanticsLabel(RegExp(r'^START surah')));
+    await tester.tap(find.bySemanticsLabel(RegExp(r'^Start surah:')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'fatihah');
     await tester.pump();
@@ -138,7 +169,7 @@ void main() {
 
   testWidgets('the surah picker searches and picks', (tester) async {
     await open(tester, prefs: {PlanStore.howSeenKey: true});
-    await tester.tap(find.bySemanticsLabel(RegExp(r'^END surah')));
+    await tester.tap(find.bySemanticsLabel(RegExp(r'^End surah:')));
     await tester.pumpAndSettle();
     expect(find.text('End surah'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'mulk');
@@ -147,7 +178,7 @@ void main() {
     await tester.tap(find.text('Al-Mulk'));
     await tester.pumpAndSettle();
     expect(find.text('Set your plan'), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp(r'^END surah: 67')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'^End surah: 67')), findsOneWidget);
     expect(find.text('30'), findsWidgets); // the end ayah is Al-Mulk's last
   });
 

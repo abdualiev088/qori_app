@@ -2,6 +2,7 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/painting.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/tokens.dart';
 import 'ribbed_glass.dart';
 
@@ -64,7 +65,7 @@ class MoodStyle {
   final double browOpacity;
 
   final IdleMotion idle;
-  final String status;
+  final String Function(AppLocalizations) status;
 
   /// The ribbed card fill behind everything.
   final RibbedGlassPainter background;
@@ -84,7 +85,7 @@ class MoodStyle {
     browOffsetY: 0,
     browOpacity: 0,
     idle: IdleMotion.bounce,
-    status: "Hifdth is happy, you're on track",
+    status: _happyText,
     background: RibbedGlassPainter.home,
     border: _happyBorder,
   );
@@ -98,7 +99,7 @@ class MoodStyle {
     browRight: 12,
     browOffsetY: 4,
     idle: IdleMotion.sway,
-    status: 'Hifdth is getting worried…',
+    status: _worriedText,
   );
 
   static final sad = _tinted(
@@ -110,7 +111,7 @@ class MoodStyle {
     browRight: 18,
     browOffsetY: 6,
     idle: IdleMotion.droop,
-    status: 'Hifdth is sad, sessions missed',
+    status: _sadText,
   );
 
   /// A mood whose card is Home's mint card turned to the hue of its middle color.
@@ -123,7 +124,7 @@ class MoodStyle {
     required double browRight,
     required double browOffsetY,
     required IdleMotion idle,
-    required String status,
+    required String Function(AppLocalizations) status,
   }) {
     final accent = body[1];
     final turn = HSLColor.fromColor(accent).hue - HSLColor.fromColor(HColors.accent).hue;
@@ -192,3 +193,7 @@ class MoodStyle {
     );
   }
 }
+
+String _happyText(AppLocalizations l) => l.moodHappy;
+String _worriedText(AppLocalizations l) => l.moodWorried;
+String _sadText(AppLocalizations l) => l.moodSad;

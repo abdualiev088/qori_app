@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:qori_app/theme/tokens.dart';
-import 'package:qori_app/widgets/hifdth_card.dart';
-import 'package:qori_app/widgets/hifdth_mood.dart';
-import 'package:qori_app/widgets/ribbed_glass.dart';
+import 'package:hifz_app/theme/tokens.dart';
+import 'package:hifz_app/widgets/hifdth_card.dart';
+import 'package:hifz_app/widgets/hifdth_mood.dart';
+import 'package:hifz_app/widgets/ribbed_glass.dart';
+import 'l10n_en.dart';
 
 void main() {
   setUp(() => HText.useGoogleFonts = false);
@@ -21,7 +22,7 @@ void main() {
     expect(a.eyeScaleY, 1);
     expect(b.accent, MoodStyle.sad.accent);
     expect(b.eyeOffsetY, 14);
-    expect(b.status, MoodStyle.sad.status);
+    expect(b.status(en), MoodStyle.sad.status(en));
   });
 
   Widget card(HifdthMood mood) => MaterialApp(
@@ -30,11 +31,11 @@ void main() {
 
   testWidgets('changing the mood morphs to the new status', (tester) async {
     await tester.pumpWidget(card(HifdthMood.happy));
-    expect(find.text(MoodStyle.happy.status), findsOneWidget);
+    expect(find.text(MoodStyle.happy.status(en)), findsOneWidget);
 
     await tester.pumpWidget(card(HifdthMood.worried));
     await tester.pump(const Duration(milliseconds: 600));
-    expect(find.text(MoodStyle.worried.status), findsOneWidget);
+    expect(find.text(MoodStyle.worried.status(en)), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -44,7 +45,7 @@ void main() {
     for (final next in [MoodStyle.worried, MoodStyle.sad, MoodStyle.happy]) {
       await tester.longPress(hifdth);
       await tester.pump(const Duration(milliseconds: 600));
-      expect(find.text(next.status), findsOneWidget);
+      expect(find.text(next.status(en)), findsOneWidget);
     }
   });
 

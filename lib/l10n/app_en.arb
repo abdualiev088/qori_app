@@ -1,0 +1,1037 @@
+{
+  "@@locale": "en",
+  "todaysProgress": "TODAY'S PROGRESS",
+  "stepsDone": "{done} of {total} done",
+  "@stepsDone": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "hifdthAssistant": "Hifdth assistant",
+  "profile": "Profile",
+  "mainNav": "Main",
+  "tabHome": "Home",
+  "tabPlayer": "Player",
+  "tabMethod": "My Method",
+  "tabSettings": "Settings",
+  "moodHappy": "Hifdth is happy, you're on track",
+  "moodWorried": "Hifdth is getting worried…",
+  "moodSad": "Hifdth is sad, sessions missed",
+  "taskDone": "done",
+  "taskPending": "pending",
+  "dailyGoal": "Daily goal {pct} percent",
+  "@dailyGoal": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "weekComplete": "This week: {done} of {total} days complete",
+  "@weekComplete": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "openPlayerLabel": "Open player. {name}, {summary}",
+  "@openPlayerLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "stopAndClose": "Stop and close {name}",
+  "@stopAndClose": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pause": "Pause",
+  "play": "Play",
+  "signInBubble": "Sign in to save your Quran progress",
+  "quranProgressCaps": "QURAN PROGRESS",
+  "opensSignIn": "Opens sign-in",
+  "signIn": "Sign in",
+  "register": "Register",
+  "signedOutHint": "Sign in, then tap a surah to mark its ayahs.",
+  "undo": "Undo",
+  "allAyahsMarked": "{count, plural, =1{1 ayah marked} other{All {count} ayahs marked}}",
+  "@allAyahsMarked": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "allAyahsCleared": "All ayahs cleared",
+  "savedLearned": "Saved · {name}, {learned} of {count, plural, =1{1 ayah} other{{count} ayahs}} learned",
+  "@savedLearned": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "learned": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "changesDiscarded": "Changes discarded",
+  "learnedNotStarted": "Not started · {count, plural, =1{1 ayah} other{{count} ayahs}}",
+  "@learnedNotStarted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "learnedAll": "Learned · all {count, plural, =1{1 ayah} other{{count} ayahs}}",
+  "@learnedAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "learnedSome": "{learned} of {count, plural, =1{1 ayah} other{{count} ayahs}} learned",
+  "@learnedSome": {
+    "placeholders": {
+      "learned": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "surahStatusLabel": "Surah {number}, {name}. {status}",
+  "@surahStatusLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "learnedSheetHint": "Tap an ayah to mark it, or slide across ayahs to mark several. The dashed one is next.",
+  "done": "Done",
+  "wholeSurahLearned": "Whole surah learned",
+  "marksAll": "Marks all {count, plural, =1{1 ayah} other{{count} ayahs}} at once",
+  "@marksAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ayahLearned": "Ayah {number}, learned",
+  "@ayahLearned": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "ayahNotLearned": "Ayah {number}, not learned",
+  "@ayahNotLearned": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "markedLearned": "{count, plural, =1{1 ayah} other{{count} ayahs}} marked learned",
+  "@markedLearned": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unmarkedShort": "{count} unmarked",
+  "@unmarkedShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unmarkedLong": "{count, plural, =1{1 ayah} other{{count} ayahs}} unmarked",
+  "@unmarkedLong": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "willHaveLearned": "{changes}. You'll have {learned} of {count, plural, =1{1 ayah} other{{count} ayahs}} learned.",
+  "@willHaveLearned": {
+    "placeholders": {
+      "changes": {
+        "type": "String"
+      },
+      "learned": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "saveChangesQ": "Save changes?",
+  "saveChanges": "Save changes",
+  "keepEditing": "Keep editing",
+  "discardChanges": "Discard changes",
+  "surahNotStarted": "Not started · {count, plural, =1{1 ayah} other{{count} ayahs}}",
+  "@surahNotStarted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "surahMemorized": "Memorized · {count, plural, =1{1 ayah} other{{count} ayahs}}",
+  "@surahMemorized": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "surahPartial": "{memorized} of {count, plural, =1{1 ayah} other{{count} ayahs}} · {left} to go",
+  "@surahPartial": {
+    "placeholders": {
+      "memorized": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      },
+      "left": {
+        "type": "int"
+      }
+    }
+  },
+  "percentMemorized": "{pct} percent memorized",
+  "@percentMemorized": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "surahsMemorized": "{memorized} of {total} surahs memorized",
+  "@surahsMemorized": {
+    "placeholders": {
+      "memorized": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "surahsCount": "{count, plural, =1{1 surah} other{{count} surahs}}",
+  "@surahsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "progressHint": "Tap a surah. Press and hold, then slide, to browse.",
+  "back": "Back",
+  "working": "{label}, working",
+  "@working": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "rule8chars": "8+ characters",
+  "ruleNumber": "A number",
+  "termsSentence": "By continuing you agree to the {terms} and {privacy}.",
+  "@termsSentence": {
+    "placeholders": {
+      "terms": {
+        "type": "String"
+      },
+      "privacy": {
+        "type": "String"
+      }
+    }
+  },
+  "terms": "Terms",
+  "privacyPolicy": "Privacy Policy",
+  "enterEmail": "Enter your email",
+  "emailIncomplete": "That email looks incomplete",
+  "accountOffline": "You're offline. Turn on the internet to update your account.",
+  "signedOutResync": "You were signed out. Sign in again to sync your progress.",
+  "yourAccount": "Your account",
+  "resetLinkSent": "We sent a reset link to {email}",
+  "@resetLinkSent": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "logOutQ": "Log out?",
+  "logOutBody": "Your progress stays on this phone. Sign in again to sync it with your account.",
+  "logOut": "Log out",
+  "deleteAccountQ": "Delete your account?",
+  "deleteAccountBody": "Your account and its synced progress are deleted for good. This can't be undone.",
+  "deleteAccount": "Delete account",
+  "accountSettingsCaps": "ACCOUNT SETTINGS",
+  "name": "Name",
+  "addYourName": "Add your name",
+  "email": "Email",
+  "notSet": "Not set",
+  "password": "Password",
+  "sendResetLink": "Send reset link",
+  "enterName": "Enter your name",
+  "yourName": "Your name",
+  "nameGreeting": "This is how Hifdth greets you.",
+  "save": "Save",
+  "cancel": "Cancel",
+  "enterPassword": "Enter your password",
+  "passwordMin8": "Use at least 8 characters",
+  "somethingWrong": "Something went wrong. Please try again.",
+  "change": "Change",
+  "emailHint": "you@example.com",
+  "continueLabel": "Continue",
+  "orWord": "or",
+  "continueApple": "Continue with Apple",
+  "continueGoogle": "Continue with Google",
+  "createPassword": "Create a password",
+  "yourPassword": "Your password",
+  "forgotPassword": "Forgot password?",
+  "createAccount": "Create account",
+  "authEmailTitle": "Sign in or sign up",
+  "authEmailBody": "Enter your email and Hifdth will take it from there.",
+  "authPasswordTitle": "Welcome back",
+  "authPasswordBody": "Enter your password to pick up where you left off.",
+  "authCreateTitle": "Nice to meet you",
+  "authCreateBody": "Two more things and your progress is saved everywhere.",
+  "linesCount": "{count, plural, =1{1 line} other{{count} lines}}",
+  "@linesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pagesCount": "{count, plural, =1{1 page} other{{count} pages}}",
+  "@pagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pagesHalf": "{n} pages",
+  "@pagesHalf": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "paceOnePage": "one full page",
+  "paceTwoPages": "two full pages",
+  "paceHalfPage": "about half a page",
+  "pacePagePlus": "a page and {count, plural, =1{1 line} other{{count} lines}}",
+  "@pacePagePlus": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paceOfPage": "{count} of 15 lines on a page",
+  "@paceOfPage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "weekdaysLong": "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday",
+  "weekdaysShort": "Mon,Tue,Wed,Thu,Fri,Sat,Sun",
+  "weekdayLetters": "M,T,W,T,F,S,S",
+  "monthsLong": "January,February,March,April,May,June,July,August,September,October,November,December",
+  "monthsShort": "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec",
+  "dateShort": "{weekday}, {day} {month}",
+  "@dateShort": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      },
+      "day": {
+        "type": "int"
+      },
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "withYear": "{date} {year}",
+  "@withYear": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "dateLong": "{weekday}, {day} {month}",
+  "@dateLong": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      },
+      "day": {
+        "type": "int"
+      },
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "askTitle": "How much of the Quran have you memorised?",
+  "askBody": "Tap a surah to tell me.",
+  "planDoneToast": "Today's plan is done. Well done!",
+  "goodMorning": "Good morning",
+  "goodAfternoon": "Good afternoon",
+  "goodEvening": "Good evening",
+  "todaysPlanCaps": "TODAY'S PLAN",
+  "tagRecite33": "Recite 33×",
+  "tagMemorize": "Memorize",
+  "tagBy22": "by 22:00",
+  "morning": "Morning",
+  "evening": "Evening",
+  "taskRecite": "Recite {range}",
+  "@taskRecite": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "taskMemorize": "Memorize {range}",
+  "@taskMemorize": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "taskReciteSub": "{amount} · 33× from memory · last {count, plural, =1{lesson} other{{count} lessons}}",
+  "@taskReciteSub": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "taskMemorizeSub": "{amount} · about one hour, before 22:00",
+  "@taskMemorizeSub": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "showsQuranProgress": "Shows your Quran progress",
+  "hifdth": "Hifdth",
+  "hideMessage": "Hide message",
+  "talkToHifdth": "Talk to Hifdth",
+  "offlineMessage": "You're offline. Changes are saved on this phone and sync when you're back online.",
+  "backOnlineMessage": "You're back online. Your changes are syncing.",
+  "offline": "Offline",
+  "backOnline": "Back online",
+  "dailyGoalTitle": "Daily goal",
+  "streak": "Streak",
+  "daysCount": "{count, plural, =1{1 day} other{{count} days}}",
+  "@daysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "nothingDue": "Nothing due today",
+  "waitingForPlan": "Hifdth is waiting for your plan",
+  "noPlanYet": "No plan yet",
+  "noPlanDetail": "Pick where to start; each day's lesson shows up here.",
+  "setUpMyPlan": "Set up my plan",
+  "restDayStatus": "Rest day. Hifdth is resting too",
+  "restDay": "Rest day",
+  "restDayDetail": "Read this week's lessons once, if you like.",
+  "startsOn": "Starts {date}",
+  "@startsOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "planComplete": "Plan complete",
+  "planCompleteDetail": "{count, plural, =1{1 ayah} other{{count} ayahs}}, {from} → {to}. Keep revising them.",
+  "@planCompleteDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "setNewRange": "Set a new range",
+  "dayOf": "Day {day}/{total}",
+  "@dayOf": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "allDoneToday": "All done today",
+  "leftToday": "{count} left today",
+  "@leftToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "yourPlanTitle": "Your plan",
+  "changePlan": "Change plan",
+  "dayText": "Day {text}",
+  "@dayText": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "linesPerDayFact": "{count, plural, =1{1 line} other{{count} lines}}/day",
+  "@linesPerDayFact": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "finishesOn": "Finishes {date}",
+  "@finishesOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "dayOff": "{day} off",
+  "@dayOff": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "methodName": "33 repetitions",
+  "loopSelected": "Loop selected",
+  "thenNextAyah": "Then next ayah",
+  "nOfM": "{n} of {total}",
+  "@nOfM": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "finishedAyat": "Finished · {count} ayat",
+  "@finishedAyat": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "finished": "Finished",
+  "playingOnce": "Playing once",
+  "playsOnce": "Plays once",
+  "repeating": "Repeating ",
+  "repeatWord": "Repeat ",
+  "ofCount": " of {count}",
+  "@ofCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "basmala": "Basmala",
+  "ayahNOfM": "Ayah {n} of {total}",
+  "@ayahNOfM": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "selectionHintSome": "{count} selected · each plays {how}, then the next selected one",
+  "@selectionHintSome": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "how": {
+        "type": "String"
+      }
+    }
+  },
+  "onRepeat": "on repeat",
+  "timesShort": "{count}×",
+  "@timesShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectionHintNone": "Tap the ayat you want to repeat",
+  "couldntLoadAyah": "Couldn't load this ayah.",
+  "couldntPlayAyah": "Couldn't play this ayah.",
+  "ayahN": "Ayah {n}",
+  "@ayahN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "surahName": "Surah {name}",
+  "@surahName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reciterLine": "{reciter} · Surah {surah} · {count, plural, =1{1 ayah} other{{count} ayahs}}",
+  "@reciterLine": {
+    "placeholders": {
+      "reciter": {
+        "type": "String"
+      },
+      "surah": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "all": "All",
+  "clear": "Clear",
+  "selected": "Selected",
+  "select": "Select",
+  "doneSelecting": "Done selecting",
+  "selectedAyatChange": "Selected, {count} ayat. Tap to change",
+  "@selectedAyatChange": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectAyat": "Select ayat",
+  "basmalaTapToListen": "Basmala. Tap to listen",
+  "tapToListenBasmala": "Tap to listen to the Basmala",
+  "loadingName": "Loading {name}",
+  "@loadingName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "couldntLoadName": "Couldn't load {name}",
+  "@couldntLoadName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "checkUpToDate": "Check the app is up to date, then try again.",
+  "tryAgain": "Try again",
+  "ayahWithText": "Ayah {n}. {text}",
+  "@ayahWithText": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "repeatEachAyahCaps": "REPEAT EACH AYAH",
+  "audioComingSoon": "Audio for {name} is coming soon",
+  "@audioComingSoon": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "position": "Position",
+  "previousAyah": "Previous ayah",
+  "nextAyah": "Next ayah",
+  "repeatForever": "Repeat forever",
+  "repeatTimes": "Repeat {count} times",
+  "@repeatTimes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noSurahMatches": "No surah matches “{query}”",
+  "@noSurahMatches": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchTryHint": "Try a number, a name like “Kahf”, or a meaning like “cave”.",
+  "clearSearch": "Clear search",
+  "juzMeaning": "Juz {juz} · {meaning}",
+  "@juzMeaning": {
+    "placeholders": {
+      "juz": {
+        "type": "int"
+      },
+      "meaning": {
+        "type": "String"
+      }
+    }
+  },
+  "surahs": "Surahs",
+  "juzSuffix": " juz",
+  "searchHint": "Name, number or meaning",
+  "jumpToJuz": "Jump to juz",
+  "juzN": "Juz {juz}",
+  "@juzN": {
+    "placeholders": {
+      "juz": {
+        "type": "int"
+      }
+    }
+  },
+  "juzMemorized": "Juz {juz}, memorized",
+  "@juzMemorized": {
+    "placeholders": {
+      "juz": {
+        "type": "int"
+      }
+    }
+  },
+  "meaningAyahs": "{meaning} · {count, plural, =1{1 ayah} other{{count} ayahs}}",
+  "@meaningAyahs": {
+    "placeholders": {
+      "meaning": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ayahRange": "ayahs {from}–{to}",
+  "@ayahRange": {
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      }
+    }
+  },
+  "continuesAyahRange": "Continues · ayahs {from}–{to}",
+  "@continuesAyahRange": {
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      }
+    }
+  },
+  "memorizedSuffix": ", memorized",
+  "ayahsMemorizedSuffix": ", {learned} of {total} ayahs memorized",
+  "@ayahsMemorizedSuffix": {
+    "placeholders": {
+      "learned": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "methodOrigin": "Your Hifz plan",
+  "methodSummary": "Learn a new portion each evening and sleep on it. On the next three mornings, recite it 33 times from memory. That makes about 100 recitations of every lesson.",
+  "step1": "Evening: memorize the new portion, about an hour, as the last thing you do.",
+  "step2": "Morning 1: recite it 33 times from memory.",
+  "step3": "Morning 2: another 33 times from memory.",
+  "step4": "Morning 3: 33 more. That's about 100 in three days.",
+  "tip1": "Finish the evening lesson before 22:00 so the mornings stay possible.",
+  "tip2": "On your rest day, read the week's lessons once or twice.",
+  "howItWorksCaps": "HOW IT WORKS",
+  "atAGlanceCaps": "AT A GLANCE",
+  "tipsCaps": "TIPS",
+  "stepLabel": "{method}, step {n}: {text}",
+  "@stepLabel": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      },
+      "n": {
+        "type": "int"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "previousStep": "Previous step",
+  "stepNOfM": "Step {n} of {total}",
+  "@stepNOfM": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "pauseSteps": "Pause steps",
+  "playSteps": "Play steps",
+  "nextStep": "Next step",
+  "learnAboutHour": "learn · ~1 h",
+  "morningN": "Morning {n}",
+  "@morningN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "fromMemory": "from memory",
+  "about100": "≈ 100 recitations",
+  "minutesShort": "{count} min",
+  "@minutesShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aDay": "a day",
+  "demanding": "Demanding",
+  "effort": "effort",
+  "solo": "Solo",
+  "noTeacher": "no teacher",
+  "startSurah": "Start surah",
+  "endSurah": "End surah",
+  "planUpdated": "Plan updated",
+  "planCreated": "Plan created · day 1 of {count} is on Home",
+  "@planCreated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "editMyPlan": "Edit my plan",
+  "updateMyPlan": "Update my plan",
+  "createMyPlan": "Create my plan",
+  "setYourPlan": "Set your plan",
+  "methodSubtitle": "{method} · each day's tasks appear on Home",
+  "@methodSubtitle": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "whatToMemorizeCaps": "WHAT TO MEMORIZE",
+  "fromBeginning": "From the beginning",
+  "fatihahFirst": "Al-Fatihah first",
+  "fromEnd": "From the end",
+  "nasFirst": "An-Nas first, Juz ʿAmma",
+  "rangeErrorFromEnd": "The end must come after the start when reading from the end. Change the end or the reading order.",
+  "rangeErrorFromBeginning": "The end must come after the start when reading from the beginning. Change the end or the reading order.",
+  "dailyPaceCaps": "DAILY PACE",
+  "lines": "Lines",
+  "presetHalfPage": "½ page",
+  "countedInMushaf": "Counted in the 15-line Madani mushaf",
+  "restDayCaps": "REST DAY",
+  "none": "None",
+  "howItWorksLabel": "How it works, {method} in {count} steps",
+  "@howItWorksLabel": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "howItWorks": "How it works",
+  "howItWorksSub": "{count} steps · about 100 recitations",
+  "@howItWorksSub": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "start": "Start",
+  "end": "End",
+  "startSurahLabel": "Start surah: {n}, {name}. Change",
+  "@startSurahLabel": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "endSurahLabel": "End surah: {n}, {name}. Change",
+  "@endSurahLabel": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "ayah": "Ayah",
+  "decrease": "Decrease",
+  "increase": "Increase",
+  "rangeLabel": "{label}, {min} to {max}",
+  "@rangeLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "dayWord": "{count, plural, =1{day} other{days}}",
+  "@dayWord": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ayahsCount": "{count, plural, =1{1 ayah} other{{count} ayahs}}",
+  "@ayahsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "day1": "Day 1",
+  "summaryHint": "Your plan shows here once the range is right.",
+  "nameOrNumber": "Name or number",
+  "noSurahMatchesDot": "No surah matches “{query}”.",
+  "@noSurahMatchesDot": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "languageCaps": "LANGUAGE",
+  "languageNote": "Surah meanings and the English translation of the ayahs stay in English for now.",
+  "playbackCaps": "PLAYBACK",
+  "repeatEachAyah": "Repeat each ayah",
+  "repeatEachAyahNote": "How many times the player plays an ayah before moving on.",
+  "thenNextAyahNote": "Go on to the next ayah when the repeats finish.",
+  "aboutCaps": "ABOUT",
+  "version": "Version",
+  "reciter": "Reciter",
+  "contactUs": "Contact us",
+  "soon": "Soon",
+  "madeWithCare": "Hifz · made for those who memorize the Quran",
+  "langEnglish": "English",
+  "langRussian": "Russian",
+  "langUzbekLatin": "Uzbek (Latin)",
+  "langUzbekCyrillic": "Uzbek (Cyrillic)",
+  "privacyPolicyTitle": "Privacy policy"
+}

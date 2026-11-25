@@ -11,6 +11,7 @@ import '../theme/tokens.dart';
 import '../widgets/icons.dart';
 import '../widgets/progress_indicators.dart';
 import '../widgets/star.dart';
+import '../l10n/l10n.dart';
 
 /// The Player tab's first screen: every surah, grouped by juz, with search.
 /// Tapping a row opens the player at that row's first ayah ([onOpen]).
@@ -192,10 +193,10 @@ class _SurahListScreenState extends State<SurahListScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 48, 24, 0),
             child: Column(children: [
-              Text('No surah matches “${_query.trim()}”',
+              Text(context.l10n.noSurahMatches(_query.trim()),
                   textAlign: TextAlign.center, style: HText.inter(size: 16, weight: FontWeight.w600)),
               const SizedBox(height: 6),
-              Text('Try a number, a name like “Kahf”, or a meaning like “cave”.',
+              Text(context.l10n.searchTryHint,
                   textAlign: TextAlign.center, style: HText.inter(size: 14, color: HColors.ink2)),
               const SizedBox(height: 10),
               TextButton(
@@ -205,7 +206,7 @@ class _SurahListScreenState extends State<SurahListScreen> {
                   foregroundColor: HColors.accentDeep,
                   textStyle: HText.button(),
                 ),
-                child: const Text('Clear search'),
+                child: Text(context.l10n.clearSearch),
               ),
             ]),
           ),
@@ -221,7 +222,7 @@ class _SurahListScreenState extends State<SurahListScreen> {
               _SurahRow(
                 surah: s,
                 learned: widget.learned.learnedCount(s),
-                subtitle: 'Juz ${juzOf(s)} · ${surahMeanings[s - 1]}',
+                subtitle: context.l10n.juzMeaning(juzOf(s), surahMeanings[s - 1]),
                 showProgress: true,
                 onTap: () => widget.onOpen(s, 1),
               ),
@@ -250,7 +251,7 @@ class _Title extends StatelessWidget {
                 focusNode: focus,
                 child: Semantics(
                   header: true,
-                  child: Text('Surahs', style: HText.inter(size: 24, weight: FontWeight.w700, letterSpacing: -0.4)),
+                  child: Text(context.l10n.surahs, style: HText.inter(size: 24, weight: FontWeight.w700, letterSpacing: -0.4)),
                 ),
               ),
             ]),
@@ -259,7 +260,7 @@ class _Title extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 4),
             child: Text.rich(TextSpan(children: [
               TextSpan(text: '30', style: HText.inter(size: 15, weight: FontWeight.w700, tabular: true)),
-              TextSpan(text: ' juz', style: HText.inter(size: 15, color: HColors.inkMuted)),
+              TextSpan(text: context.l10n.juzSuffix, style: HText.inter(size: 15, color: HColors.inkMuted)),
             ])),
           ),
         ],
@@ -345,7 +346,7 @@ class _SearchField extends StatelessWidget {
         style: HText.inter(size: 16),
         cursorColor: HColors.accentDeep,
         decoration: InputDecoration(
-          hintText: 'Name, number or meaning',
+          hintText: context.l10n.searchHint,
           hintStyle: HText.inter(size: 16, color: const Color(0xFF9AA3AD)),
           filled: true,
           fillColor: Colors.white,
@@ -356,7 +357,7 @@ class _SearchField extends StatelessWidget {
             builder: (context, value, _) => value.text.isEmpty
                 ? const SizedBox.shrink()
                 : IconButton(
-                    tooltip: 'Clear search',
+                    tooltip: context.l10n.clearSearch,
                     constraints: const BoxConstraints.tightFor(width: 44, height: 44),
                     onPressed: () {
                       controller.clear();
@@ -391,7 +392,7 @@ class _JuzRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
         container: true,
-        label: 'Jump to juz',
+        label: context.l10n.jumpToJuz,
         child: SizedBox(
           height: 52,
           child: ListView(
@@ -429,7 +430,7 @@ class _JuzButton extends StatelessWidget {
     return Semantics(
       button: true,
       selected: current,
-      label: 'Juz $juz${memorized ? ', memorized' : ''}',
+      label: memorized ? context.l10n.juzMemorized(juz) : context.l10n.juzN(juz),
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -472,7 +473,7 @@ class _JuzSection extends StatelessWidget {
             header: true,
             child:
                 Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-              Text('Juz $juz', style: HText.inter(size: 17, weight: FontWeight.w700)),
+              Text(context.l10n.juzN(juz), style: HText.inter(size: 17, weight: FontWeight.w700)),
               const SizedBox(width: 8),
               Text('الجزء ${arabicDigits(juz)}',
                   textDirection: TextDirection.rtl, style: HText.arabic(size: 17, color: HColors.accentDeep)),
@@ -489,8 +490,10 @@ class _JuzSection extends StatelessWidget {
             surah: p.surah,
             learned: learned.learnedCount(p.surah),
             subtitle: p.whole
-                ? '${surahMeanings[p.surah - 1]} · ${p.ayahCount} ayahs'
-                : '${p.from > 1 ? 'Continues · ' : ''}ayahs ${p.from}–${p.to}',
+                ? context.l10n.meaningAyahs(surahMeanings[p.surah - 1], p.ayahCount)
+                : p.from > 1
+                    ? context.l10n.continuesAyahRange(p.from, p.to)
+                    : context.l10n.ayahRange(p.from, p.to),
             showProgress: p.whole,
             onTap: () => onOpen(p.surah, p.from),
           ),
@@ -553,7 +556,7 @@ class _SurahRowState extends State<_SurahRow> {
     return Semantics(
       button: true,
       label:
-          '$s, $name, ${widget.subtitle}${done ? ', memorized' : inProgress ? ', ${widget.learned} of $total ayahs memorized' : ''}',
+          '$s, $name, ${widget.subtitle}${done ? context.l10n.memorizedSuffix : inProgress ? context.l10n.ayahsMemorizedSuffix(widget.learned, total) : ''}',
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

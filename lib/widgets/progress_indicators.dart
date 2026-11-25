@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../theme/tokens.dart';
 import 'icons.dart';
+import '../l10n/l10n.dart';
 
 /// A row of equal segments, each filled 0–1. Used for today's sessions (6 px)
 /// and the player's per-repetition progress (4 px).
@@ -68,7 +69,7 @@ class ProgressRing extends StatelessWidget {
   Widget build(BuildContext context) {
     final pct = (value * 100).round();
     return Semantics(
-      label: 'Daily goal $pct percent',
+      label: context.l10n.dailyGoal(pct),
       excludeSemantics: true,
       child: SizedBox.square(
         dimension: size,
@@ -166,7 +167,7 @@ class StepTimeline extends StatelessWidget {
         for (final (i, s) in steps.indexed) ...[
           if (i > 0) const SizedBox(height: 4),
           Semantics(
-            label: '${s.title}, ${s.done ? 'done' : 'pending'}. ${s.subtitle}',
+            label: '${s.title}, ${s.done ? context.l10n.taskDone : context.l10n.taskPending}. ${s.subtitle}',
             excludeSemantics: true,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,7 +369,7 @@ class StreakBars extends StatelessWidget {
   Widget build(BuildContext context) {
     final done = days.where((d) => d.done).length;
     return Semantics(
-      label: 'This week: $done of ${days.length} days complete',
+      label: context.l10n.weekComplete(done, days.length),
       excludeSemantics: true,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -379,11 +380,19 @@ class StreakBars extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    height: d.done ? 28 : 10,
-                    decoration: BoxDecoration(
-                      color: d.done ? HColors.accent : HColors.track,
-                      borderRadius: BorderRadius.circular(4),
+                  // Always as tall as a done day's bar, so the card keeps its height
+                  // in a week with nothing done yet.
+                  SizedBox(
+                    height: 28,
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        height: d.done ? 28 : 10,
+                        decoration: BoxDecoration(
+                          color: d.done ? HColors.accent : HColors.track,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4),

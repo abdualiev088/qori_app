@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:qori_app/data/auth_api.dart';
-import 'package:qori_app/screens/auth_screen.dart';
-import 'package:qori_app/theme/tokens.dart';
-import 'package:qori_app/widgets/auth_widgets.dart';
+import 'package:hifz_app/data/auth_api.dart';
+import 'package:hifz_app/screens/auth_screen.dart';
+import 'package:hifz_app/theme/tokens.dart';
+import 'package:hifz_app/widgets/auth_widgets.dart';
 
 import 'fake_auth_api.dart';
 
@@ -170,7 +170,7 @@ void main() {
     await tester.enterText(field('Email'), 'aziz@mail.com');
     await tester.tap(find.text('Continue'));
     await settle(tester);
-    expect(find.textContaining("Can't reach Qori"), findsOneWidget);
+    expect(find.textContaining("Can't reach Hifz"), findsOneWidget);
     expect(find.text('Sign in or sign up'), findsOneWidget);
   });
 

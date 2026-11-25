@@ -18,7 +18,7 @@ Picked from a prototype with three directions.
   - Live password rules ("8+ characters", "A number").
 - **Rejected:**
   - *Classic* (the mockup layout with Sign in / Create account tabs). It asks for the most at once (tabs plus three methods), and people often pick the wrong tab.
-  - *Social first* (Apple and Google up front, email folded away). It costs email users an extra tap and still needed a "New to Qori? Create account" switch.
+  - *Social first* (Apple and Google up front, email folded away). It costs email users an extra tap and still needed a "New to Hifz? Create account" switch.
 
 ## Player tab: surah list by juz, with a mini-player (2026-11-20)
 
@@ -51,7 +51,7 @@ Picked from a prototype with three directions (`player-list-proto/DECISION.md`).
 
 - **Chosen:** ship TestFlight and Google Play internal testing with only what works: sign-in, Quran progress with sync, the Player. The bottom nav has two tabs, Home and Player. Home shows the greeting, Hifdth's card and Quran progress.
 - **Removed until the schedule exists:** today's sessions, the daily goal and the streak (they showed made-up times and a permanent 0), and the empty My Method and Settings tabs. Hifdth stays happy because nothing can put the user behind yet.
-- **Android id** is `com.abdualiev088.qori`, the same as the iOS bundle id; Google Play never allows changing it after the first upload. The app is called "Qori" on both home screens.
+- **Android id** is `com.abdualiev088.hifz`, the same as the iOS bundle id; Google Play never allows changing it after the first upload. The app is called "Hifz" on both home screens.
 - **Rejected:** keeping the cards with a "coming soon" label. Testers would judge the app by numbers that never move.
 
 ## Memorization plan: one method, 33 repetitions (2026-11-24)
@@ -68,3 +68,20 @@ From the My Method prototype (`~/method-proto`, `FLUTTER_PROMPT_33.md`), cut dow
 - **Rejected:**
   - *A list of methods* (the prototype's eight). The spec asks for one, and a single method keeps the setup short.
   - *Ayahs a day.* An ayah count means very different amounts in Al-Baqarah and Juz ʿAmma.
+
+## 2026-11-25 · My Method form: grouped and quieter
+
+- **Chosen:** settings grouped into white cards (range as two stops on a line, pace, rest day as a sliding segmented control), one-line copy, At a glance cut to three facts, a summary card whose day count rolls on change. The save button is grey while there is nothing new to save.
+- **Rejected:** keeping the paragraph of instructions and the six At a glance tiles (too much to read before acting); dimming the button to 60% when disabled (a pale green still looks tappable).
+
+## 2026-11-25 · Settings tab and three languages
+
+- **Chosen:** Flutter gen-l10n (`lib/l10n/*.arb`, `flutter_localizations` + `intl`), four locales: en, ru, uz (Latin), uz-Cyrl. Uzbek Cyrillic is transliterated from the Latin file with a short list of fixed exceptions (months, weekday abbreviations, "email"). Dates and plurals are formatted from the ARB files, not from `intl` date symbols, so Uzbek Cyrillic gets real month names. English stays the default instead of following the phone.
+- **Rejected:** a hand-rolled string map (no plurals, Material's own texts stay English); following the system language now (the user asked for English by default).
+- **Settings contents:** Language, Playback (repeat, then next ayah), About. Account stays behind Home's profile button.
+
+## 2026-11-25 · The app is called Hifz
+
+- **Chosen:** "Hifz" everywhere: the name on the phone, in-app texts, the Dart package (`hifz_app`), class names, `HIFZ_API_URL`, and the iOS bundle id / Android applicationId `com.abdualiev088.hifz` (changed before the first store upload). The mascot stays Hifdth; the reciter stays Alijon Qori.
+- **Not renamed:** the GitHub repo (`qori_app`), the local folder, the backend project's folder, and the Android upload keystore's file name.
+- **Follow-up:** new bundle id needs its own Google Sign-In iOS client and Apple Sign-In / App Store Connect entry.

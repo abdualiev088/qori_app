@@ -3,13 +3,13 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:qori_app/data/api_client.dart';
-import 'package:qori_app/data/auth_api.dart';
-import 'package:qori_app/data/learned_store.dart';
-import 'package:qori_app/data/progress_sync.dart';
+import 'package:hifz_app/data/api_client.dart';
+import 'package:hifz_app/data/auth_api.dart';
+import 'package:hifz_app/data/learned_store.dart';
+import 'package:hifz_app/data/progress_sync.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// A small in-memory stand-in for the Qori backend, following docs/api.md.
+/// A small in-memory stand-in for the Hifz backend, following docs/api.md.
 class FakeServer {
   /// The signed-in account's progress. There are no guest accounts.
   final progress = <int, Set<int>>{};

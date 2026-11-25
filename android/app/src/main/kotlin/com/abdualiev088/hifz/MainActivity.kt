@@ -1,4 +1,4 @@
-package com.abdualiev088.qori
+package com.abdualiev088.hifz
 
 import com.ryanheise.audioservice.AudioServiceActivity
 

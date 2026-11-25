@@ -1,13 +1,13 @@
 # Выпуск на тест: TestFlight и Google Play internal testing
 
-Цель — рабочая версия для тестировщиков: вход, прогресс с синхронизацией, плеер со всеми 114 сурами Алижона кори. План «33 повторения» (My Method, план дня, цель, стрик) вернулся 2026-11-25; Settings — после.
+Цель — рабочая версия для тестировщиков: вход, прогресс с синхронизацией, плеер со всеми 114 сурами Алижона кори. План «33 повторения» (My Method, план дня, цель, стрик) вернулся 2026-11-25; Settings с языками (en/ru/uz/uz-Cyrl) вернулась тогда же.
 
 Отметка: [x] сделано, [ ] осталось. В скобках — кто может сделать.
 
 ## 1. Приложение (код)
 
 - [x] Убраны заглушки: вкладки My Method и Settings, план дня, цель, стрик. (Claude)
-- [x] Android applicationId `com.abdualiev088.qori`, как bundle id на iOS. Название на экране телефона — «Qori». (Claude)
+- [x] Android applicationId `com.abdualiev088.hifz`, как bundle id на iOS. Название на экране телефона — «Hifz». (Claude)
 - [x] Подпись Android-релиза читается из `android/key.properties` (не в git). (Claude)
 - [x] Flutter обновлён до 3.50.1; `flutter analyze` без ошибок и предупреждений, `flutter test` — 102 из 102. (Claude)
 - [ ] Ссылки Privacy Policy и Terms на экране входа сейчас просто текст: сделать их ссылками на страницы из п. 4. (Claude, когда будут адреса)
@@ -42,12 +42,12 @@
 
 ## 5. iOS → TestFlight
 
-- [ ] В App Store Connect создать приложение с bundle id `com.abdualiev088.qori`.
+- [ ] В App Store Connect создать приложение с bundle id `com.abdualiev088.hifz`.
 - [ ] Sign in with Apple: включить capability в Apple Developer для этого bundle id.
 - [ ] Google Sign-In: iOS client ID в Google Cloud, `GOOGLE_IOS_CLIENT_ID` и reversed client ID в `Info.plist` (URL scheme).
 - [ ] Заполнить App Privacy (какие данные собираются) и Export Compliance (только HTTPS → обычно «нет»).
 - [ ] Сборка на Mac:
-  `flutter build ipa --dart-define=QORI_API_URL=https://api.<домен>/v1 --dart-define=GOOGLE_IOS_CLIENT_ID=… --dart-define=GOOGLE_SERVER_CLIENT_ID=…`
+  `flutter build ipa --dart-define=HIFZ_API_URL=https://api.<домен>/v1 --dart-define=GOOGLE_IOS_CLIENT_ID=… --dart-define=GOOGLE_SERVER_CLIENT_ID=…`
   затем загрузить через Xcode Organizer или Transporter.
 - [ ] Внутренние тестировщики (до 100, из команды App Store Connect) получают сборку сразу. Внешним (до 10 000) нужна короткая проверка Apple: описание, что тестировать, тестовый аккаунт для ревьюера.
 
@@ -58,7 +58,7 @@
   и `android/key.properties` (storeFile, storePassword, keyAlias, keyPassword). Ключ и пароли хранить вне git, сделать резервную копию.
 - [ ] Google Sign-In: Android client ID с SHA-1 ключа загрузки и SHA-1 ключа Play App Signing (из Play Console).
 - [ ] Сборка:
-  `flutter build appbundle --dart-define=QORI_API_URL=https://api.<домен>/v1 --dart-define=GOOGLE_SERVER_CLIENT_ID=…`
+  `flutter build appbundle --dart-define=HIFZ_API_URL=https://api.<домен>/v1 --dart-define=GOOGLE_SERVER_CLIENT_ID=…`
 - [ ] В Play Console: создать приложение, заполнить Data safety, рейтинг контента, целевую аудиторию, ссылку на политику конфиденциальности, загрузить `.aab` в Internal testing, добавить email тестировщиков.
 
 ## 7. Перед каждой тестовой сборкой

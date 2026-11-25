@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../data/surahs.dart';
 import '../theme/tokens.dart';
 import 'star.dart';
+import '../l10n/l10n.dart';
 
 const _cols = 10;
 const _gap = 4.0;
@@ -17,13 +18,13 @@ TextStyle _num({required double size, required FontWeight weight, Color color = 
     HText.inter(size: size, weight: weight, color: color, letterSpacing: letterSpacing)
         .copyWith(fontFeatures: _tabular);
 
-String _status(SurahProgress s) {
-  if (s.notStarted) return 'Not started · ${s.ayahs} ayahs';
-  if (s.isMemorized) return 'Memorized · ${s.ayahs} ayahs';
-  return '${s.memorized} of ${s.ayahs} ayahs · ${s.ayahs - s.memorized} to go';
+String _status(AppLocalizations l, SurahProgress s) {
+  if (s.notStarted) return l.surahNotStarted(s.ayahs);
+  if (s.isMemorized) return l.surahMemorized(s.ayahs);
+  return l.surahPartial(s.memorized, s.ayahs, s.ayahs - s.memorized);
 }
 
-String _label(SurahProgress s) => 'Surah ${s.number}, ${s.name}. ${_status(s)}';
+String _label(AppLocalizations l, SurahProgress s) => l.surahStatusLabel(s.number, s.name, _status(l, s));
 
 int _percent(SurahProgress s) => (s.fraction * 100).round();
 
@@ -184,13 +185,13 @@ class _QuranProgressCardState extends State<QuranProgressCard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Flexible(
-                child: Text('QURAN PROGRESS',
+                child: Text(context.l10n.quranProgressCaps,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: HText.inter(size: 12, weight: FontWeight.w600, letterSpacing: 0.6, color: HColors.ink2)),
               ),
               Semantics(
-                label: '$memorized of ${surahs.length} surahs memorized',
+                label: context.l10n.surahsMemorized(memorized, surahs.length),
                 excludeSemantics: true,
                 child: Text.rich(TextSpan(
                   style: _num(size: 14, weight: FontWeight.w700),
@@ -208,7 +209,7 @@ class _QuranProgressCardState extends State<QuranProgressCard> {
           const SizedBox(height: 14),
           Semantics(
             container: true,
-            label: '${surahs.length} surahs',
+            label: context.l10n.surahsCount(surahs.length),
             child: Listener(
               onPointerDown: _onPointerDown,
               onPointerMove: _onPointerMove,
@@ -259,7 +260,7 @@ class _QuranProgressCardState extends State<QuranProgressCard> {
             ),
           ),
           const SizedBox(height: 10),
-          Text('Tap a surah. Press and hold, then slide, to browse.',
+          Text(context.l10n.progressHint,
               key: widget.hintKey, style: HText.inter(size: 13, color: HColors.inkMuted)),
           const SizedBox(height: 14),
           const ColoredBox(color: HColors.divider, child: SizedBox(height: 1)),
@@ -303,7 +304,7 @@ class _Tile extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: _label(s),
+      label: _label(context.l10n, s),
       excludeSemantics: true,
       onTap: onTap,
       child: AnimatedScale(
@@ -374,7 +375,7 @@ class _Detail extends StatelessWidget {
     return Semantics(
       liveRegion: true,
       container: true,
-      label: '${_label(s)}. ${_percent(s)} percent memorized',
+      label: '${_label(context.l10n, s)}. ${context.l10n.percentMemorized(_percent(s))}',
       excludeSemantics: true,
       child: Row(
         children: [
@@ -394,7 +395,7 @@ class _Detail extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: HText.inter(size: 15, weight: FontWeight.w600)),
                 const SizedBox(height: 1),
-                Text(_status(s),
+                Text(_status(context.l10n, s),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: HText.inter(size: 13, color: HColors.ink2).copyWith(fontFeatures: _tabular)),
@@ -420,7 +421,7 @@ class PercentRing extends StatelessWidget {
   Widget build(BuildContext context) {
     final pct = (value * 100).round();
     return Semantics(
-      label: '$pct percent memorized',
+      label: context.l10n.percentMemorized(pct),
       excludeSemantics: true,
       child: SizedBox.square(
         dimension: 46,
@@ -585,7 +586,7 @@ class _LoupeState extends State<_Loupe> with SingleTickerProviderStateMixin {
             children: [
               Text('${s.number}', style: _num(size: 20, weight: FontWeight.w700, color: Colors.white)),
               Text(s.name, style: HText.inter(size: 13, weight: FontWeight.w600, color: Colors.white)),
-              Text(_status(s),
+              Text(_status(context.l10n, s),
                   style: HText.inter(size: 13, color: Colors.white.withValues(alpha: 0.7))
                       .copyWith(fontFeatures: _tabular)),
             ],

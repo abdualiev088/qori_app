@@ -6,9 +6,9 @@ import '../widgets/auth_widgets.dart';
 import '../widgets/hifdth_card.dart';
 import '../widgets/hifdth_mood.dart';
 import '../widgets/toast.dart';
+import '../l10n/l10n.dart';
 
 /// Shown when the account page opens without internet.
-const accountOfflineNotice = "You're offline. Turn on the internet to update your account.";
 
 /// The signed-in account: name, email, password reset, and log out.
 /// Pops after logging out or deleting the account.
@@ -25,7 +25,7 @@ class _AccountScreenState extends State<AccountScreen> {
   bool _busy = false;
 
   /// Kept here so the page can still draw while it closes after logging out.
-  late QoriUser _user = widget.api.user!;
+  late HifzUser _user = widget.api.user!;
 
   @override
   void initState() {
@@ -39,13 +39,13 @@ class _AccountScreenState extends State<AccountScreen> {
     final online = await widget.api.loadMe();
     if (!mounted) return;
     if (!online) {
-      _toast(accountOfflineNotice);
+      _toast(context.l10n.accountOffline);
       return;
     }
     final user = widget.api.user;
     if (user == null || user.isGuest) {
       // The server ended this session (signed out elsewhere, or deleted).
-      _toast('You were signed out. Sign in again to sync your progress.');
+      _toast(context.l10n.signedOutResync);
       Navigator.of(context).pop();
       return;
     }
@@ -54,7 +54,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   String get _name {
     final n = _user.displayName.trim();
-    return n.isNotEmpty ? n : (_user.email ?? 'Your account');
+    return n.isNotEmpty ? n : (_user.email ?? context.l10n.yourAccount);
   }
 
   void _toast(String text) => Toast.show(context, text);
@@ -72,7 +72,7 @@ class _AccountScreenState extends State<AccountScreen> {
     if (email == null) return;
     try {
       await widget.api.sendPasswordReset(email);
-      _toast('We sent a reset link to $email');
+      _toast(context.l10n.resetLinkSent(email));
     } on ApiException catch (e) {
       _toast(e.message);
     }
@@ -84,9 +84,9 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _logOut() async {
     final ok = await _confirm(
-      title: 'Log out?',
-      body: 'Your progress stays on this phone. Sign in again to sync it with your account.',
-      action: 'Log out',
+      title: context.l10n.logOutQ,
+      body: context.l10n.logOutBody,
+      action: context.l10n.logOut,
       icon: Icons.logout_rounded,
     );
     if (!ok || !mounted) return;
@@ -97,9 +97,9 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _delete() async {
     final ok = await _confirm(
-      title: 'Delete your account?',
-      body: 'Your account and its synced progress are deleted for good. This can\'t be undone.',
-      action: 'Delete account',
+      title: context.l10n.deleteAccountQ,
+      body: context.l10n.deleteAccountBody,
+      action: context.l10n.deleteAccount,
       icon: Icons.delete_outline_rounded,
     );
     if (!ok || !mounted) return;
@@ -142,27 +142,27 @@ class _AccountScreenState extends State<AccountScreen> {
               const SizedBox(height: 28),
               Padding(
                 padding: const EdgeInsets.only(left: 4, bottom: 8),
-                child: Text('ACCOUNT SETTINGS',
+                child: Text(context.l10n.accountSettingsCaps,
                     style: HText.inter(size: 12, weight: FontWeight.w600, color: HColors.inkMuted, letterSpacing: 0.8)),
               ),
               _Section(children: [
                 _Row(
                   icon: Icons.person_outline_rounded,
-                  label: 'Name',
-                  value: _user.displayName.isEmpty ? 'Add your name' : _user.displayName,
+                  label: context.l10n.name,
+                  value: _user.displayName.isEmpty ? context.l10n.addYourName : _user.displayName,
                   onTap: _editName,
                 ),
-                _Row(icon: Icons.mail_outline_rounded, label: 'Email', value: email ?? 'Not set'),
+                _Row(icon: Icons.mail_outline_rounded, label: context.l10n.email, value: email ?? context.l10n.notSet),
                 if (_user.hasPassword)
                   _Row(
                     icon: Icons.lock_outline_rounded,
-                    label: 'Password',
-                    value: 'Send reset link',
+                    label: context.l10n.password,
+                    value: context.l10n.sendResetLink,
                     onTap: _resetPassword,
                   ),
                 _Row(
                   icon: Icons.delete_outline_rounded,
-                  label: 'Delete account',
+                  label: context.l10n.deleteAccount,
                   danger: true,
                   onTap: _busy ? null : _delete,
                 ),
@@ -178,7 +178,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     : Row(mainAxisSize: MainAxisSize.min, children: [
                         const Icon(Icons.logout_rounded, size: 21, color: Color(0xFFC03535)),
                         const SizedBox(width: 10),
-                        Text('Log out', style: HText.button(color: const Color(0xFFC03535))),
+                        Text(context.l10n.logOut, style: HText.button(color: const Color(0xFFC03535))),
                       ]),
               ),
             ],
@@ -246,7 +246,7 @@ class _NameSheetState extends State<_NameSheet> {
   Future<void> _submit() async {
     final name = _controller.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = 'Enter your name');
+      setState(() => _error = context.l10n.enterName);
       return;
     }
     if (name == widget.initial.trim()) {
@@ -270,14 +270,14 @@ class _NameSheetState extends State<_NameSheet> {
   @override
   Widget build(BuildContext context) =>
       Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text('Your name', style: HText.inter(size: 20, weight: FontWeight.w700)),
+        Text(context.l10n.yourName, style: HText.inter(size: 20, weight: FontWeight.w700)),
         const SizedBox(height: 4),
-        Text('This is how Hifdth greets you.', style: HText.inter(size: 15, color: HColors.ink2)),
+        Text(context.l10n.nameGreeting, style: HText.inter(size: 15, color: HColors.ink2)),
         const SizedBox(height: 20),
         AutofillGroup(
           child: AuthField(
-            label: 'Name',
-            hint: 'Your name',
+            label: context.l10n.name,
+            hint: context.l10n.yourName,
             icon: Icons.person_outline_rounded,
             controller: _controller,
             // The sheet exists only to type a name, so the keyboard opening with it is expected.
@@ -293,9 +293,9 @@ class _NameSheetState extends State<_NameSheet> {
           ),
         ),
         const SizedBox(height: 20),
-        PrimaryButton(label: 'Save', loading: _saving, onPressed: _submit),
+        PrimaryButton(label: context.l10n.save, loading: _saving, onPressed: _submit),
         const SizedBox(height: 4),
-        _TextAction(label: 'Cancel', onTap: _saving ? null : () => Navigator.pop(context, false)),
+        _TextAction(label: context.l10n.cancel, onTap: _saving ? null : () => Navigator.pop(context, false)),
       ]);
 }
 
@@ -333,7 +333,7 @@ class _ConfirmSheet extends StatelessWidget {
           child: Text(action, style: HText.button(color: Colors.white)),
         ),
         const SizedBox(height: 4),
-        _TextAction(label: 'Cancel', onTap: () => Navigator.pop(context, false)),
+        _TextAction(label: context.l10n.cancel, onTap: () => Navigator.pop(context, false)),
       ]);
 }
 

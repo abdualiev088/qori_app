@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../theme/tokens.dart';
 import 'icons.dart';
+import '../l10n/l10n.dart';
 
 /// Blur plus a 180% saturation boost, like `backdrop-filter: blur() saturate(180%)`.
 ui.ImageFilter glassFilter(double blur) {
@@ -126,7 +127,7 @@ class GlassProfileButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      GlassCircleButton(label: 'Profile', onTap: onTap, child: HIcon.profile(HColors.ink));
+      GlassCircleButton(label: context.l10n.profile, onTap: onTap, child: HIcon.profile(HColors.ink));
 }
 
 /// The round 46 px glass button used in Home's header.
@@ -215,7 +216,7 @@ class _BottomGlowPainter extends CustomPainter {
   bool shouldRepaint(_BottomGlowPainter old) => false;
 }
 
-enum HTab { home, player, method }
+enum HTab { home, player, method, settings }
 
 /// The liquid-glass bottom nav: 68 tall, radius 34, one equal column per tab.
 ///
@@ -274,7 +275,7 @@ class _LiquidGlassNavState extends State<LiquidGlassNav> {
   Widget build(BuildContext context) {
     return Semantics(
       container: true,
-      label: 'Main',
+      label: context.l10n.mainNav,
       child: SizedBox(
         height: 68,
         child: LiquidGlass(
@@ -375,9 +376,10 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = active ? HColors.accentDeep : HColors.navInk;
     final (icon, label) = switch (tab) {
-      HTab.home => (HIcon.home(color, active: active), 'Home'),
-      HTab.player => (HIcon.player(color, active: active), 'Player'),
-      HTab.method => (HIcon.method(color, active: active), 'My Method'),
+      HTab.home => (HIcon.home(color, active: active), context.l10n.tabHome),
+      HTab.player => (HIcon.player(color, active: active), context.l10n.tabPlayer),
+      HTab.method => (HIcon.method(color, active: active), context.l10n.tabMethod),
+      HTab.settings => (HIcon.settings(color, active: active), context.l10n.tabSettings),
     };
     return Semantics(
       button: true,

@@ -1,12 +1,12 @@
-# Qori: business logic
+# Hifz: business logic
 
 The rules the app follows, in plain words. If this file and the code disagree, the code wins: fix this file in the same change.
 
 Status tags: **live** (works today), **placeholder** (hardcoded until the real logic exists), **planned** (not built).
 
-## 1. What Qori is
+## 1. What Hifz is
 
-Qori helps a person memorise the Quran (hifdth). Hifdth, a round green mascot, reflects how the user is doing and talks to them. The app works fully offline and syncs to the Qori server when it can.
+Hifz helps a person memorise the Quran (hifdth). Hifdth, a round green mascot, reflects how the user is doing and talks to them. The app works fully offline and syncs to the Hifz server when it can.
 
 ## 2. Core facts
 
@@ -87,7 +87,9 @@ The rules are in `lib/data/progress_sync.dart`.
 ## 9. Memorization plan: 33 repetitions (live)
 
 - **One method: "33 repetitions".** Learn the new portion in the evening (about an hour), then recite it 33 times from memory on each of the next three mornings.
-- **Set up in My Method.** The first visit shows the full explainer once (stepped diagram, At a glance, Tips). Later visits open on **Set your plan**, with the explainer folded behind "How it works".
+- **Set up in My Method.** The first visit shows the full explainer once (stepped diagram, At a glance, Tips). Later visits open on the plan form (**Set your plan**, or **Your plan** once one is saved), with the explainer folded behind "How it works".
+  - The form has three groups (What to memorize, Daily pace, Rest day) and a live summary: days, finish date, ayahs, surahs, size and day 1. An impossible range swaps the summary for a hint.
+  - **Create my plan** works as soon as the range is valid. Once a plan is saved the button reads **Update my plan** and is grey until something differs from the saved plan; changing a value back counts as no change, and after a save it greys out again.
 - **The plan:**
   - Reading order: **from the beginning** (Al-Fatihah first) or **from the end** (An-Nas first; surahs backwards, ayahs forwards). Default: from the end.
   - Start and end ayah. Default: An-Nas 1 → An-Naba 40. The end must come after the start in the reading order, or the plan can't be saved.
@@ -108,7 +110,7 @@ The rules are in `lib/data/progress_sync.dart`.
   - Changing the plan keeps its start date and today's ticks.
 - **Home:**
   - "Today's plan" lists the tasks, and the user ticks each one. The morning recitation has an amber sun tile, the evening lesson an indigo moon tile, so the time of day shows at a glance.
-  - The "Your plan" card shows the range, a strip of days, and the pace, finish date and rest day as chips. Its edit button opens My Method.
+  - The "Your plan" card shows the range, a strip of days, and the pace, finish date and rest day as chips; the rest day is spelled out with a capital ("Friday off"). Its edit button opens My Method.
   - Rest days, the days before the start and a finished plan each have their own message.
 - **Daily goal:** ticked ÷ today's tasks.
 - **Streak:**
@@ -133,8 +135,15 @@ The rules are in `lib/data/progress_sync.dart`.
 - **Opening a surah only reads it** (unless it's already the active one): no ayah is highlighted, the full player panel stays hidden, and leaving it shows no mini-player. Any surah that was active keeps playing in the mini-player. **Tapping an ayah** makes that surah the active one: the old one stops, the tapped ayah plays (when it has audio), and the full player appears.
 - **Planned:** audio for every surah (the reciter's), streamed from storage behind a CDN.
 
-## 11. Not built yet
+## 11. Settings and languages (live)
 
-- The bottom nav has three tabs: **Home**, **Player** and **My Method**. **Settings** was removed for the first release until it has something in it.
+- The bottom nav has four tabs: **Home**, **Player**, **My Method** and **Settings** (gear).
+- **Language:** English (default), Russian, Uzbek in Latin script and Uzbek in Cyrillic. The choice applies at once and is saved on the device (`hifdth.locale.v1`); the phone's own language is not used yet. Surah meanings and the English ayah translation stay English for now. Surah names stay in their transliteration.
+- **Playback:** the same repeat count (1, 3, 5, 7, 10, ∞) and "Then next ayah" switch the player uses; changing them here changes the player.
+- **About:** version, reciter; Privacy policy and Contact us are marked "Soon".
+- **Small Hifdth:** when Home scrolls and Hifdth flies to the corner, it turns happy (green) on the way and stays happy there whatever the plan's mood; it takes the real mood back as it lands in the card.
+
+## 12. Not built yet
+
 - Changing email or password inside the app (password reset by email works).
 - More reciters and translations.

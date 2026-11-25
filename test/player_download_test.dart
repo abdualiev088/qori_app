@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:qori_app/data/api_client.dart';
-import 'package:qori_app/data/surah_source.dart';
-import 'package:qori_app/player/player_controller.dart';
+import 'package:hifz_app/data/api_client.dart';
+import 'package:hifz_app/data/surah_source.dart';
+import 'package:hifz_app/player/player_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fake_audio_engine.dart';
@@ -74,7 +74,7 @@ void main() {
   test('offline and not downloaded: says why, and stops loading', () async {
     source.offline = true;
     await player.load(5);
-    expect(player.audioError, contains("Can't reach Qori"));
+    expect(player.audioError, contains("Can't reach Hifz"));
     expect(player.loading, isFalse);
     expect(engine.playing, isFalse);
 

@@ -1,4 +1,4 @@
-# qori_app
+# hifz_app
 
 A new Flutter project.
 

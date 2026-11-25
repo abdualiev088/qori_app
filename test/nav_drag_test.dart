@@ -1,8 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:qori_app/theme/tokens.dart';
-import 'package:qori_app/widgets/glass.dart';
+import 'package:hifz_app/theme/tokens.dart';
+import 'package:hifz_app/widgets/glass.dart';
 
 void main() {
   setUp(() => HText.useGoogleFonts = false);
@@ -28,11 +28,11 @@ void main() {
     expect(selected, [HTab.player]);
   });
 
-  testWidgets('the nav has Home, Player and My Method; Settings waits until it has content', (tester) async {
+  testWidgets('the nav has Home, Player, My Method and Settings', (tester) async {
     await pumpNav(tester);
-    expect(HTab.values, [HTab.home, HTab.player, HTab.method]);
+    expect(HTab.values, [HTab.home, HTab.player, HTab.method, HTab.settings]);
     expect(find.text('My Method'), findsOneWidget);
-    expect(find.text('Settings'), findsNothing);
+    expect(find.text('Settings'), findsOneWidget);
   });
 
   testWidgets('swiping from the active tab selects the tab where the finger lifts', (tester) async {

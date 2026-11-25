@@ -5,6 +5,7 @@ import '../theme/tokens.dart';
 import 'glass.dart';
 import 'hifdth_card.dart';
 import 'hifdth_mood.dart';
+import '../l10n/l10n.dart';
 
 /// Page background with the soft mint glow at the top, like the mockup.
 class AuthBackground extends StatelessWidget {
@@ -46,7 +47,7 @@ class GlassBackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
         button: true,
-        label: 'Back',
+        label: context.l10n.back,
         child: GestureDetector(
           onTap: onTap,
           child: SizedBox.square(
@@ -132,6 +133,7 @@ class PressableButton extends StatefulWidget {
     this.shadows = const [],
     this.height = PressableButton.fullHeight,
     this.semanticLabel,
+    this.disabledBackground,
   });
 
   /// Full-width buttons, and compact ones (two side by side, or inside a card).
@@ -146,6 +148,9 @@ class PressableButton extends StatefulWidget {
   final List<BoxShadow> shadows;
   final double height;
   final String? semanticLabel;
+
+  /// A flat fill while disabled, in place of dimming the whole button.
+  final Color? disabledBackground;
 
   @override
   State<PressableButton> createState() => _PressableButtonState();
@@ -171,17 +176,26 @@ class _PressableButtonState extends State<PressableButton> {
           duration: const Duration(milliseconds: 120),
           curve: Curves.easeOut,
           child: AnimatedOpacity(
-            opacity: enabled ? 1 : 0.6,
+            opacity: enabled || widget.disabledBackground != null ? 1 : 0.6,
             duration: const Duration(milliseconds: 150),
-            child: Container(
+            // Between enabled and disabled the fill cross-fades rather than snapping.
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
               height: widget.height,
-              decoration: BoxDecoration(
-                color: widget.gradient == null ? widget.background : null,
-                gradient: widget.gradient,
-                borderRadius: BorderRadius.circular(18),
-                border: widget.border == null ? null : Border.all(color: widget.border!),
-                boxShadow: widget.shadows,
-              ),
+              decoration: !enabled && widget.disabledBackground != null
+                  ? BoxDecoration(
+                      color: widget.disabledBackground,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [for (final s in widget.shadows) s.copyWith(color: s.color.withValues(alpha: 0))],
+                    )
+                  : BoxDecoration(
+                      color: widget.gradient == null ? widget.background : null,
+                      gradient: widget.gradient,
+                      borderRadius: BorderRadius.circular(18),
+                      border: widget.border == null ? null : Border.all(color: widget.border!),
+                      boxShadow: widget.shadows,
+                    ),
               alignment: Alignment.center,
               child: widget.child,
             ),
@@ -247,7 +261,9 @@ class PrimaryButton extends StatelessWidget {
         onPressed: loading ? null : onPressed,
         height: compact ? PressableButton.compactHeight : PressableButton.fullHeight,
         background: HColors.accent,
-        semanticLabel: loading ? '$label, working' : null,
+        semanticLabel: loading ? context.l10n.working(label) : null,
+        // Disabled reads as gray, not as a paler green that still looks tappable.
+        disabledBackground: loading ? null : HColors.track,
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -262,7 +278,13 @@ class PrimaryButton extends StatelessWidget {
                   dimension: 22,
                   child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
                 )
-              : Text(label, key: ValueKey(label), style: HText.button(color: Colors.white, compact: compact)),
+              : AnimatedDefaultTextStyle(
+                  key: ValueKey(label),
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  style: HText.button(color: onPressed == null ? HColors.inkMuted : Colors.white, compact: compact),
+                  child: Text(label),
+                ),
         ),
       );
 }
@@ -368,7 +390,7 @@ class _AuthFieldState extends State<AuthField> {
           prefixIcon: Icon(widget.icon, size: 20, color: error != null ? const Color(0xFFD14343) : HColors.inkMuted),
           suffixIcon: widget.password
               ? IconButton(
-                  tooltip: _obscured ? 'Show password' : 'Hide password',
+                  tooltip: _obscured ? context.l10n.showPassword : context.l10n.hidePassword,
                   onPressed: () => setState(() => _obscured = !_obscured),
                   icon: Icon(_obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                       size: 21, color: HColors.ink2),
@@ -425,8 +447,8 @@ class PasswordRules extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 8, left: 4),
       child: Wrap(runSpacing: 4, children: [
-        rule('8+ characters', password.length >= 8),
-        rule('A number', password.contains(RegExp(r'\d'))),
+        rule(context.l10n.rule8chars, password.length >= 8),
+        rule(context.l10n.ruleNumber, password.contains(RegExp(r'\d'))),
       ]),
     );
   }
@@ -438,13 +460,18 @@ class TermsFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final link = HText.inter(size: 13, weight: FontWeight.w600, color: HColors.accentDeep);
+    // The sentence comes whole from the translation; the two links are cut out
+    // of it by their markers, so each language keeps its own word order.
+    final l = context.l10n;
+    final parts = l.termsSentence('\u0001', '\u0002').split(RegExp('(?=[\u0001\u0002])|(?<=[\u0001\u0002])'));
     return Text.rich(
       TextSpan(children: [
-        const TextSpan(text: 'By continuing you agree to the '),
-        TextSpan(text: 'Terms', style: link),
-        const TextSpan(text: ' and '),
-        TextSpan(text: 'Privacy Policy', style: link),
-        const TextSpan(text: '.'),
+        for (final p in parts)
+          switch (p) {
+            '\u0001' => TextSpan(text: l.terms, style: link),
+            '\u0002' => TextSpan(text: l.privacyPolicy, style: link),
+            _ => TextSpan(text: p),
+          },
       ]),
       textAlign: TextAlign.center,
       style: HText.inter(size: 13, color: HColors.inkMuted, height: 1.5),
@@ -452,9 +479,9 @@ class TermsFooter extends StatelessWidget {
   }
 }
 
-String? validateEmail(String v) {
+String? validateEmail(AppLocalizations l, String v) {
   final s = v.trim();
-  if (s.isEmpty) return 'Enter your email';
-  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(s)) return 'That email looks incomplete';
+  if (s.isEmpty) return l.enterEmail;
+  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(s)) return l.emailIncomplete;
   return null;
 }

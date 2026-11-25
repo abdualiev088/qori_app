@@ -212,6 +212,8 @@ class Plan {
           dueHour: 12,
           range: span(l[back.last].first, l[back.first].last),
           amount: fmtLines(sumLines([for (final i in back.reversed) ...l[i]])),
+          lines: sumLines([for (final i in back.reversed) ...l[i]]),
+          lessons: back.length,
         ),
       PlanTask(
         id: 'new',
@@ -221,6 +223,7 @@ class Plan {
         dueHour: 22,
         range: seg(l[k]),
         amount: fmtLines(sumLines(l[k])),
+        lines: sumLines(l[k]),
       ),
     ];
   }
@@ -236,7 +239,15 @@ class PlanTask {
     required this.dueHour,
     required this.range,
     required this.amount,
+    required this.lines,
+    this.lessons = 1,
   });
+
+  /// Mushaf lines in this task, for formatting in the app's language.
+  final double lines;
+
+  /// Lessons the morning recitation covers (1–3); 1 for the evening's.
+  final int lessons;
 
   /// Morning recitation ("m33") or the evening's new lesson ("new").
   bool get morning => id == 'm33';
