@@ -936,13 +936,17 @@ class _Chip extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: selected ? HColors.mintRing : HColors.bgTop),
               ),
+              // Longer labels ("½ саҳифа") shrink to fit the quarter-width chip instead of being cut off.
               child: Center(
-                child: Text(label,
-                    maxLines: 1,
-                    style: HText.inter(
-                        size: 14,
-                        weight: selected ? FontWeight.w600 : FontWeight.w500,
-                        color: selected ? HColors.accentDeep : HColors.ink2)),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(label,
+                      maxLines: 1,
+                      style: HText.inter(
+                          size: 14,
+                          weight: selected ? FontWeight.w600 : FontWeight.w500,
+                          color: selected ? HColors.accentDeep : HColors.ink2)),
+                ),
               ),
             ),
           ),
