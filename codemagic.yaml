@@ -1,0 +1,58 @@
+# Codemagic builds the iOS app on its Macs and sends it to TestFlight
+# (docs/RELEASE_CHECKLIST.md, section 5). Started by hand from the Codemagic
+# site: Start new build → ios-testflight.
+#
+# Set up once in Codemagic (nothing secret lives in this file):
+# - Team settings → Integrations → Developer Portal: an App Store Connect API
+#   key (role App Manager) named "Qori App Store Connect". Codemagic uses it to
+#   make the signing certificate and profile, and to upload the build.
+# - App settings → Environment variables, group "qori", all optional:
+#   QORI_API_URL (the deployed backend; without it sign-in has no server),
+#   QORI_AUDIO_URL (the audio bucket; without it the app uses r2.dev),
+#   GOOGLE_IOS_CLIENT_ID, GOOGLE_SERVER_CLIENT_ID (Google sign-in).
+
+workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: Qori App Store Connect
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      groups:
+        - qori
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.abdualiev088.qori
+    scripts:
+      - name: Packages
+        script: flutter pub get
+      - name: Tests
+        script: flutter test
+      - name: CocoaPods
+        script: cd ios && pod install --repo-update
+      - name: Signing
+        script: xcode-project use-profiles
+      - name: Build the ipa
+        script: |
+          # Only the settings that are set are passed; the app has defaults for the rest.
+          DEFINES=""
+          for name in QORI_API_URL QORI_AUDIO_URL GOOGLE_IOS_CLIENT_ID GOOGLE_SERVER_CLIENT_ID; do
+            value="${!name}"
+            if [ -n "$value" ]; then DEFINES="$DEFINES --dart-define=$name=$value"; fi
+          done
+          # Every upload to TestFlight needs a new build number: Codemagic's counter.
+          flutter build ipa --release \
+            --build-number="$BUILD_NUMBER" \
+            --export-options-plist=/Users/builder/export_options.plist \
+            $DEFINES
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true

@@ -1,3 +1,5 @@
 .venv/
 cache/
 out/
+publish/
+.r2.env

@@ -28,7 +28,15 @@ class AudioFileInfo {
   final int durationMs;
 }
 
-/// A surah's recordings for one reciter: `GET /v1/surahs/{n}/audio`.
+/// Where the recitation audio and its lists live: the public R2 bucket.
+/// Pass `--dart-define=QORI_AUDIO_URL=https://audio.example.com` to use another.
+String defaultAudioUrl() {
+  const fromEnv = String.fromEnvironment('QORI_AUDIO_URL');
+  // r2.dev is rate-limited: fine for testing, replaced by our own domain before release.
+  return fromEnv.isNotEmpty ? fromEnv : 'https://pub-4158057f334347aba656f785e7219ec1.r2.dev';
+}
+
+/// A surah's recordings for one reciter: `manifests/<reciter>/NNN.json`.
 class SurahAudio {
   SurahAudio({required this.reciter, required this.basmala, required this.ayahs});
 
@@ -53,10 +61,13 @@ class SurahAudio {
   AudioFileInfo? file(int ayah) => ayah == 0 ? basmala : ayahs[ayah];
 }
 
-/// Recitation audio from the server, kept on the device.
+/// Recitation audio from the public bucket, kept on the device.
 ///
-/// - Which surahs have audio comes from `GET /v1/recitations`, saved so it's
-///   known offline too.
+/// The bucket holds the files and the lists, so audio needs no API server
+/// (docs/DECISIONS.md). Everything there is public; the lists hold no user data.
+///
+/// - Which surahs have audio comes from `manifests/recitations.json`, saved so
+///   it's known offline too.
 /// - Each surah's manifest (file URLs and checksums) is saved the first time
 ///   it's fetched; after that it's used straight away and refreshed in the
 ///   background once per launch.
@@ -66,11 +77,11 @@ class SurahAudio {
 ///   time, and kept only if its checksum matches.
 class AudioCache {
   AudioCache({
-    required ApiClient api,
+    required String baseUrl,
     required SharedPreferences prefs,
     http.Client? client,
     Future<Directory> Function()? directory,
-  })  : _api = api,
+  })  : _base = baseUrl,
         _prefs = prefs,
         _http = client ?? http.Client(),
         _directory = directory ?? getApplicationSupportDirectory {
@@ -80,7 +91,7 @@ class AudioCache {
   static const catalogKey = 'hifdth.audio.catalog.v1';
   static String manifestKey(int surah) => 'hifdth.audio.surah.$surah.v1';
 
-  final ApiClient _api;
+  final String _base;
   final SharedPreferences _prefs;
   final http.Client _http;
   final Future<Directory> Function() _directory;
@@ -112,7 +123,7 @@ class AudioCache {
   /// Fetches which surahs have audio. Keeps the saved list when offline.
   Future<void> refreshCatalog() async {
     try {
-      final list = await _api.get('/recitations') as List;
+      final list = await _getJson('manifests/recitations.json') as List;
       if (list.isEmpty) return;
       final first = list.first as Map<String, dynamic>;
       _applyCatalog(first);
@@ -143,12 +154,33 @@ class AudioCache {
 
   Future<SurahAudio> _fetchManifest(int surah) async {
     if (!_refreshed.add(surah) && _manifests[surah] != null) return _manifests[surah]!;
-    final query = reciterSlug == null ? '' : '?reciter=$reciterSlug';
-    final json = await _api.get('/surahs/$surah/audio$query') as Map<String, dynamic>;
+    if (reciterSlug == null) await refreshCatalog();
+    final slug = reciterSlug;
+    if (slug == null) throw ApiException.offline();
+    final json = await _getJson('manifests/$slug/${surah.toString().padLeft(3, '0')}.json') as Map<String, dynamic>;
     final m = SurahAudio.fromJson(json);
     _manifests[surah] = m;
     await _prefs.setString(manifestKey(surah), jsonEncode(json));
     return m;
+  }
+
+  Future<Object?> _getJson(String path) async {
+    final url = '$_base/$path';
+    final http.Response response;
+    try {
+      response = await http.Response.fromStream(
+          await sendAllowingDevHttp(_http, http.Request('GET', Uri.parse(url))).timeout(const Duration(seconds: 20)));
+    } catch (e) {
+      throw ApiException.offline(kDebugMode ? '$url\n$e' : null);
+    }
+    if (response.statusCode != 200) {
+      throw ApiException(response.statusCode, 'no_audio', 'This surah has no recording yet.');
+    }
+    try {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } on FormatException {
+      throw ApiException(-1, 'bad_list', "Couldn't read the list of recordings. Please try again.");
+    }
   }
 
   /// The ayah's file on the device (0 is the Basmala), downloading it if needed.

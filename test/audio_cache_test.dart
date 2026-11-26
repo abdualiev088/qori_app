@@ -10,7 +10,7 @@ import 'package:qori_app/data/audio_cache.dart';
 import 'package:qori_app/data/surah_source.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// The server's content endpoints and media files, in memory.
+/// The audio bucket's lists and media files, in memory.
 class FakeContentServer {
   /// sha256 → bytes, served at `/media/<sha>.mp3`.
   final files = <String, List<int>>{};
@@ -37,12 +37,12 @@ class FakeContentServer {
     if (offline) throw http.ClientException('offline');
     final path = request.url.path;
     requests.add(path);
-    if (path == '/v1/recitations') {
+    if (path == '/manifests/recitations.json') {
       return _json([
         {'slug': 'alijon-qori', 'name': 'Alijon Qori', 'surahs': [1, 112]},
       ]);
     }
-    if (path == '/v1/surahs/1/audio') {
+    if (path == '/manifests/alijon-qori/001.json') {
       return _json({
         'surah': 1,
         'reciter': {'slug': 'alijon-qori', 'name': 'Alijon Qori'},
@@ -50,7 +50,7 @@ class FakeContentServer {
         'ayahs': [for (final (i, sha) in fatiha.indexed) {'ayah': i + 1, ...info(sha)}],
       });
     }
-    if (path == '/v1/surahs/112/audio') {
+    if (path == '/manifests/alijon-qori/112.json') {
       return _json({
         'surah': 112,
         'reciter': {'slug': 'alijon-qori', 'name': 'Alijon Qori'},
@@ -63,7 +63,7 @@ class FakeContentServer {
       final bytes = files[sha];
       return bytes == null ? http.Response('', 404) : http.Response.bytes(corruptWith ?? bytes, 200);
     }
-    return http.Response('{"error": {"code": "not_found", "message": "Not found."}}', 404);
+    return http.Response('<Error>NoSuchKey</Error>', 404);
   });
 
   int get downloads => requests.where((r) => r.startsWith('/media/')).length;
@@ -87,7 +87,7 @@ void main() {
   tearDown(() => dir.delete(recursive: true));
 
   AudioCache newCache() => AudioCache(
-        api: ApiClient(baseUrl: 'http://test/v1', tokens: MemoryTokenStore(), client: server.client),
+        baseUrl: 'http://test',
         prefs: prefs,
         client: server.client,
         directory: () async => dir,
@@ -190,7 +190,7 @@ void main() {
 
       expect(source.hasAudio(2), isFalse);
       expect(await source.audio(2, 1), isNull);
-      expect(server.requests.where((r) => r.startsWith('/v1/surahs/2')), isEmpty);
+      expect(server.requests.where((r) => r.startsWith('/manifests/alijon-qori/002')), isEmpty);
     });
   });
 }

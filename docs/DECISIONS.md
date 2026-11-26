@@ -36,16 +36,24 @@ Picked from a prototype with three directions (`player-list-proto/DECISION.md`).
 
 ## Recitation audio: downloaded per ayah, kept on the device (2026-11-20)
 
-- **The server hands out URLs, not audio.** `GET /v1/surahs/{n}/audio` lists each ayah's file with its URL, size, sha256 and length. In production the files sit in object storage (S3 or Cloudflare R2) behind a CDN. Django never streams audio, so many listeners cost CDN bandwidth, not server time.
+- **The server hands out URLs, not audio.** Each surah's list (since 2026-11-26 a file in the bucket, see below) gives each ayah's file with its URL, size, sha256 and length. In production the files sit in object storage (S3 or Cloudflare R2) behind a CDN. Django never streams audio, so many listeners cost CDN bandwidth, not server time.
 - **Files never change at a URL.** Their names include their checksum, so phones and the CDN can cache them forever. A corrected recording gets a new name.
 - **Downloaded on first play, kept forever.** `lib/data/audio_cache.dart` stores files by checksum in the app's support folder, which iOS doesn't clear, and verifies each download before keeping it. A downloaded ayah plays offline.
 - **Neighbours are fetched while an ayah plays.** The ayah before and after start downloading as soon as playback starts, so next and previous begin at once. The cache doesn't fetch further ahead, to avoid spending data on ayahs that may never play.
 - **One Basmala for every surah.** The reciter's Basmala is Al-Fatihah's ayah 1, listed as ayah 0 for surahs 2–114 (not 9). Because files are stored by checksum, it's downloaded once.
-- **Al-Qalam stays bundled.** `RemoteSurahSource` plays bundled audio where it exists and downloads the rest. Which surahs have audio comes from `GET /v1/recitations`, saved so it's known offline.
+- **Al-Qalam stays bundled.** `RemoteSurahSource` plays bundled audio where it exists and downloads the rest. Which surahs have audio comes from the bucket's `manifests/recitations.json`, saved so it's known offline.
 - **Rejected:**
   - *Bundling all audio.* Al-Qalam alone is 18 MB.
   - *Streaming each ayah from Django.* Every play would hit the server, and nothing would work offline.
   - *Downloading a whole surah up front.* That wastes data for someone who listens to one ayah, and Al-Baqarah has 286.
+
+## Audio lists live next to the audio, not on the API (2026-11-26)
+
+- **Chosen:** the R2 bucket holds the files and their lists. `manifests/recitations.json` says which surahs each reciter has; `manifests/<reciter>/NNN.json` lists a surah's ayahs with URL, size, sha256 and length (the shape the API would have returned). `tools/recitations/publish.py` builds and uploads both. The app reads them straight from the bucket (`defaultAudioUrl()`, `--dart-define=QORI_AUDIO_URL`).
+- **Why:** audio no longer waits for the backend, and the API server spends nothing on listeners. The lists hold no user data, and the files are public anyway. Only the upload key can change them, and it lives in `tools/recitations/.r2.env`, not in the app or git.
+- **Caching:** audio files never change at a URL (cached for a year); the lists keep their names, so they're cached for 5 minutes. A fixed recording reaches phones on their next launch.
+- **Until release** the bucket is reached at its rate-limited r2.dev address; before release it moves to our own domain behind the Cloudflare CDN. Then only `defaultAudioUrl()` and the lists' `--base` change; the files stay.
+- **Rejected:** *importing the lists into the Django database.* It adds a server hop and a dependency on the backend for content that is the same for everyone.
 
 ## First release without placeholders (2026-11-23)
 

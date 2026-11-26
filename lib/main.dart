@@ -31,8 +31,8 @@ Future<void> main() async {
   );
   final prefs = await SharedPreferences.getInstance();
   final api = ApiClient(baseUrl: defaultApiUrl(), tokens: SecureTokenStore());
-  // Recitation audio: downloaded from the server on first play, then kept on the device.
-  final audio = AudioCache(api: api, prefs: prefs);
+  // Recitation audio: downloaded from the public bucket on first play, then kept on the device.
+  final audio = AudioCache(baseUrl: defaultAudioUrl(), prefs: prefs);
   final player = PlayerController(JustAudioEngine(handler), prefs, source: RemoteSurahSource(audio));
   final learned = LearnedStore.load(prefs);
   final plans = PlanStore.load(prefs);
