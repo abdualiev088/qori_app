@@ -863,24 +863,6 @@ abstract class AppLocalizations {
   /// **'Today\'s plan is done. Well done!'**
   String get planDoneToast;
 
-  /// No description provided for @goodMorning.
-  ///
-  /// In en, this message translates to:
-  /// **'Good morning'**
-  String get goodMorning;
-
-  /// No description provided for @goodAfternoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Good afternoon'**
-  String get goodAfternoon;
-
-  /// No description provided for @goodEvening.
-  ///
-  /// In en, this message translates to:
-  /// **'Good evening'**
-  String get goodEvening;
-
   /// No description provided for @todaysPlanCaps.
   ///
   /// In en, this message translates to:
@@ -1978,6 +1960,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Privacy policy'**
   String get privacyPolicyTitle;
+
+  /// No description provided for @today.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get today;
+
+  /// No description provided for @yesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get yesterday;
+
+  /// No description provided for @tomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get tomorrow;
+
+  /// No description provided for @monthsStandalone.
+  ///
+  /// In en, this message translates to:
+  /// **'January,February,March,April,May,June,July,August,September,October,November,December'**
+  String get monthsStandalone;
+
+  /// No description provided for @monthYear.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} {year}'**
+  String monthYear(String month, int year);
+
+  /// No description provided for @calendarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get calendarTitle;
+
+  /// No description provided for @legendDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get legendDone;
+
+  /// No description provided for @legendPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Partly done'**
+  String get legendPartial;
+
+  /// No description provided for @legendMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed'**
+  String get legendMissed;
+
+  /// No description provided for @legendUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get legendUpcoming;
+
+  /// No description provided for @previousDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous day'**
+  String get previousDay;
+
+  /// No description provided for @nextDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Next day'**
+  String get nextDay;
+
+  /// No description provided for @openCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the calendar'**
+  String get openCalendar;
+
+  /// No description provided for @previousMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous month'**
+  String get previousMonth;
+
+  /// No description provided for @nextMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Next month'**
+  String get nextMonth;
+
+  /// No description provided for @backToToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to today'**
+  String get backToToday;
+
+  /// No description provided for @dayDoneStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'All done that day'**
+  String get dayDoneStatus;
+
+  /// No description provided for @dayPartialStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} done that day'**
+  String dayPartialStatus(int done, int total);
+
+  /// No description provided for @dayMissedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed that day'**
+  String get dayMissedStatus;
+
+  /// No description provided for @dayUpcomingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get dayUpcomingStatus;
+
+  /// No description provided for @dayTodayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{date}, today'**
+  String dayTodayLabel(String date);
+
+  /// No description provided for @longestStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Longest {count, plural, =1{1 day} other{{count} days}}'**
+  String longestStreak(int count);
+
+  /// No description provided for @streakThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} this week'**
+  String streakThisWeek(int done, int total);
+
+  /// No description provided for @skippedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Skipped 1 day} other{Skipped {count} days}} · finish moved to {date}'**
+  String skippedStatus(int count, String date);
 }
 
 class _AppLocalizationsDelegate

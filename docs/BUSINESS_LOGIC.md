@@ -89,7 +89,7 @@ The rules are in `lib/data/progress_sync.dart`.
 - **One method: "33 repetitions".** Learn the new portion in the evening (about an hour), then recite it 33 times from memory on each of the next three mornings.
 - **Set up in My Method.** The first visit shows the full explainer once (stepped diagram, At a glance, Tips). Later visits open on the plan form (**Set your plan**, or **Your plan** once one is saved), with the explainer folded behind "How it works".
   - The form has three groups (What to memorize, Daily pace, Rest day) and a live summary: days, finish date, ayahs, surahs, size and day 1. An impossible range swaps the summary for a hint.
-  - **Create my plan** works as soon as the range is valid. Once a plan is saved the button reads **Update my plan** and is grey until something differs from the saved plan; changing a value back counts as no change, and after a save it greys out again.
+  - **Create my plan** works as soon as the range is valid. Once a plan is saved, **Update my plan** is hidden until something differs from the saved plan; then it rises in above the nav like the mini-player. Changing a value back hides it again, and so does saving.
 - **The plan:**
   - Reading order: **from the beginning** (Al-Fatihah first) or **from the end** (An-Nas first; surahs backwards, ayahs forwards). Default: from the end.
   - Start and end ayah. Default: An-Nas 1 → An-Naba 40. The end must come after the start in the reading order, or the plan can't be saved.
@@ -102,8 +102,9 @@ The rules are in `lib/data/progress_sync.dart`.
   - Only long surahs are split.
   - A single very long ayah (Al-Baqarah 282) is a lesson on its own.
 - **Each study day's tasks:**
-  - **Morning** (from day 2): recite the last 1–3 lessons 33 times from memory.
+  - **Morning:** recite, 33 times from memory, the lessons learned on the three study days before (1–3 lessons; none on day 1).
   - **Evening:** memorize the day's lesson, before 22:00.
+- **A skipped evening:** when a past day's evening lesson wasn't ticked, that lesson counts as not learned. It is offered again the next study day, it isn't recited on the following mornings, and the plan gets one more study day (the finish date moves). Today's evening counts only once the day is over. Home's status pill then says "Skipped 2 days · finish moved to Sat, 24 Jan", and the day chip shows the longer total ("Day 4/52").
 - **The calendar:**
   - A new plan starts today.
   - Rest days have no lesson and push the finish date back.
@@ -112,12 +113,14 @@ The rules are in `lib/data/progress_sync.dart`.
   - "Today's plan" lists the tasks, and the user ticks each one. The morning recitation has an amber sun tile, the evening lesson an indigo moon tile, so the time of day shows at a glance.
   - The "Your plan" card shows the range, a strip of days, and the pace, finish date and rest day as chips; the rest day is spelled out with a capital ("Friday off"). Its edit button opens My Method.
   - Rest days, the days before the start and a finished plan each have their own message.
+  - **Day calendar** (once a plan exists): a frosted-glass "‹ Today ›" pill floats in the top bar (left; the cloud and profile buttons are on the right), and the week's seven days sit above Hifdth's card, each with its weekday, date and state. Today is always the filled green cell. Home has no greeting or date line. Each day shows its state: done (green check), partly done (half amber ring), missed (soft red cross), today still open (green flame), coming up (gray flame), rest (moon). The arrows step a day, a day cell picks it, a sideways swipe moves a week, and tapping the pill opens the whole month in a bottom sheet (tap a day, swipe or arrow between months, "Back to today").
+  - Picking another day shows that day's tasks with their ticks in Hifdth's card, titled with the date, plus "All done that day", "1 of 2 done that day", "Missed that day" or "Coming up". Only today can be ticked; a past day's unticked tasks show a red cross instead of a checkbox. Hifdth's mood follows the shown day: a missed day makes it sad, a partly done day worried, a done or upcoming day happy (today keeps the late-task rule). The goal and the streak always follow today.
 - **Daily goal:** ticked ÷ today's tasks.
 - **Streak:**
   - The number of study days in a row with every task ticked.
   - Rest days are skipped and don't break it.
   - An unfinished today doesn't break it either: counting starts at yesterday.
-  - The week bars show which of this week's days (Monday to Sunday) were fully done.
+  - Shown as a ring that this week's done study days fill, with the longest streak so far ("Longest 14 days") under it.
 - **Saved on this phone only** (`hifdth.plan.v1`, `hifdth.plan.done.v1`, `hifdth.howseen.v1`). The plan works signed out and isn't synced or cleared on log-out.
 - **Planned:** sync the plan and ticks to the account; more methods.
 

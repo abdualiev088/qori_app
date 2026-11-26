@@ -429,9 +429,6 @@
   "askTitle": "How much of the Quran have you memorised?",
   "askBody": "Tap a surah to tell me.",
   "planDoneToast": "Today's plan is done. Well done!",
-  "goodMorning": "Good morning",
-  "goodAfternoon": "Good afternoon",
-  "goodEvening": "Good evening",
   "todaysPlanCaps": "TODAY'S PLAN",
   "tagRecite33": "Recite 33×",
   "tagMemorize": "Memorize",
@@ -1033,5 +1030,83 @@
   "langRussian": "Russian",
   "langUzbekLatin": "Uzbek (Latin)",
   "langUzbekCyrillic": "Uzbek (Cyrillic)",
-  "privacyPolicyTitle": "Privacy policy"
+  "privacyPolicyTitle": "Privacy policy",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "tomorrow": "Tomorrow",
+  "monthsStandalone": "January,February,March,April,May,June,July,August,September,October,November,December",
+  "monthYear": "{month} {year}",
+  "@monthYear": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarTitle": "Calendar",
+  "legendDone": "Done",
+  "legendPartial": "Partly done",
+  "legendMissed": "Missed",
+  "legendUpcoming": "Coming up",
+  "previousDay": "Previous day",
+  "nextDay": "Next day",
+  "openCalendar": "Open the calendar",
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month",
+  "backToToday": "Back to today",
+  "dayDoneStatus": "All done that day",
+  "dayPartialStatus": "{done} of {total} done that day",
+  "@dayPartialStatus": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "dayMissedStatus": "Missed that day",
+  "dayUpcomingStatus": "Coming up",
+  "dayTodayLabel": "{date}, today",
+  "@dayTodayLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "longestStreak": "Longest {count, plural, =1{1 day} other{{count} days}}",
+  "@longestStreak": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "streakThisWeek": "{done} of {total} this week",
+  "@streakThisWeek": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "skippedStatus": "{count, plural, =1{Skipped 1 day} other{Skipped {count} days}} · finish moved to {date}",
+  "@skippedStatus": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -567,15 +567,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planDoneToast => 'Today\'s plan is done. Well done!';
 
   @override
-  String get goodMorning => 'Good morning';
-
-  @override
-  String get goodAfternoon => 'Good afternoon';
-
-  @override
-  String get goodEvening => 'Good evening';
-
-  @override
   String get todaysPlanCaps => 'TODAY\'S PLAN';
 
   @override
@@ -1284,4 +1275,101 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyPolicyTitle => 'Privacy policy';
+
+  @override
+  String get today => 'Today';
+
+  @override
+  String get yesterday => 'Yesterday';
+
+  @override
+  String get tomorrow => 'Tomorrow';
+
+  @override
+  String get monthsStandalone =>
+      'January,February,March,April,May,June,July,August,September,October,November,December';
+
+  @override
+  String monthYear(String month, int year) {
+    return '$month $year';
+  }
+
+  @override
+  String get calendarTitle => 'Calendar';
+
+  @override
+  String get legendDone => 'Done';
+
+  @override
+  String get legendPartial => 'Partly done';
+
+  @override
+  String get legendMissed => 'Missed';
+
+  @override
+  String get legendUpcoming => 'Coming up';
+
+  @override
+  String get previousDay => 'Previous day';
+
+  @override
+  String get nextDay => 'Next day';
+
+  @override
+  String get openCalendar => 'Open the calendar';
+
+  @override
+  String get previousMonth => 'Previous month';
+
+  @override
+  String get nextMonth => 'Next month';
+
+  @override
+  String get backToToday => 'Back to today';
+
+  @override
+  String get dayDoneStatus => 'All done that day';
+
+  @override
+  String dayPartialStatus(int done, int total) {
+    return '$done of $total done that day';
+  }
+
+  @override
+  String get dayMissedStatus => 'Missed that day';
+
+  @override
+  String get dayUpcomingStatus => 'Coming up';
+
+  @override
+  String dayTodayLabel(String date) {
+    return '$date, today';
+  }
+
+  @override
+  String longestStreak(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return 'Longest $_temp0';
+  }
+
+  @override
+  String streakThisWeek(int done, int total) {
+    return '$done of $total this week';
+  }
+
+  @override
+  String skippedStatus(int count, String date) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Skipped $count days',
+      one: 'Skipped 1 day',
+    );
+    return '$_temp0 · finish moved to $date';
+  }
 }

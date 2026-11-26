@@ -35,7 +35,7 @@ Flutter-приложение-компаньон для заучивания Ко
 | `screens/player_screen.dart` | Список аятов, панель плеера, сегментный seek bar, repeat chip, auto switch. |
 | `screens/auth_screen.dart` | Шаги email → password / create. После успеха заменяется на `AccountScreen`. |
 | `screens/account_screen.dart` | Имя, email, сброс пароля, выход, удаление аккаунта. |
-| `widgets/` | `glass.dart` (LiquidGlass, nav c hold/swipe), `ribbed_glass.dart` (+shimmer), `hifdth_*` (painter, mood, card), `learned_sheet.dart` (сетка аятов со свайп-разметкой и диалогом сохранения), `quran_progress_card.dart` (сетка 114 сур с лупой), `progress_indicators.dart`, `auth_widgets.dart`, `toast.dart`, `star.dart`, `icons.dart`. |
+| `widgets/` | `glass.dart` (LiquidGlass, nav c hold/swipe), `ribbed_glass.dart` (+shimmer), `hifdth_*` (painter, mood, card), `learned_sheet.dart` (сетка аятов со свайп-разметкой и диалогом сохранения), `quran_progress_card.dart` (сетка 114 сур с лупой), `progress_indicators.dart`, `day_calendar.dart` (пилюля «Today», неделя, месяц в bottom sheet), `auth_widgets.dart`, `toast.dart`, `star.dart`, `icons.dart`. |
 
 ## Что реально, а что заглушка
 - Реально: выученные аяты + синк, аккаунты, плеер Al-Qalam (только сура 68, ~18 МБ mp3 в ассетах).

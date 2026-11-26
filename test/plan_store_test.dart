@@ -60,6 +60,7 @@ void main() {
   test('a task is behind once its time has passed', () async {
     final store = await fresh();
     await store.save(plan(), today: mon);
+    await store.toggle(mon, 'new'); // Monday's lesson learned, so Tuesday recites it
     expect(store.behind(day(1).add(const Duration(hours: 11))), 0);
     expect(store.behind(day(1).add(const Duration(hours: 13))), 1);
     expect(store.behind(day(1).add(const Duration(hours: 23))), 2);
@@ -72,5 +73,66 @@ void main() {
     expect(store.howSeen, isFalse);
     await store.markHowSeen();
     expect(PlanStore.load(await SharedPreferences.getInstance()).howSeen, isTrue);
+  });
+
+  test('each day has a state: done, partly, missed, rest, today, upcoming', () async {
+    final store = await fresh();
+    await store.save(plan(), today: mon);
+    await store.toggle(day(0), 'new'); // Mon done
+    await store.toggle(day(1), 'm33'); // Tue partly
+    final now = day(3).add(const Duration(hours: 9)); // Thursday morning
+    expect(store.dayState(mon.subtract(const Duration(days: 1)), now), DayState.none);
+    expect(store.dayState(day(0), now), DayState.done);
+    expect(store.dayState(day(1), now), DayState.partial);
+    expect(store.dayState(day(2), now), DayState.missed);
+    expect(store.dayState(day(3), now), DayState.today);
+    expect(store.dayState(day(4), now), DayState.rest); // Friday
+    expect(store.dayState(day(5), now), DayState.upcoming);
+    expect(store.weekProgress(now), (1, 6));
+  });
+
+  test('the longest streak survives a break', () async {
+    final store = await fresh();
+    await store.save(plan(), today: mon);
+    Future<void> finish(int i) async {
+      if (i > 0) await store.toggle(day(i), 'm33');
+      await store.toggle(day(i), 'new');
+    }
+
+    for (final i in [0, 1, 2, 3, 5]) {
+      await finish(i); // Mon–Thu, (Fri rest), Sat: five in a row
+    }
+    await finish(7); // Mon after a missed Sunday
+    expect(store.longestStreak(day(7)), 5);
+    expect(store.streak(day(7)), 1);
+  });
+
+  test('an evening lesson not learned moves to the next day and adds a day', () async {
+    final store = await fresh();
+    await store.save(plan(), today: mon);
+    final base = store.finishDate(mon)!;
+    expect(store.totalDays(mon), 50);
+
+    await store.toggle(day(0), 'new'); // Mon: lesson 1 learned
+    // Tue: evening skipped.
+    await store.toggle(day(2), 'new'); // Wed: lesson 2 learned (again offered)
+    final thu = day(3).add(const Duration(hours: 9));
+
+    expect(store.scheduleOn(day(1), thu)!.lesson, 1);
+    expect(store.scheduleOn(day(2), thu)!.lesson, 1); // moved from Tuesday
+    expect(store.scheduleOn(day(2), thu)!.recite, [0]); // nothing new to recite from Tuesday
+    expect(store.scheduleOn(day(3), thu)!.lesson, 2);
+    expect(store.scheduleOn(day(3), thu)!.recite, [1, 0]);
+    expect(store.scheduleOn(day(5), thu)!.recite, [2, 1]); // Sat: Thu, Wed (Tue gave nothing)
+    expect(store.scheduleOn(day(4), thu), isNull); // Friday rest
+
+    expect(store.skipped(thu), 1);
+    expect(store.totalDays(thu), 51);
+    expect(store.finishDate(thu)!.isAfter(base), isTrue);
+    expect(store.dayState(day(1), thu), DayState.missed);
+
+    // Today's own evening isn't counted as skipped until the day is over.
+    expect(store.skipped(day(3).add(const Duration(hours: 23))), 1);
+    expect(store.skipped(day(5)), 2); // Thursday's evening was never ticked
   });
 }

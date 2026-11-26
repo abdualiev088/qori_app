@@ -74,9 +74,15 @@ void main() {
     expect(find.text('Update my plan'), findsOneWidget);
   });
 
-  testWidgets('Update my plan is enabled only while there are unsaved changes', (tester) async {
+  testWidgets('Update my plan appears only while there are unsaved changes', (tester) async {
     await open(tester, prefs: {PlanStore.howSeenKey: true});
-    bool enabled() => tester.widget<PrimaryButton>(find.byType(PrimaryButton)).onPressed != null;
+    // Shown = the button has risen in (it's hidden while nothing has changed).
+    bool enabled() =>
+        tester
+            .widget<AnimatedOpacity>(
+                find.ancestor(of: find.byType(PrimaryButton), matching: find.byType(AnimatedOpacity)).first)
+            .opacity ==
+        1;
     await tester.tap(find.text('Create my plan'));
     await tester.pump();
     expect(find.text('Your plan'), findsOneWidget);

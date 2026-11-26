@@ -85,6 +85,38 @@ class ProgressRing extends StatelessWidget {
   }
 }
 
+/// A 60 px ring for the streak: the week's done study days fill it (easing
+/// over 600 ms when that changes), with the streak count and a flame inside.
+class StreakRing extends StatelessWidget {
+  const StreakRing({super.key, required this.streak, required this.value, this.size = 60});
+
+  final int streak;
+
+  /// Share of this week's study days that are done, 0–1.
+  final double value;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => ExcludeSemantics(
+        child: SizedBox.square(
+          dimension: size,
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(end: value),
+            duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 600),
+            curve: Curves.easeOut,
+            builder: (context, v, child) => CustomPaint(painter: _RingPainter(v, 6), child: child),
+            child: Center(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text('$streak', style: HText.inter(size: 16, weight: FontWeight.w700, tabular: true, height: 1.1)),
+                Icon(Icons.local_fire_department_rounded,
+                    size: 14, color: streak > 0 ? HColors.accent : const Color(0xFFC3CAD1)),
+              ]),
+            ),
+          ),
+        ),
+      );
+}
+
 class _RingPainter extends CustomPainter {
   _RingPainter(this.value, this.stroke);
 
@@ -117,9 +149,18 @@ class _RingPainter extends CustomPainter {
 
 class DayStep {
   const DayStep(
-      {required this.title, required this.subtitle, required this.done, this.time, this.morning, this.tags = const []});
+      {required this.title,
+      required this.subtitle,
+      required this.done,
+      this.missed = false,
+      this.time,
+      this.morning,
+      this.tags = const []});
 
   final String title;
+
+  /// A past day's task that was never ticked: a red cross instead of a checkbox.
+  final bool missed;
 
   /// Read aloud (and shown on read-only steps).
   final String subtitle;
@@ -140,10 +181,13 @@ class DayStep {
 /// tasks: a sun or moon tile, the ayahs, a few tags and a checkbox, and the
 /// whole row ticks and unticks.
 class StepTimeline extends StatelessWidget {
-  const StepTimeline({super.key, required this.steps, this.onToggle});
+  const StepTimeline({super.key, required this.steps, this.onToggle, this.locked = false});
 
   final List<DayStep> steps;
   final ValueChanged<int>? onToggle;
+
+  /// Task rows that can't be ticked (a past or future day).
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
@@ -154,10 +198,12 @@ class StepTimeline extends StatelessWidget {
           if (i > 0) const Divider(height: 1, thickness: 1, color: HColors.divider),
           _TaskRow(
               step: s,
-              onTap: () {
-                if (!s.done) HapticFeedback.lightImpact();
-                toggle(i);
-              }),
+              onTap: locked
+                  ? null
+                  : () {
+                      if (!s.done) HapticFeedback.lightImpact();
+                      toggle(i);
+                    }),
         ],
       ]);
     }
@@ -216,7 +262,9 @@ class _TaskRow extends StatelessWidget {
   const _TaskRow({required this.step, required this.onTap});
 
   final DayStep step;
-  final VoidCallback onTap;
+
+  /// Null: shown but not tickable.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -225,9 +273,10 @@ class _TaskRow extends StatelessWidget {
     final reduce = MediaQuery.disableAnimationsOf(context);
     final fade = reduce ? Duration.zero : const Duration(milliseconds: 160);
     return Semantics(
-      button: true,
+      button: onTap != null,
       checked: s.done,
-      label: '${s.time == null ? '' : '${s.time}. '}${s.title}. ${s.subtitle}',
+      label:
+          '${s.time == null ? '' : '${s.time}. '}${s.title}. ${s.missed ? '${context.l10n.legendMissed}. ' : ''}${s.subtitle}',
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -260,28 +309,40 @@ class _TaskRow extends StatelessWidget {
               ]),
             ),
             const SizedBox(width: 12),
-            AnimatedContainer(
-              duration: fade,
-              curve: Curves.easeOut,
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: s.done ? HColors.accentDeep : HColors.surface,
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(color: s.done ? HColors.accentDeep : const Color(0xFFC9D2CC), width: 1.5),
-              ),
-              alignment: Alignment.center,
-              child: AnimatedScale(
-                scale: s.done ? 1 : 0.6,
-                duration: reduce ? Duration.zero : const Duration(milliseconds: 220),
+            if (s.missed)
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: HColors.warnSoft,
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: HColors.warn.withValues(alpha: 0.35), width: 1.5),
+                ),
+                child: const Icon(Icons.close_rounded, size: 17, color: HColors.warn),
+              )
+            else
+              AnimatedContainer(
+                duration: fade,
                 curve: Curves.easeOut,
-                child: AnimatedOpacity(
-                  opacity: s.done ? 1 : 0,
-                  duration: fade,
-                  child: HIcon.check(Colors.white, size: 16, width: 2.6),
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: s.done ? HColors.accentDeep : HColors.surface,
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: s.done ? HColors.accentDeep : const Color(0xFFC9D2CC), width: 1.5),
+                ),
+                alignment: Alignment.center,
+                child: AnimatedScale(
+                  scale: s.done ? 1 : 0.6,
+                  duration: reduce ? Duration.zero : const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  child: AnimatedOpacity(
+                    opacity: s.done ? 1 : 0,
+                    duration: fade,
+                    child: HIcon.check(Colors.white, size: 16, width: 2.6),
+                  ),
                 ),
               ),
-            ),
           ]),
         ),
       ),
@@ -348,62 +409,6 @@ class TimeTile extends StatelessWidget {
             child: Icon(Icons.star_rounded, size: size * 0.2, color: Colors.white.withValues(alpha: 0.85)),
           ),
       ]),
-    );
-  }
-}
-
-class StreakDay {
-  const StreakDay(this.label, this.done);
-
-  final String label;
-  final bool done;
-}
-
-/// Seven day bars: 28 px accent when done, 10 px track when not.
-class StreakBars extends StatelessWidget {
-  const StreakBars({super.key, required this.days});
-
-  final List<StreakDay> days;
-
-  @override
-  Widget build(BuildContext context) {
-    final done = days.where((d) => d.done).length;
-    return Semantics(
-      label: context.l10n.weekComplete(done, days.length),
-      excludeSemantics: true,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          for (final (i, d) in days.indexed) ...[
-            if (i > 0) const SizedBox(width: 4),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Always as tall as a done day's bar, so the card keeps its height
-                  // in a week with nothing done yet.
-                  SizedBox(
-                    height: 28,
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        height: d.done ? 28 : 10,
-                        decoration: BoxDecoration(
-                          color: d.done ? HColors.accent : HColors.track,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(d.label,
-                      style: HText.inter(size: 12, height: 1.1, weight: FontWeight.w500, color: HColors.ink2)),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 }

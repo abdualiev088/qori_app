@@ -13,6 +13,7 @@ import '../data/surahs.dart';
 import '../theme/tokens.dart';
 import '../widgets/auth_widgets.dart' show PrimaryButton;
 import '../widgets/glass.dart';
+import '../widgets/day_calendar.dart';
 import '../widgets/hifdth_card.dart';
 import '../widgets/hifdth_mood.dart';
 import '../widgets/learned_sheet.dart';
@@ -106,6 +107,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   static const _miniSize = 56.0;
 
+  /// The floating top bar's height (the glass pill and buttons).
+  static const _barHeight = 46.0;
+
   /// The corner spot's bottom edge, above Home's bottom. Hifdth's middle lines
   /// up with the card's hint line when the page is scrolled to the end; this
   /// fallback is replaced once the card has been laid out.
@@ -125,14 +129,44 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   DateTime get _now => widget.now ?? DateTime.now();
 
+  /// The day the calendar shows; null means today (so it rolls over at midnight).
+  DateTime? _picked;
+
+  /// -1 if the last move went back in time, 1 forward: new days slide in from that side.
+  int _dir = 1;
+
+  DateTime get _shown => _picked ?? dateOnly(_now);
+
+  void _show(DateTime day) {
+    final d = dateOnly(day);
+    if (d == _shown) return;
+    setState(() {
+      _dir = d.isAfter(_shown) ? 1 : -1;
+      _picked = d == dateOnly(_now) ? null : d;
+    });
+  }
+
+  Future<void> _openMonth() async {
+    final store = widget.plans;
+    if (store == null) return;
+    final now = _now;
+    final picked = await MonthCalendarSheet.show(
+      context,
+      selected: _shown,
+      now: now,
+      stateOf: (d) => store.dayState(d, now),
+    );
+    if (picked != null && mounted) _show(picked);
+  }
+
   /// Ticks or unticks today's task [i]; finishing the day says well done.
   Future<void> _toggle(List<PlanTask> tasks, int i) async {
     final store = widget.plans;
     if (store == null) return;
     final now = _now;
-    final wasDone = store.allDone(now);
+    final wasDone = store.allDone(now, now);
     await store.toggle(now, tasks[i].id);
-    if (!wasDone && store.allDone(now) && mounted) Toast.show(context, context.l10n.planDoneToast);
+    if (!wasDone && store.allDone(now, now) && mounted) Toast.show(context, context.l10n.planDoneToast);
   }
 
   @override
@@ -245,10 +279,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     final t = _now;
     final l = context.l10n;
-    final greeting = t.hour < 12 ? l.goodMorning : (t.hour < 18 ? l.goodAfternoon : l.goodEvening);
     final top = MediaQuery.paddingOf(context).top + 9;
     final today = _Today.of(l, widget.plans, t);
-    final mood = moodFor(sessionsBehind: today.behind);
+    final shown = _shown;
+    final isToday = shown == dateOnly(t);
+    final day = isToday ? today : _Today.of(l, widget.plans, t, day: shown);
+    // Today: from late tasks. Another day: how that day went (partly done
+    // worries Hifdth, a missed day makes it sad; done or ahead, it's happy).
+    final mood = isToday
+        ? moodFor(sessionsBehind: today.behind)
+        : switch (widget.plans?.dayState(shown, t)) {
+            DayState.missed => HifdthMood.sad,
+            DayState.partial => HifdthMood.worried,
+            _ => HifdthMood.happy,
+          };
+    final pastDay = shown.isBefore(dateOnly(t));
+    final plans = widget.plans;
     final landed = _fly.isCompleted;
     final cornerBottom = _cornerBottom;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -261,36 +307,31 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           Positioned.fill(
             child: SingleChildScrollView(
               controller: _scroll,
-              padding: EdgeInsets.fromLTRB(16, top < 56 ? 56 : top, 16, widget.bottomInset),
+              padding: EdgeInsets.fromLTRB(16, (top < 56 ? 56 : top) + _barHeight + 14, 16, widget.bottomInset),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(dateLong(l, t),
-                                style: HText.inter(size: 13, weight: FontWeight.w500, color: HColors.ink2)),
-                            const SizedBox(height: 2),
-                            Text(greeting, style: HText.inter(size: 24, weight: FontWeight.w700, letterSpacing: -0.4)),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 46), // the header buttons float here (see _HeaderButtons)
-                    ],
-                  ),
-                  const SizedBox(height: 18),
+                  if (plans?.plan != null) ...[
+                    WeekStrip(
+                      selected: shown,
+                      now: t,
+                      direction: _dir,
+                      stateOf: (d) => plans!.dayState(d, t),
+                      onSelect: _show,
+                    ),
+                    const SizedBox(height: 18),
+                  ],
                   HifdthCard(
                     key: _cardKey,
                     mood: mood,
                     characterAway: !_fly.isDismissed,
-                    title: l.todaysPlanCaps,
-                    subtitle: today.subtitle,
-                    status: today.status,
+                    title: isToday ? l.todaysPlanCaps : dateShort(l, shown, now: t).toUpperCase(),
+                    subtitle: day.subtitle,
+                    status: day.status,
+                    contentKey: shown,
+                    locked: !isToday,
                     steps: [
-                      for (final task in today.tasks)
+                      for (final task in day.tasks)
                         DayStep(
                           title: task.range,
                           subtitle: task.morning
@@ -301,15 +342,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           tags: task.morning
                               ? [l.tagRecite33, linesText(l, task.lines)]
                               : [l.tagMemorize, linesText(l, task.lines), l.tagBy22],
-                          done: widget.plans!.isDone(t, task.id),
+                          done: widget.plans!.isDone(shown, task.id),
+                          missed: pastDay && !widget.plans!.isDone(shown, task.id),
                         ),
                     ],
                     onToggle: (i) => _toggle(today.tasks, i),
                     empty: _DayMessage(
-                      icon: today.icon,
-                      title: today.message,
-                      detail: today.detail,
-                      action: today.action,
+                      icon: day.icon,
+                      title: day.message,
+                      detail: day.detail,
+                      action: day.action,
                       onAction: widget.onOpenMethod,
                     ),
                   ),
@@ -326,11 +368,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         const SizedBox(width: 12),
                         Expanded(
                           child: _StreakCard(
-                            streak: widget.plans?.streak(t) ?? 0,
-                            days: [
-                              for (final (i, done) in (widget.plans?.week(t) ?? List.filled(7, false)).indexed)
-                                StreakDay(weekdayLetter(l, i + 1), done),
-                            ],
+                            streak: plans?.streak(t) ?? 0,
+                            longest: plans?.longestStreak(t) ?? 0,
+                            week: plans?.weekProgress(t) ?? (0, 0),
                           ),
                         ),
                       ],
@@ -354,6 +394,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
           // The bubble, beside where Hifdth lands.
           // Pinned: they stay put while the page scrolls under them.
+          // The top bar floats over the page: the day pill on the left, the
+          // cloud and profile buttons on the right.
+          if (plans?.plan != null)
+            Positioned(
+              top: top < 56 ? 56 : top,
+              left: 16,
+              child: DayPill(
+                label: dayLabel(l, shown, t),
+                direction: _dir,
+                onPrev: () => _show(addDays(shown, -1)),
+                onNext: () => _show(addDays(shown, 1)),
+                onOpen: _openMonth,
+              ),
+            ),
           Positioned(
             top: top < 56 ? 56 : top,
             right: 16,
@@ -702,41 +756,46 @@ class _GoalCard extends StatelessWidget {
       );
 }
 
+/// The streak as a ring (this week's done study days fill it), the count in
+/// days, and the longest streak so far as a small chip.
 class _StreakCard extends StatelessWidget {
-  const _StreakCard({required this.streak, required this.days});
+  const _StreakCard({required this.streak, required this.longest, required this.week});
 
   /// Fully done study days in a row.
-  final int streak;
+  final int streak, longest;
 
-  /// This week, Monday to Sunday.
-  final List<StreakDay> days;
+  /// This week's done study days, and how many it has.
+  final (int, int) week;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(color: HColors.surface, borderRadius: BorderRadius.circular(HRadii.card)),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            // Centred, not baseline: IntrinsicHeight measures a baseline row a fraction short.
-            children: [
-              Flexible(
-                child: Text(context.l10n.streak,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: HText.inter(size: 14, weight: FontWeight.w600)),
+    final l = context.l10n;
+    final (done, total) = week;
+    return Semantics(
+      container: true,
+      label: '${l.streak}: ${l.daysCount(streak)}. ${l.longestStreak(longest)}. ${l.streakThisWeek(done, total)}',
+      excludeSemantics: true,
+      child: Container(
+        decoration: BoxDecoration(color: HColors.surface, borderRadius: BorderRadius.circular(HRadii.card)),
+        padding: const EdgeInsets.all(16),
+        child: Row(children: [
+          StreakRing(streak: streak, value: total == 0 ? 0 : done / total),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(l.streak, style: HText.inter(size: 14, weight: FontWeight.w600)),
+              const SizedBox(height: 2),
+              Text(l.daysCount(streak), style: HText.inter(size: 13, color: HColors.ink2, tabular: true)),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(color: HColors.mintWash, borderRadius: BorderRadius.circular(999)),
+                child: Text(l.longestStreak(longest),
+                    style: HText.inter(size: 11, weight: FontWeight.w600, color: HColors.accentDeep, tabular: true)),
               ),
-              const SizedBox(width: 6),
-              Text(context.l10n.daysCount(streak),
-                  style: HText.inter(size: 13, color: HColors.ink2, tabular: true)),
-            ],
+            ]),
           ),
-          const SizedBox(height: 10),
-          StreakBars(days: days),
-        ],
+        ]),
       ),
     );
   }
@@ -757,7 +816,11 @@ class _Today {
     this.goalCaption = '',
     this.day,
     this.total = 0,
+    this.finish,
   });
+
+  /// The projected last study day (moves later with each skipped evening).
+  final DateTime? finish;
 
   final List<PlanTask> tasks;
 
@@ -782,7 +845,11 @@ class _Today {
   final int? day;
   final int total;
 
-  static _Today of(AppLocalizations l, PlanStore? store, DateTime now) {
+  /// What Home shows for [day] (today unless the calendar picked another).
+  /// Mood and the goal only ever follow today.
+  static _Today of(AppLocalizations l, PlanStore? store, DateTime now, {DateTime? day}) {
+    final shown = day ?? now;
+    final isToday = dateOnly(shown) == dateOnly(now);
     final plan = store?.plan;
     if (store == null || plan == null) {
       return _Today(
@@ -793,9 +860,34 @@ class _Today {
         goalCaption: l.nothingDue,
       );
     }
-    final total = plan.lessons.length;
-    final k = plan.lessonIndexOn(now);
-    if (k == null) {
+    // Days follow the real ticks: an evening lesson that wasn't learned moves
+    // to the next study day, which adds a day to the plan.
+    final total = store.totalDays(now);
+    final skipped = store.skipped(now);
+    final finish = store.finishDate(now);
+    final s = store.scheduleOn(shown, now);
+    final d = dateOnly(shown);
+    if (s == null) {
+      if (d.isBefore(plan.startDate)) {
+        return _Today(
+          icon: Icons.event_rounded,
+          message: l.startsOn(dateShort(l, plan.startDate)),
+          goalCaption: l.nothingDue,
+          day: -1,
+          total: total,
+        );
+      }
+      if (finish != null && d.isAfter(finish)) {
+        return _Today(
+          icon: Icons.verified_rounded,
+          message: l.planComplete,
+          detail: l.planCompleteDetail(plan.positions.length, nameOf(plan.start.s), nameOf(plan.end.s)),
+          action: l.setNewRange,
+          goalCaption: l.nothingDue,
+          day: total,
+          total: total,
+        );
+      }
       return _Today(
         status: l.restDayStatus,
         icon: Icons.self_improvement_rounded,
@@ -805,38 +897,31 @@ class _Today {
         total: total,
       );
     }
-    if (k < 0) {
-      return _Today(
-        icon: Icons.event_rounded,
-        message: l.startsOn(dateShort(l, plan.startDate)),
-        goalCaption: l.nothingDue,
-        day: k,
-        total: total,
-      );
-    }
-    if (k >= total) {
-      return _Today(
-        icon: Icons.verified_rounded,
-        message: l.planComplete,
-        detail: l.planCompleteDetail(plan.positions.length, nameOf(plan.start.s), nameOf(plan.end.s)),
-        action: l.setNewRange,
-        goalCaption: l.nothingDue,
-        day: k,
-        total: total,
-      );
-    }
-    final tasks = plan.tasksFor(k);
-    final done = tasks.where((t) => store.isDone(now, t.id)).length;
+    final tasks = store.tasksOn(shown, now);
+    final done = tasks.where((t) => store.isDone(shown, t.id)).length;
     final left = tasks.length - done;
+    final String? status = isToday
+        ? (left == 0
+            ? l.planDoneToast
+            : skipped > 0 && finish != null
+                ? l.skippedStatus(skipped, dateShort(l, finish, now: now))
+                : null)
+        : switch (store.dayState(shown, now)) {
+            DayState.done => l.dayDoneStatus,
+            DayState.partial => l.dayPartialStatus(done, tasks.length),
+            DayState.missed => l.dayMissedStatus,
+            _ => l.dayUpcomingStatus,
+          };
     return _Today(
       tasks: tasks,
-      subtitle: l.dayOf(k + 1, total),
-      status: left == 0 ? l.planDoneToast : null,
-      behind: store.behind(now),
-      goal: done / tasks.length,
+      subtitle: l.dayOf(s.number, total),
+      status: status,
+      behind: isToday ? store.behind(now) : 0,
+      goal: tasks.isEmpty ? 0 : done / tasks.length,
       goalCaption: left == 0 ? l.allDoneToday : l.leftToday(left),
-      day: k,
+      day: s.number - 1,
       total: total,
+      finish: finish,
     );
   }
 }
@@ -974,8 +1059,8 @@ class _PlanCard extends StatelessWidget {
           const SizedBox(height: 12),
           Wrap(spacing: 6, runSpacing: 6, children: [
             _Fact(Icons.subject_rounded, context.l10n.linesPerDayFact(plan.linesPerDay)),
-            _Fact(Icons.flag_rounded, dateShort(context.l10n, plan.finishDate()),
-                label: context.l10n.finishesOn(dateShort(context.l10n, plan.finishDate()))),
+            _Fact(Icons.flag_rounded, dateShort(context.l10n, today.finish ?? plan.finishDate()),
+                label: context.l10n.finishesOn(dateShort(context.l10n, today.finish ?? plan.finishDate()))),
             if (rest != null)
               _Fact(Icons.weekend_rounded, context.l10n.dayOff(weekdayTitle(context.l10n, rest))),
           ]),

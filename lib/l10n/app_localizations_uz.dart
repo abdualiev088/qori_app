@@ -569,15 +569,6 @@ class AppLocalizationsUz extends AppLocalizations {
   String get planDoneToast => 'Bugungi reja bajarildi. Barakalla!';
 
   @override
-  String get goodMorning => 'Xayrli tong';
-
-  @override
-  String get goodAfternoon => 'Xayrli kun';
-
-  @override
-  String get goodEvening => 'Xayrli kech';
-
-  @override
   String get todaysPlanCaps => 'BUGUNGI REJA';
 
   @override
@@ -1287,6 +1278,96 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get privacyPolicyTitle => 'Maxfiylik siyosati';
+
+  @override
+  String get today => 'Bugun';
+
+  @override
+  String get yesterday => 'Kecha';
+
+  @override
+  String get tomorrow => 'Ertaga';
+
+  @override
+  String get monthsStandalone =>
+      'Yanvar,Fevral,Mart,Aprel,May,Iyun,Iyul,Avgust,Sentabr,Oktabr,Noyabr,Dekabr';
+
+  @override
+  String monthYear(String month, int year) {
+    return '$year-yil, $month';
+  }
+
+  @override
+  String get calendarTitle => 'Taqvim';
+
+  @override
+  String get legendDone => 'Bajarildi';
+
+  @override
+  String get legendPartial => 'Qisman';
+
+  @override
+  String get legendMissed => 'Oʻtkazib yuborildi';
+
+  @override
+  String get legendUpcoming => 'Oldinda';
+
+  @override
+  String get previousDay => 'Oldingi kun';
+
+  @override
+  String get nextDay => 'Keyingi kun';
+
+  @override
+  String get openCalendar => 'Taqvimni ochish';
+
+  @override
+  String get previousMonth => 'Oldingi oy';
+
+  @override
+  String get nextMonth => 'Keyingi oy';
+
+  @override
+  String get backToToday => 'Bugunga qaytish';
+
+  @override
+  String get dayDoneStatus => 'Bu kun hammasi bajarilgan';
+
+  @override
+  String dayPartialStatus(int done, int total) {
+    return '$total tadan $done tasi bajarilgan';
+  }
+
+  @override
+  String get dayMissedStatus => 'Bu kun oʻtkazib yuborilgan';
+
+  @override
+  String get dayUpcomingStatus => 'Oldinda';
+
+  @override
+  String dayTodayLabel(String date) {
+    return '$date, bugun';
+  }
+
+  @override
+  String longestStreak(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count kun',
+    );
+    return 'Rekord: $_temp0';
+  }
+
+  @override
+  String streakThisWeek(int done, int total) {
+    return 'Bu hafta $total tadan $done';
+  }
+
+  @override
+  String skippedStatus(int count, String date) {
+    return '$count kun oʻtkazib yuborildi · tugash $date ga surildi';
+  }
 }
 
 /// The translations for Uzbek, using the Cyrillic script (`uz_Cyrl`).
@@ -1851,15 +1932,6 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get planDoneToast => 'Бугунги режа бажарилди. Баракалла!';
-
-  @override
-  String get goodMorning => 'Хайрли тонг';
-
-  @override
-  String get goodAfternoon => 'Хайрли кун';
-
-  @override
-  String get goodEvening => 'Хайрли кеч';
 
   @override
   String get todaysPlanCaps => 'БУГУНГИ РЕЖА';
@@ -2569,4 +2641,94 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get privacyPolicyTitle => 'Махфийлик сиёсати';
+
+  @override
+  String get today => 'Бугун';
+
+  @override
+  String get yesterday => 'Кеча';
+
+  @override
+  String get tomorrow => 'Эртага';
+
+  @override
+  String get monthsStandalone =>
+      'Январ,Феврал,Март,Апрел,Май,Июн,Июл,Август,Сентябр,Октябр,Ноябр,Декабр';
+
+  @override
+  String monthYear(String month, int year) {
+    return '$year-йил, $month';
+  }
+
+  @override
+  String get calendarTitle => 'Тақвим';
+
+  @override
+  String get legendDone => 'Бажарилди';
+
+  @override
+  String get legendPartial => 'Қисман';
+
+  @override
+  String get legendMissed => 'Ўтказиб юборилди';
+
+  @override
+  String get legendUpcoming => 'Олдинда';
+
+  @override
+  String get previousDay => 'Олдинги кун';
+
+  @override
+  String get nextDay => 'Кейинги кун';
+
+  @override
+  String get openCalendar => 'Тақвимни очиш';
+
+  @override
+  String get previousMonth => 'Олдинги ой';
+
+  @override
+  String get nextMonth => 'Кейинги ой';
+
+  @override
+  String get backToToday => 'Бугунга қайтиш';
+
+  @override
+  String get dayDoneStatus => 'Бу кун ҳаммаси бажарилган';
+
+  @override
+  String dayPartialStatus(int done, int total) {
+    return '$total тадан $done таси бажарилган';
+  }
+
+  @override
+  String get dayMissedStatus => 'Бу кун ўтказиб юборилган';
+
+  @override
+  String get dayUpcomingStatus => 'Олдинда';
+
+  @override
+  String dayTodayLabel(String date) {
+    return '$date, бугун';
+  }
+
+  @override
+  String longestStreak(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count кун',
+    );
+    return 'Рекорд: $_temp0';
+  }
+
+  @override
+  String streakThisWeek(int done, int total) {
+    return 'Бу ҳафта $total тадан $done';
+  }
+
+  @override
+  String skippedStatus(int count, String date) {
+    return '$count кун ўтказиб юборилди · тугаш $date га сурилди';
+  }
 }

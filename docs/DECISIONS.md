@@ -83,3 +83,14 @@ From the My Method prototype (`~/method-proto`, `FLUTTER_PROMPT_33.md`), cut dow
 ## 2026-11-25 · The name stays Qori
 
 - **Tried and reverted:** renaming the app to "Hifz" everywhere, bundle id included (`com.abdualiev088.hifz`). It needed a new signing profile and new sign-in setup, so the app is back to **Qori** with `com.abdualiev088.qori`. The rename is in the history (e08788a) if it is wanted again.
+
+## 2026-11-26 · A day calendar on Home
+
+- **Chosen:** the second reference: a "‹ Today ›" pill over a strip of seven white day cells with state badges, above Hifdth's card. Picking a day switches the card to that day (read-only); the pill opens a month grid in a bottom sheet. The Streak card became a ring with the longest streak, since the strip already shows the week.
+- **Rejected:** arrows that only browse weeks (the card would never show another day); expanding the month in place (pushes the whole page down); a dark widget style (first reference) that doesn't match Home.
+- **Then:** the greeting and date line went; the pill moved into the floating glass top bar, and today's cell became solid green with the date number, so today is found first.
+
+## 2026-11-26 · Skipped evenings move the lesson
+
+- **Chosen:** the schedule follows the ticks. A lesson only counts as learned when its evening is ticked; otherwise it moves to the next study day and the plan grows by one day. Each learned lesson is recited on the three study mornings after its evening, so a skipped evening just adds nothing to those mornings.
+- **Rejected:** "the last three learned lessons" every morning (a skip would stretch one lesson's recitations over more days); keeping the fixed calendar (the app would ask to recite lessons that were never learned).

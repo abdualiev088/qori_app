@@ -4,6 +4,8 @@ import 'package:qori_app/data/learned_store.dart';
 import 'package:qori_app/data/plan.dart';
 import 'package:qori_app/data/plan_store.dart';
 import 'package:qori_app/screens/home_screen.dart';
+import 'package:qori_app/widgets/hifdth_card.dart';
+import 'package:qori_app/widgets/hifdth_mood.dart';
 import 'package:qori_app/theme/tokens.dart';
 import 'package:qori_app/widgets/toast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -52,8 +54,8 @@ void main() {
     var opened = false;
     await home(tester, DateTime(2026, 11, 11, 15), onOpenMethod: () => opened = true);
 
-    expect(find.text('Wednesday, 11 November'), findsOneWidget);
-    expect(find.text('Good afternoon'), findsOneWidget);
+    // No plan: no day pill or week strip yet.
+    expect(find.bySemanticsLabel(RegExp('Open the calendar')), findsNothing);
     expect(find.text("TODAY'S PLAN"), findsOneWidget);
     expect(find.text('Hifdth is waiting for your plan'), findsOneWidget);
     expect(find.text('No plan yet'), findsOneWidget);
@@ -106,6 +108,9 @@ void main() {
   testWidgets('day 4 adds the morning recitation; a missed morning worries Hifdth', (tester) async {
     await fresh();
     await plans.save(plan(), today: DateTime(2026, 11, 23));
+    for (final d in [23, 24, 25]) {
+      await plans.toggle(DateTime(2026, 11, d), 'new'); // every evening learned
+    }
     await home(tester, DateTime(2026, 11, 26, 13));
 
     expect(find.text('Day 4/50'), findsOneWidget);
@@ -127,5 +132,69 @@ void main() {
     expect(find.text('Rest day. Hifdth is resting too'), findsOneWidget);
     expect(find.text('Rest day'), findsOneWidget);
     expect(find.text('Nothing due today'), findsOneWidget);
+  });
+
+  testWidgets('the calendar steps through days; other days show their tasks but cannot be ticked', (tester) async {
+    await fresh();
+    await plans.save(plan(), today: DateTime(2026, 11, 23));
+    await plans.toggle(DateTime(2026, 11, 23), 'new'); // Monday done
+    await plans.toggle(DateTime(2026, 11, 24), 'm33'); // Tuesday partly
+    await home(tester, DateTime(2026, 11, 26, 13)); // Thursday
+
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'^Thursday, 26, Today')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'^Monday, 23, Done')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'^Wednesday, 25, Missed')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'^Friday, 27, Rest day')), findsOneWidget);
+
+    // Tuesday's and Wednesday's evening lessons weren't learned: two days skipped.
+    expect(find.text('Day 4/52'), findsOneWidget);
+    expect(find.textContaining('Skipped 2 days · finish moved to'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Previous day'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('Yesterday'), findsOneWidget);
+    expect(find.text('WED, 25 NOV'), findsOneWidget);
+    expect(find.text('Missed that day'), findsOneWidget);
+    expect(find.text('Day 3/52'), findsOneWidget);
+    // Lesson 2 again, since Tuesday's evening wasn't learned.
+    expect(find.text(nb('Al-Masad · An-Nasr · Al-Kafirun')), findsOneWidget);
+    // A missed day: Hifdth is sad and each unticked task shows a red cross.
+    expect(tester.widget<HifdthCard>(find.byType(HifdthCard)).mood, HifdthMood.sad);
+    expect(find.byIcon(Icons.close_rounded), findsNWidgets(3)); // the strip's badge + two tasks
+    // Looking back doesn't tick anything.
+    await tester.tap(find.text(nb('Al-Masad · An-Nasr · Al-Kafirun')));
+    await tester.pump();
+    expect(plans.isDone(DateTime(2026, 11, 25), 'new'), isFalse);
+
+    // The month: pick Monday the 23rd.
+    await tester.tap(find.bySemanticsLabel(RegExp(r'^Yesterday\. Open the calendar')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('November 2026'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel(RegExp(r'^Monday, 23 November, Done')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('MON, 23 NOV'), findsOneWidget);
+    expect(find.text('All done that day'), findsOneWidget);
+    expect(tester.widget<HifdthCard>(find.byType(HifdthCard)).mood, HifdthMood.happy);
+
+    // Partly done (Tuesday's morning only): worried.
+    await tester.tap(find.bySemanticsLabel('Next day'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('1 of 2 done that day'), findsOneWidget);
+    expect(tester.widget<HifdthCard>(find.byType(HifdthCard)).mood, HifdthMood.worried);
+
+    // Back to today from the sheet.
+    await tester.tap(find.bySemanticsLabel(RegExp(r'Open the calendar$')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.tap(find.text('Back to today'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text("TODAY'S PLAN"), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

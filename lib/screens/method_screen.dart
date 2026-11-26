@@ -137,12 +137,19 @@ class _MethodScreenState extends State<MethodScreen> {
     final editing = _store.plan != null;
     final draft = _draft;
     final ok = draft.valid;
-    // Editing: enabled only while there's something new to save, so after a
-    // save it greys out again until the next change.
+    // Editing a saved plan: the button is hidden until something differs from
+    // it, then rises in like the mini-player (10 px, 220 ms ease-out) and sinks
+    // away after a save (150 ms ease-in). It keeps its green look while it
+    // fades, so it never flashes grey on the way out.
+    final show = _explainer || !editing || _dirty;
     final button = _explainer
         ? PrimaryButton(label: editing ? context.l10n.editMyPlan : context.l10n.setUpMyPlan, onPressed: _showForm)
         : PrimaryButton(
-            label: editing ? context.l10n.updateMyPlan : context.l10n.createMyPlan, onPressed: ok && _dirty ? _save : null);
+            label: editing ? context.l10n.updateMyPlan : context.l10n.createMyPlan,
+            onPressed: !show || ok ? _save : null,
+          );
+    final fade = reduce ? Duration.zero : Duration(milliseconds: show ? 220 : 150);
+    final curve = show ? Curves.easeOut : Curves.easeIn;
 
     return Stack(children: [
       Positioned.fill(
@@ -178,7 +185,28 @@ class _MethodScreenState extends State<MethodScreen> {
         ),
       ),
       // Pinned above the nav.
-      Positioned(left: 16, right: 16, bottom: widget.bottomInset + 12, child: button),
+      Positioned(
+        left: 16,
+        right: 16,
+        bottom: widget.bottomInset + 12,
+        child: IgnorePointer(
+          ignoring: !show,
+          child: ExcludeSemantics(
+            excluding: !show,
+            child: AnimatedOpacity(
+              opacity: show ? 1 : 0,
+              duration: fade,
+              curve: curve,
+              child: AnimatedSlide(
+                offset: show ? Offset.zero : const Offset(0, 10 / PressableButton.fullHeight),
+                duration: fade,
+                curve: curve,
+                child: button,
+              ),
+            ),
+          ),
+        ),
+      ),
     ]);
   }
 

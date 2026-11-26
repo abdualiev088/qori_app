@@ -32,7 +32,6 @@ String weekdayTitle(AppLocalizations l, int weekday) {
 }
 
 String weekdayShort(AppLocalizations l, int weekday) => _split(l.weekdaysShort)[weekday - 1];
-String weekdayLetter(AppLocalizations l, int weekday) => _split(l.weekdayLetters)[weekday - 1];
 
 /// "Wed, 20 Jan", with the year when it isn't [now]'s.
 String dateShort(AppLocalizations l, DateTime d, {DateTime? now}) {

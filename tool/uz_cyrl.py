@@ -44,6 +44,8 @@ FIX={'oktabr':'октябр','sentabr':'сентябр'}
 def convert(T):
     out={k:conv(v) for k,v in T.items()}
     out['monthsLong']=out['monthsLong'].replace('октабр','октябр').replace('сентабр','сентябр')
+    if 'monthsStandalone' in out:
+        out['monthsStandalone']=out['monthsStandalone'].replace('Октабр','Октябр').replace('Сентабр','Сентябр')
     out.update(
       weekdaysShort='Ду,Се,Чо,Па,Жу,Ша,Як', weekdayLetters='Д,С,Ч,П,Ж,Ш,Я',
       enterEmail='Электрон почтангизни киритинг', emailIncomplete='Электрон почта тўлиқ киритилмаганга ўхшайди',

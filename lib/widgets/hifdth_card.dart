@@ -23,6 +23,8 @@ class HifdthCard extends StatefulWidget {
     this.subtitle,
     this.status,
     this.onToggle,
+    this.locked = false,
+    this.contentKey,
     this.empty,
   });
 
@@ -39,6 +41,13 @@ class HifdthCard extends StatefulWidget {
 
   /// Makes the steps checkboxes.
   final ValueChanged<int>? onToggle;
+
+  /// Shows the task rows without letting them be ticked (another day than today).
+  final bool locked;
+
+  /// Which day the panel shows; a new key cross-fades the tasks (200 ms) and
+  /// eases the panel to its new height.
+  final Object? contentKey;
 
   /// Shown in place of the steps when there are none (no plan, rest day…).
   final Widget? empty;
@@ -133,6 +142,7 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     const radius = BorderRadius.all(Radius.circular(HRadii.homeCard));
     final done = widget.steps.where((s) => s.done).length;
+    final reduce = MediaQuery.disableAnimationsOf(context);
 
     return AnimatedBuilder(
       animation: _morph,
@@ -185,22 +195,40 @@ class _HifdthCardState extends State<HifdthCard> with TickerProviderStateMixin {
                               ),
                           ],
                         ),
-                        if (widget.steps.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          Semantics(
-                            label: context.l10n.stepsDone(done, widget.steps.length),
-                            excludeSemantics: true,
-                            child: SegmentedProgressBar(
-                              fills: [for (final s in widget.steps) s.done ? 1 : 0],
-                              color: style.accent,
+                        AnimatedSize(
+                          duration: reduce ? Duration.zero : const Duration(milliseconds: 220),
+                          curve: Curves.easeInOut,
+                          alignment: Alignment.topCenter,
+                          child: AnimatedSwitcher(
+                            duration: reduce ? Duration.zero : const Duration(milliseconds: 200),
+                            switchInCurve: Curves.easeOut,
+                            switchOutCurve: Curves.easeIn,
+                            layoutBuilder: (current, previous) => Stack(
+                                alignment: Alignment.topCenter, children: [...previous, if (current != null) current]),
+                            child: Column(
+                              key: ValueKey(widget.contentKey),
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                if (widget.steps.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Semantics(
+                                    label: context.l10n.stepsDone(done, widget.steps.length),
+                                    excludeSemantics: true,
+                                    child: SegmentedProgressBar(
+                                      fills: [for (final s in widget.steps) s.done ? 1 : 0],
+                                      color: style.accent,
+                                    ),
+                                  ),
+                                  SizedBox(height: widget.onToggle == null ? 14 : 4),
+                                  StepTimeline(steps: widget.steps, onToggle: widget.onToggle, locked: widget.locked),
+                                ] else if (widget.empty case final empty?) ...[
+                                  const SizedBox(height: 12),
+                                  empty,
+                                ],
+                              ],
                             ),
                           ),
-                          SizedBox(height: widget.onToggle == null ? 14 : 4),
-                          StepTimeline(steps: widget.steps, onToggle: widget.onToggle),
-                        ] else if (widget.empty case final empty?) ...[
-                          const SizedBox(height: 12),
-                          empty,
-                        ],
+                        ),
                       ],
                     ),
                   ),

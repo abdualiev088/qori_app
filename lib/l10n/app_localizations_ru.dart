@@ -599,15 +599,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get planDoneToast => 'План на сегодня выполнен. Отлично!';
 
   @override
-  String get goodMorning => 'Доброе утро';
-
-  @override
-  String get goodAfternoon => 'Добрый день';
-
-  @override
-  String get goodEvening => 'Добрый вечер';
-
-  @override
   String get todaysPlanCaps => 'ПЛАН НА СЕГОДНЯ';
 
   @override
@@ -1341,4 +1332,105 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get privacyPolicyTitle => 'Политика конфиденциальности';
+
+  @override
+  String get today => 'Сегодня';
+
+  @override
+  String get yesterday => 'Вчера';
+
+  @override
+  String get tomorrow => 'Завтра';
+
+  @override
+  String get monthsStandalone =>
+      'Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь';
+
+  @override
+  String monthYear(String month, int year) {
+    return '$month $year';
+  }
+
+  @override
+  String get calendarTitle => 'Календарь';
+
+  @override
+  String get legendDone => 'Выполнено';
+
+  @override
+  String get legendPartial => 'Частично';
+
+  @override
+  String get legendMissed => 'Пропущено';
+
+  @override
+  String get legendUpcoming => 'Впереди';
+
+  @override
+  String get previousDay => 'Предыдущий день';
+
+  @override
+  String get nextDay => 'Следующий день';
+
+  @override
+  String get openCalendar => 'Открыть календарь';
+
+  @override
+  String get previousMonth => 'Предыдущий месяц';
+
+  @override
+  String get nextMonth => 'Следующий месяц';
+
+  @override
+  String get backToToday => 'К сегодняшнему дню';
+
+  @override
+  String get dayDoneStatus => 'В этот день всё выполнено';
+
+  @override
+  String dayPartialStatus(int done, int total) {
+    return 'Выполнено $done из $total';
+  }
+
+  @override
+  String get dayMissedStatus => 'Этот день пропущен';
+
+  @override
+  String get dayUpcomingStatus => 'Впереди';
+
+  @override
+  String dayTodayLabel(String date) {
+    return '$date, сегодня';
+  }
+
+  @override
+  String longestStreak(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count дня',
+      many: '$count дней',
+      few: '$count дня',
+      one: '$count день',
+    );
+    return 'Рекорд: $_temp0';
+  }
+
+  @override
+  String streakThisWeek(int done, int total) {
+    return '$done из $total на этой неделе';
+  }
+
+  @override
+  String skippedStatus(int count, String date) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count дня',
+      many: '$count дней',
+      few: '$count дня',
+      one: '$count день',
+    );
+    return 'Пропущено: $_temp0 · финиш перенесён на $date';
+  }
 }

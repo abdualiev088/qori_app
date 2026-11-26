@@ -197,10 +197,13 @@ class Plan {
 
   /// Today's tasks for lesson [k]: the morning recitation of the last three
   /// lessons (from day 2), then the evening's new lesson.
-  List<PlanTask> tasksFor(int k) {
+  List<PlanTask> tasksFor(int k) =>
+      k < 0 || k >= lessons.length ? const [] : tasksForLessons(k, [for (final i in [k - 1, k - 2, k - 3]) if (i >= 0) i]);
+
+  /// A day's tasks: recite lessons [back] (newest first) in the morning, then
+  /// memorize lesson [k] in the evening ([k] null: no evening lesson).
+  List<PlanTask> tasksForLessons(int? k, List<int> back) {
     final l = lessons;
-    if (k < 0 || k >= l.length) return const [];
-    final back = [for (final i in [k - 1, k - 2, k - 3]) if (i >= 0) i];
     return [
       if (back.isNotEmpty)
         PlanTask(
@@ -215,6 +218,7 @@ class Plan {
           lines: sumLines([for (final i in back.reversed) ...l[i]]),
           lessons: back.length,
         ),
+      if (k != null)
       PlanTask(
         id: 'new',
         title: 'Memorize ${seg(l[k])}',
