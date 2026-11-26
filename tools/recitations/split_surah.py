@@ -12,10 +12,12 @@ How it works:
    basmala (optional; not in surahs 1 and 9), then each ayah, so that the
    recognized text best matches each unit's text. Stretches that match nothing
    (isti'adha, a repeated phrase) are left out and listed in the report.
-5. Copies each unit out without re-encoding (no quality loss), with a little
-   silence kept on both sides, into out/<folder>/<NN. Surah>/<NN. First words>.mp3.
-   The basmala is the same before every surah, so only one is kept per
-   reciter: out/<folder>/00. Bismillah.mp3 (in Al-Fatihah it is ayah 1).
+5. Cuts each ayah out exactly, with short fades, into
+   out/<folder>/<NN. Surah>/<NN. First words>.mp3. The cut sits in the
+   pause after the ayah's echo and before the next ayah's first sound.
+   Every surah plays one shared Basmala per reciter, his Al-Fatihah ayah 1,
+   copied to out/<folder>/00. Bismillah.mp3; the Basmala read before other
+   surahs is only noted in report.json.
 
 Every run writes report.json next to the surah's files: timings, what was
 heard and how similar it is to the ayah's text (sim, 0..1).
@@ -26,6 +28,7 @@ from __future__ import annotations
 import json
 import math
 import re
+import shutil
 import subprocess
 import sys
 import urllib.request
@@ -61,8 +64,14 @@ PAD_BEFORE_MAX = 0.6
 PAD_AFTER_MAX = 1.2
 MIN_HEARD = 0.3  # seconds
 QUIET_DB = 3.0  # how close to the pause's quietest a cut point must be
+ONSET_DB = 6.0  # louder than the pause's floor by this much: the next ayah is starting
+GUARD = 0.12  # seconds of quiet kept before the next ayah's first sound
+FADE_IN, FADE_OUT = 0.005, 0.02  # seconds
 PAUSE_BONUS = 2.0  # letters of text match per e-fold of pause length at an ayah's end
 BASMALA = 'بسم الله الرحمن الرحيم'
+# One Basmala per reciter, played as ayah 0 of surahs 2-114 (not 9): his
+# recitation of Al-Fatihah's ayah 1 (docs/DECISIONS.md).
+BASMALA_FILE = '00. Bismillah.mp3'
 
 
 # ---------- text ----------
@@ -260,10 +269,16 @@ def similarity(heard: str, ref: str) -> float:
 # ---------- cutting ----------
 
 def cut(src: Path, dst: Path, start: float, end: float):
+    """Decodes [start, end) exactly and encodes it again with short fades.
+    Copying MP3 frames instead snaps the cut to 26 ms frames and leaves the
+    first frame of each file without its predecessor: the next ayah's first
+    consonant leaked into the end of the previous file as a click."""
     dst.parent.mkdir(parents=True, exist_ok=True)
+    dur = end - start
     subprocess.run(
-        [FFMPEG, '-v', 'error', '-y', '-ss', f'{start:.3f}', '-to', f'{end:.3f}', '-i', str(src),
-         '-c', 'copy', '-map_metadata', '-1', str(dst)],
+        [FFMPEG, '-v', 'error', '-y', '-ss', f'{start:.3f}', '-t', f'{dur:.3f}', '-i', str(src),
+         '-af', f'afade=t=in:d={FADE_IN},afade=t=out:st={max(0.0, dur - FADE_OUT):.3f}:d={FADE_OUT}',
+         '-c:a', 'libmp3lame', '-q:a', '2', '-map_metadata', '-1', str(dst)],
         check=True,
     )
 
@@ -274,20 +289,32 @@ def spoken_text(surah: int, ayah: int, text: str) -> str:
 
 
 def quietest(db: np.ndarray, a: float, b: float) -> float:
-    """Where to cut the pause between a and b: the last moment, before the next
-    ayah begins, that is still about as quiet as the pause gets (smoothed over 60 ms).
+    """Where to cut the pause between a and b: the last moment that is still
+    about as quiet as the pause gets (smoothed over 60 ms), but at least
+    GUARD before the next ayah's first sound begins to rise.
 
     Cutting late keeps the previous ayah's tail whole: a long-drawn ending
     (the madd of "dihaqa") and the room's echo after it ("awla" in 75:34) fade
-    through most of the pause, and an earlier cut lets that fade be heard at
-    the start of the next ayah."""
+    through most of the pause. The guard keeps the soft start of the next
+    ayah (the "f" of "fa-bi-ayyi" in 55:55) out of the previous file."""
     i, j = int(a / HOP), max(int(a / HOP) + 1, int(b / HOP))
     seg = db[i:j]
     if len(seg) < 3:
         return (a + b) / 2
     smooth = np.convolve(seg, np.ones(3) / 3, mode='same')[1:-1]
-    quiet = np.flatnonzero(smooth <= smooth.min() + QUIET_DB)
-    return (i + int(quiet[-1]) + 1 + 0.5) * HOP
+    floor = smooth.min()
+    onset = len(smooth)
+    while onset > 0 and smooth[onset - 1] > floor + ONSET_DB:
+        onset -= 1
+    limit = onset - round(GUARD / HOP)
+    if limit <= 0:  # the pause is shorter than the guard
+        return (i + int(np.argmin(smooth)) + 1 + 0.5) * HOP
+    head = smooth[:limit]
+    quiet = np.flatnonzero(head <= floor + QUIET_DB)
+    # A short pause may still be fading when the next ayah starts: then the
+    # quietest moment the guard allows.
+    k = int(quiet[-1]) if len(quiet) else int(np.argmin(head))
+    return (i + k + 1 + 0.5) * HOP
 
 
 def _absorb(groups, pieces, heard, refs):
@@ -398,13 +425,13 @@ def split(reciter: str, surah: int):
         entry = {'ayah': n, 'file': f'{label}.mp3', 'start': round(start, 2), 'end': round(end, 2),
                  'pieces': b - a + 1, 'sim': similarity(got, ref), 'heard': got}
         if n == 0:
-            # The basmala is the same words before every surah: keep one per reciter.
-            shared = OUT / cfg['folder'] / '00. Bismillah.mp3'
-            if not shared.exists():
-                cut(mp3, shared, start, end)
+            # Only noted, so its time isn't given to ayah 1: every surah
+            # plays the one shared Basmala (see BASMALA_FILE).
             report['basmala'] = entry
             continue
         cut(mp3, folder / entry['file'], start, end)
+        if surah == 1 and n == 1:
+            shutil.copyfile(folder / entry['file'], OUT / cfg['folder'] / BASMALA_FILE)
         report['ayahs'].append(entry)
     if first > 0:
         cut(mp3, OUT / cfg['folder'] / '_extra' / f'{surah:03d}_istiadha.mp3',
