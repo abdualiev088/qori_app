@@ -13,7 +13,7 @@ Flutter-приложение-компаньон для заучивания Ко
 - `just_audio` + `audio_service` + `audio_session` — плеер с lock screen.
 - `shared_preferences` — локальное состояние; `flutter_secure_storage` — токены.
 - `http` — API; `google_sign_in` 7.x, `sign_in_with_apple`; `google_fonts` (Inter, Amiri Quran); `flutter_svg`.
-- iOS bundle и Android applicationId — `com.abdualiev088.qori`, team `QQLG5SP5R2`. Подпись Android-релиза — `android/key.properties` (не в git).
+- iOS bundle и Android applicationId — `com.abdualiev088.qori`, team `MKY9D343NM` (индивидуальный аккаунт, App Store Connect app id 6839614827). Подпись Android-релиза — `android/key.properties` (не в git).
 
 ## Структура `lib/`
 | Файл | Что |

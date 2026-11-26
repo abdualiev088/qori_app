@@ -3,12 +3,14 @@
 # site: Start new build → ios-testflight.
 #
 # Set up once in Codemagic (nothing secret lives in this file):
-# - Team settings → Integrations → Developer Portal: an App Store Connect API
-#   key (role App Manager) named "Qori App Store Connect". Codemagic uses it to
-#   make the signing certificate and profile, and to upload the build.
-# - App settings → Environment variables, group "qori", all optional:
-#   QORI_API_URL (the deployed backend; without it sign-in has no server),
-#   QORI_AUDIO_URL (the audio bucket; without it the app uses r2.dev),
+# - Personal account (or team) → Integrations → Developer Portal: an App Store
+#   Connect API key (role App Manager) named "Qori App Store Connect".
+#   Codemagic uses it to make the signing certificate and profile, and to
+#   upload the build.
+# - Later, when they exist: App settings → Environment variables, group
+#   "qori", then add `groups: [qori]` under environment below. Read by the
+#   build step: QORI_API_URL (the deployed backend; without it sign-in has no
+#   server), QORI_AUDIO_URL (the audio bucket; without it the app uses r2.dev),
 #   GOOGLE_IOS_CLIENT_ID, GOOGLE_SERVER_CLIENT_ID (Google sign-in).
 
 workflows:
@@ -22,8 +24,6 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      groups:
-        - qori
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.abdualiev088.qori

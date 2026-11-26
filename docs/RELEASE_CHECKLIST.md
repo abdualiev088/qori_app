@@ -36,14 +36,14 @@
 
 ## 4. Юридическое и аккаунты разработчика
 
-- [ ] Apple Developer Program ($99 в год) — team `QQLG5SP5R2` уже есть, проверить, что подписка активна.
+- [x] Apple Developer Program: индивидуальный аккаунт, team `MKY9D343NM`, продление 23.08.2027. App ID `com.abdualiev088.qori` и приложение Qori в App Store Connect созданы. (Claude)
 - [ ] Google Play Console (разовые $25). Для личного аккаунта, созданного после ноября 2023, Google требует закрытое тестирование: 12 тестировщиков в течение 14 дней до выхода в продакшен. Internal testing (до 100 человек) доступен сразу.
 - [ ] Страница политики конфиденциальности (что собираем: email, имя, прогресс; как удалить аккаунт) и условия использования, по публичным адресам.
 - [ ] Разрешение чтеца (или правообладателя mp3quran) на использование записей в приложении.
 
 ## 5. iOS → TestFlight
 
-- [ ] В App Store Connect создать приложение с bundle id `com.abdualiev088.qori`.
+- [x] В App Store Connect создать приложение с bundle id `com.abdualiev088.qori`. (Claude)
 - [ ] Sign in with Apple: включить capability в Apple Developer для этого bundle id.
 - [ ] Google Sign-In: iOS client ID в Google Cloud, `GOOGLE_IOS_CLIENT_ID` и reversed client ID в `Info.plist` (URL scheme).
 - [ ] Заполнить App Privacy (какие данные собираются) и Export Compliance (только HTTPS → обычно «нет»).

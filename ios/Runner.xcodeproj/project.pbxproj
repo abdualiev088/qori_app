@@ -383,7 +383,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				DEVELOPMENT_TEAM = QQLG5SP5R2;
+				DEVELOPMENT_TEAM = MKY9D343NM;
 				PRODUCT_BUNDLE_IDENTIFIER = com.abdualiev088.qori;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -565,7 +565,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				DEVELOPMENT_TEAM = QQLG5SP5R2;
+				DEVELOPMENT_TEAM = MKY9D343NM;
 				PRODUCT_BUNDLE_IDENTIFIER = com.abdualiev088.qori;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -588,7 +588,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				DEVELOPMENT_TEAM = QQLG5SP5R2;
+				DEVELOPMENT_TEAM = MKY9D343NM;
 				PRODUCT_BUNDLE_IDENTIFIER = com.abdualiev088.qori;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
