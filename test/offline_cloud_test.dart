@@ -77,7 +77,7 @@ void main() {
     expect(find.text('Register'), findsOneWidget);
     expect(find.byType(QuranProgressCard), findsNothing); // nothing to change
     expect(find.byType(HifdthCard), findsOneWidget); // the rest of Home stays
-    expect(find.bySemanticsLabel('Profile'), findsOneWidget);
+    expect(find.bySemanticsLabel('Profile'), findsNothing); // the account lives in Settings
 
     auth.user = const QoriUser(id: '1', email: 'a@b.co');
     await tester.pump();

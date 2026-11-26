@@ -49,7 +49,7 @@ class HomeScreen extends StatefulWidget {
   /// Which ayahs are learned; the Quran progress card follows it.
   final LearnedStore learned;
 
-  /// Sign-in calls. Without it (tests) the profile button does nothing.
+  /// Sign-in calls (the signed-out card's buttons). Without it (tests) Home acts signed in.
   final AuthApi? auth;
 
   /// Space reserved under the content for the floating nav.
@@ -395,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           // The bubble, beside where Hifdth lands.
           // Pinned: they stay put while the page scrolls under them.
           // The top bar floats over the page: the day pill on the left, the
-          // cloud and profile buttons on the right.
+          // offline cloud on the right.
           if (plans?.plan != null)
             Positioned(
               top: top < 56 ? 56 : top,
@@ -411,7 +411,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           Positioned(
             top: top < 56 ? 56 : top,
             right: 16,
-            child: _HeaderButtons(online: widget.auth?.online, onProfile: _openAuth),
+            child: _HeaderButtons(online: widget.auth?.online),
           ),
           if (_signedIn)
             Positioned(
@@ -528,14 +528,13 @@ class _FlyingHifdth extends StatelessWidget {
   }
 }
 
-/// The cloud and profile buttons at the top right. The cloud shows while
+/// The offline cloud at the top right (the account lives in Settings). It shows while
 /// offline; when the connection comes back it turns green for a moment
 /// ([backOnlineFor]), then fades away.
 class _HeaderButtons extends StatefulWidget {
-  const _HeaderButtons({required this.online, required this.onProfile});
+  const _HeaderButtons({required this.online});
 
   final ValueListenable<bool>? online;
-  final VoidCallback onProfile;
 
   static const backOnlineFor = Duration(seconds: 2);
 
@@ -629,12 +628,9 @@ class _HeaderButtonsState extends State<_HeaderButtons> {
           ),
           layoutBuilder: (current, previous) =>
               Stack(alignment: Alignment.center, children: [...previous, if (current != null) current]),
-          child: _cloud == _Cloud.hidden
-              ? _cloudButton()
-              : Padding(key: ValueKey(_cloud), padding: const EdgeInsets.only(right: 10), child: _cloudButton()),
+          child: _cloudButton(),
         ),
       ),
-      GlassProfileButton(onTap: widget.onProfile),
     ]);
   }
 }

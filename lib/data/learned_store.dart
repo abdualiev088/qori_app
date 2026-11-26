@@ -26,6 +26,9 @@ class LearnedStore extends ChangeNotifier {
 
   bool isSurahLearned(int surah) => learnedCount(surah) == surahAyahCounts[surah - 1];
 
+  /// All learned ayahs across the Quran (of 6236).
+  int get ayahsLearned => _learned.values.fold(0, (n, a) => n + a.length);
+
   int get surahsLearned => [for (var n = 1; n <= 114; n++) n].where(isSurahLearned).length;
 
   /// Called after every [commit] with the surah and its new set, so it can be synced.

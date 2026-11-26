@@ -5,14 +5,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum AppLanguage {
   en(Locale('en'), 'English'),
   ru(Locale('ru'), 'Русский'),
-  uzLatn(Locale.fromSubtags(languageCode: 'uz'), 'Oʻzbekcha'),
-  uzCyrl(Locale.fromSubtags(languageCode: 'uz', scriptCode: 'Cyrl'), 'Ўзбекча');
+  uzLatn(Locale.fromSubtags(languageCode: 'uz'), 'Oʻzbekcha (lotin)'),
+  uzCyrl(Locale.fromSubtags(languageCode: 'uz', scriptCode: 'Cyrl'), 'Ўзбекча (кирилл)');
 
   const AppLanguage(this.locale, this.nativeName);
 
   final Locale locale;
 
-  /// The name in its own language and script, as the picker shows it.
+  /// The name in its own language and script, as the picker shows it; Uzbek
+  /// names say which script they are in.
   final String nativeName;
 }
 

@@ -294,7 +294,7 @@ class _DayCell extends StatelessWidget {
 
 /// A day's state as a round badge: a green check (done), a half amber ring
 /// (partly), a soft red cross (missed), a green flame on mint (today), a gray
-/// flame (coming up), a moon (rest), or an empty ring (nothing planned).
+/// flame (coming up), a sofa (rest, as on the plan card), or an empty ring (nothing planned).
 class DayStateIcon extends StatelessWidget {
   const DayStateIcon({super.key, required this.state, this.size = 28, this.onAccent = false});
 
@@ -322,7 +322,7 @@ class DayStateIcon extends StatelessWidget {
           HColors.bgTop,
           Icon(Icons.local_fire_department_rounded, size: glyph + 2, color: const Color(0xFFC3CAD1)),
         ),
-      DayState.rest => (HColors.bgTop, Icon(Icons.bedtime_rounded, size: glyph, color: const Color(0xFFAAB3BD))),
+      DayState.rest => (HColors.bgTop, Icon(Icons.weekend_rounded, size: glyph, color: const Color(0xFFAAB3BD))),
       DayState.none => (Colors.transparent, null),
     };
     if (onAccent) {
@@ -333,7 +333,7 @@ class DayStateIcon extends StatelessWidget {
         alignment: Alignment.center,
         child: switch (state) {
           DayState.done => HIcon.check(HColors.accentDeep, size: glyph, width: 2.6),
-          DayState.rest => Icon(Icons.bedtime_rounded, size: glyph, color: HColors.accentDeep),
+          DayState.rest => Icon(Icons.weekend_rounded, size: glyph, color: HColors.accentDeep),
           DayState.none => null,
           _ => Icon(Icons.local_fire_department_rounded, size: glyph + 2, color: HColors.accent),
         },

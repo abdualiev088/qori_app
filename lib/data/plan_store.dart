@@ -60,6 +60,9 @@ class PlanStore extends ChangeNotifier {
     await _saveDone();
   }
 
+  /// Evening lessons ticked so far (each one a lesson learned).
+  int get lessonsLearned => _done.values.where((ids) => ids.contains('new')).length;
+
   bool isDone(DateTime day, String id) => _done[dateKey(day)]?.contains(id) ?? false;
 
   Future<void> toggle(DateTime day, String id) async {

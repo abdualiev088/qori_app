@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:qori_app/data/auth_api.dart';
 import 'package:qori_app/data/locale_store.dart';
 import 'package:qori_app/l10n/app_localizations.dart';
 import 'package:qori_app/l10n/plan_text.dart';
@@ -9,6 +10,7 @@ import 'package:qori_app/theme/tokens.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fake_audio_engine.dart';
+import 'fake_auth_api.dart';
 
 void main() {
   setUp(() => HText.useGoogleFonts = false);
@@ -16,7 +18,7 @@ void main() {
   late LocaleStore locale;
   late PlayerController player;
 
-  Future<void> open(WidgetTester tester) async {
+  Future<void> open(WidgetTester tester, {FakeAuthApi? auth}) async {
     tester.view
       ..physicalSize = const Size(1206, 2622)
       ..devicePixelRatio = 3;
@@ -31,7 +33,7 @@ void main() {
         locale: locale.locale,
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
-        home: Scaffold(body: SettingsScreen(locale: locale, player: player, bottomInset: 96)),
+        home: Scaffold(body: SettingsScreen(locale: locale, player: player, auth: auth, bottomInset: 96)),
       ),
     ));
     await tester.pumpAndSettle();
@@ -47,17 +49,39 @@ void main() {
     expect(find.text('Настройки'), findsOneWidget);
     expect(find.text('ЯЗЫК'), findsOneWidget);
 
-    await tester.tap(find.text('Ўзбекча'));
+    await tester.tap(find.text('Ўзбекча (кирилл)'));
     await tester.pumpAndSettle();
     expect(find.text('Созламалар'), findsOneWidget);
 
-    await tester.tap(find.text('Oʻzbekcha'));
+    await tester.tap(find.text('Oʻzbekcha (lotin)'));
     await tester.pumpAndSettle();
     expect(find.text('Sozlamalar'), findsOneWidget);
 
     final again = LocaleStore.load(await SharedPreferences.getInstance());
     expect(again.language, AppLanguage.uzLatn);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the account row asks to sign in, then shows who is signed in', (tester) async {
+    final auth = FakeAuthApi();
+    await open(tester, auth: auth);
+    expect(find.text('Sign in'), findsNWidgets(2)); // the name line and the pill
+    expect(find.text('Save your progress on every device'), findsOneWidget);
+    expect(find.text('Surahs'), findsOneWidget);
+    expect(find.text('Lessons'), findsOneWidget);
+    expect(find.text('Best streak'), findsOneWidget);
+
+    auth.user = const QoriUser(id: '1', email: 'aziz@example.com', displayName: 'Aziz');
+    await tester.pump();
+    expect(find.text('Aziz'), findsOneWidget);
+    expect(find.text('aziz@example.com'), findsOneWidget);
+    expect(find.text('A'), findsOneWidget); // the initial
+    expect(find.text('Edit'), findsOneWidget);
+
+    await tester.tap(find.text('Aziz'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('ACCOUNT SETTINGS'), findsOneWidget); // the account page
   });
 
   testWidgets('playback settings change the player', (tester) async {

@@ -102,3 +102,8 @@ From the My Method prototype (`~/method-proto`, `FLUTTER_PROMPT_33.md`), cut dow
 
 - **Chosen:** the schedule follows the ticks. A lesson only counts as learned when its evening is ticked; otherwise it moves to the next study day and the plan grows by one day. Each learned lesson is recited on the three study mornings after its evening, so a skipped evening just adds nothing to those mornings.
 - **Rejected:** "the last three learned lessons" every morning (a skip would stretch one lesson's recitations over more days); keeping the fixed calendar (the app would ask to recite lessons that were never learned).
+
+## 2026-11-26 · Account moves into Settings
+
+- **Chosen:** the account row (name, email, or "Sign in") heads Settings; Home's profile button is gone, leaving the top bar to the day pill and the offline cloud. Language rows show only each language's own name, with the script in brackets for Uzbek.
+- **Rejected:** keeping the profile button as a second way in (two entry points, and it crowded the top bar next to the day pill).

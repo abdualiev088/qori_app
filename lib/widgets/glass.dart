@@ -119,17 +119,6 @@ class LiquidGlass extends StatelessWidget {
   }
 }
 
-/// The 46 px glass profile button on Home.
-class GlassProfileButton extends StatelessWidget {
-  const GlassProfileButton({super.key, required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) =>
-      GlassCircleButton(label: context.l10n.profile, onTap: onTap, child: HIcon.profile(HColors.ink));
-}
-
 /// The round 46 px glass button used in Home's header.
 class GlassCircleButton extends StatelessWidget {
   const GlassCircleButton({super.key, required this.label, required this.onTap, required this.child, this.fill});

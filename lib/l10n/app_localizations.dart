@@ -119,12 +119,6 @@ abstract class AppLocalizations {
   /// **'Hifdth assistant'**
   String get hifdthAssistant;
 
-  /// No description provided for @profile.
-  ///
-  /// In en, this message translates to:
-  /// **'Profile'**
-  String get profile;
-
   /// No description provided for @mainNav.
   ///
   /// In en, this message translates to:
@@ -1865,12 +1859,6 @@ abstract class AppLocalizations {
   /// **'LANGUAGE'**
   String get languageCaps;
 
-  /// No description provided for @languageNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Surah meanings and the English translation of the ayahs stay in English for now.'**
-  String get languageNote;
-
   /// No description provided for @playbackCaps.
   ///
   /// In en, this message translates to:
@@ -1930,30 +1918,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Qori · made for those who memorize the Quran'**
   String get madeWithCare;
-
-  /// No description provided for @langEnglish.
-  ///
-  /// In en, this message translates to:
-  /// **'English'**
-  String get langEnglish;
-
-  /// No description provided for @langRussian.
-  ///
-  /// In en, this message translates to:
-  /// **'Russian'**
-  String get langRussian;
-
-  /// No description provided for @langUzbekLatin.
-  ///
-  /// In en, this message translates to:
-  /// **'Uzbek (Latin)'**
-  String get langUzbekLatin;
-
-  /// No description provided for @langUzbekCyrillic.
-  ///
-  /// In en, this message translates to:
-  /// **'Uzbek (Cyrillic)'**
-  String get langUzbekCyrillic;
 
   /// No description provided for @privacyPolicyTitle.
   ///
@@ -2104,6 +2068,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Skipped 1 day} other{Skipped {count} days}} · finish moved to {date}'**
   String skippedStatus(int count, String date);
+
+  /// No description provided for @signInSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your progress on every device'**
+  String get signInSubtitle;
+
+  /// No description provided for @editProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get editProfile;
+
+  /// No description provided for @quranWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Quran'**
+  String get quranWord;
+
+  /// No description provided for @statSurahs.
+  ///
+  /// In en, this message translates to:
+  /// **'Surahs'**
+  String get statSurahs;
+
+  /// No description provided for @statLessons.
+  ///
+  /// In en, this message translates to:
+  /// **'Lessons'**
+  String get statLessons;
+
+  /// No description provided for @statBestStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Best streak'**
+  String get statBestStreak;
+
+  /// No description provided for @ayahsOfQuran.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {total} ayahs learned'**
+  String ayahsOfQuran(int count, int total);
 }
 
 class _AppLocalizationsDelegate

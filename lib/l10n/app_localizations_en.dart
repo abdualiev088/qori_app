@@ -20,9 +20,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hifdthAssistant => 'Hifdth assistant';
 
   @override
-  String get profile => 'Profile';
-
-  @override
   String get mainNav => 'Main';
 
   @override
@@ -1226,10 +1223,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageCaps => 'LANGUAGE';
 
   @override
-  String get languageNote =>
-      'Surah meanings and the English translation of the ayahs stay in English for now.';
-
-  @override
   String get playbackCaps => 'PLAYBACK';
 
   @override
@@ -1260,18 +1253,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get madeWithCare => 'Qori · made for those who memorize the Quran';
-
-  @override
-  String get langEnglish => 'English';
-
-  @override
-  String get langRussian => 'Russian';
-
-  @override
-  String get langUzbekLatin => 'Uzbek (Latin)';
-
-  @override
-  String get langUzbekCyrillic => 'Uzbek (Cyrillic)';
 
   @override
   String get privacyPolicyTitle => 'Privacy policy';
@@ -1371,5 +1352,28 @@ class AppLocalizationsEn extends AppLocalizations {
       one: 'Skipped 1 day',
     );
     return '$_temp0 · finish moved to $date';
+  }
+
+  @override
+  String get signInSubtitle => 'Save your progress on every device';
+
+  @override
+  String get editProfile => 'Edit';
+
+  @override
+  String get quranWord => 'Quran';
+
+  @override
+  String get statSurahs => 'Surahs';
+
+  @override
+  String get statLessons => 'Lessons';
+
+  @override
+  String get statBestStreak => 'Best streak';
+
+  @override
+  String ayahsOfQuran(int count, int total) {
+    return '$count of $total ayahs learned';
   }
 }

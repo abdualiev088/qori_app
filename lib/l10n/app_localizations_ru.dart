@@ -20,9 +20,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hifdthAssistant => 'Помощник Hifdth';
 
   @override
-  String get profile => 'Профиль';
-
-  @override
   String get mainNav => 'Главное меню';
 
   @override
@@ -1284,10 +1281,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get languageCaps => 'ЯЗЫК';
 
   @override
-  String get languageNote =>
-      'Значения названий сур и перевод аятов пока на английском.';
-
-  @override
   String get playbackCaps => 'ВОСПРОИЗВЕДЕНИЕ';
 
   @override
@@ -1317,18 +1310,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get madeWithCare => 'Qori · для тех, кто учит Коран наизусть';
-
-  @override
-  String get langEnglish => 'Английский';
-
-  @override
-  String get langRussian => 'Русский';
-
-  @override
-  String get langUzbekLatin => 'Узбекский (латиница)';
-
-  @override
-  String get langUzbekCyrillic => 'Узбекский (кириллица)';
 
   @override
   String get privacyPolicyTitle => 'Политика конфиденциальности';
@@ -1432,5 +1413,28 @@ class AppLocalizationsRu extends AppLocalizations {
       one: '$count день',
     );
     return 'Пропущено: $_temp0 · финиш перенесён на $date';
+  }
+
+  @override
+  String get signInSubtitle => 'Сохраняйте прогресс на всех устройствах';
+
+  @override
+  String get editProfile => 'Изменить';
+
+  @override
+  String get quranWord => 'Коран';
+
+  @override
+  String get statSurahs => 'Суры';
+
+  @override
+  String get statLessons => 'Уроки';
+
+  @override
+  String get statBestStreak => 'Рекорд';
+
+  @override
+  String ayahsOfQuran(int count, int total) {
+    return 'Выучено аятов: $count из $total';
   }
 }

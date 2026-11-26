@@ -20,9 +20,6 @@ class AppLocalizationsUz extends AppLocalizations {
   String get hifdthAssistant => 'Hifdth yordamchisi';
 
   @override
-  String get profile => 'Profil';
-
-  @override
   String get mainNav => 'Asosiy menyu';
 
   @override
@@ -1230,10 +1227,6 @@ class AppLocalizationsUz extends AppLocalizations {
   String get languageCaps => 'TIL';
 
   @override
-  String get languageNote =>
-      'Sura nomlarining maʼnolari va oyatlar tarjimasi hozircha ingliz tilida.';
-
-  @override
   String get playbackCaps => 'IJRO';
 
   @override
@@ -1263,18 +1256,6 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get madeWithCare => 'Qori · Qurʼonni yod oladiganlar uchun';
-
-  @override
-  String get langEnglish => 'Inglizcha';
-
-  @override
-  String get langRussian => 'Ruscha';
-
-  @override
-  String get langUzbekLatin => 'Oʻzbekcha (lotin)';
-
-  @override
-  String get langUzbekCyrillic => 'Oʻzbekcha (kirill)';
 
   @override
   String get privacyPolicyTitle => 'Maxfiylik siyosati';
@@ -1368,6 +1349,29 @@ class AppLocalizationsUz extends AppLocalizations {
   String skippedStatus(int count, String date) {
     return '$count kun oʻtkazib yuborildi · tugash $date ga surildi';
   }
+
+  @override
+  String get signInSubtitle => 'Natijangizni barcha qurilmalarda saqlang';
+
+  @override
+  String get editProfile => 'Tahrirlash';
+
+  @override
+  String get quranWord => 'Qurʼon';
+
+  @override
+  String get statSurahs => 'Suralar';
+
+  @override
+  String get statLessons => 'Darslar';
+
+  @override
+  String get statBestStreak => 'Rekord';
+
+  @override
+  String ayahsOfQuran(int count, int total) {
+    return '$total oyatdan $count tasi yodlangan';
+  }
 }
 
 /// The translations for Uzbek, using the Cyrillic script (`uz_Cyrl`).
@@ -1384,9 +1388,6 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get hifdthAssistant => 'Hifdth ёрдамчиси';
-
-  @override
-  String get profile => 'Профил';
 
   @override
   String get mainNav => 'Асосий меню';
@@ -2593,10 +2594,6 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
   String get languageCaps => 'ТИЛ';
 
   @override
-  String get languageNote =>
-      'Сура номларининг маънолари ва оятлар таржимаси ҳозирча инглиз тилида.';
-
-  @override
   String get playbackCaps => 'ИЖРО';
 
   @override
@@ -2626,18 +2623,6 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get madeWithCare => 'Qori · Қуръонни ёд оладиганлар учун';
-
-  @override
-  String get langEnglish => 'Инглизча';
-
-  @override
-  String get langRussian => 'Русча';
-
-  @override
-  String get langUzbekLatin => 'Ўзбекча (лотин)';
-
-  @override
-  String get langUzbekCyrillic => 'Ўзбекча (кирилл)';
 
   @override
   String get privacyPolicyTitle => 'Махфийлик сиёсати';
@@ -2730,5 +2715,28 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
   @override
   String skippedStatus(int count, String date) {
     return '$count кун ўтказиб юборилди · тугаш $date га сурилди';
+  }
+
+  @override
+  String get signInSubtitle => 'Натижангизни барча қурилмаларда сақланг';
+
+  @override
+  String get editProfile => 'Таҳрирлаш';
+
+  @override
+  String get quranWord => 'Қуръон';
+
+  @override
+  String get statSurahs => 'Суралар';
+
+  @override
+  String get statLessons => 'Дарслар';
+
+  @override
+  String get statBestStreak => 'Рекорд';
+
+  @override
+  String ayahsOfQuran(int count, int total) {
+    return '$total оятдан $count таси ёдланган';
   }
 }

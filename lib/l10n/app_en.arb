@@ -13,7 +13,6 @@
     }
   },
   "hifdthAssistant": "Hifdth assistant",
-  "profile": "Profile",
   "mainNav": "Main",
   "tabHome": "Home",
   "tabPlayer": "Player",
@@ -1015,7 +1014,6 @@
     }
   },
   "languageCaps": "LANGUAGE",
-  "languageNote": "Surah meanings and the English translation of the ayahs stay in English for now.",
   "playbackCaps": "PLAYBACK",
   "repeatEachAyah": "Repeat each ayah",
   "repeatEachAyahNote": "How many times the player plays an ayah before moving on.",
@@ -1026,10 +1024,6 @@
   "contactUs": "Contact us",
   "soon": "Soon",
   "madeWithCare": "Qori · made for those who memorize the Quran",
-  "langEnglish": "English",
-  "langRussian": "Russian",
-  "langUzbekLatin": "Uzbek (Latin)",
-  "langUzbekCyrillic": "Uzbek (Cyrillic)",
   "privacyPolicyTitle": "Privacy policy",
   "today": "Today",
   "yesterday": "Yesterday",
@@ -1106,6 +1100,23 @@
       },
       "date": {
         "type": "String"
+      }
+    }
+  },
+  "signInSubtitle": "Save your progress on every device",
+  "editProfile": "Edit",
+  "quranWord": "Quran",
+  "statSurahs": "Surahs",
+  "statLessons": "Lessons",
+  "statBestStreak": "Best streak",
+  "ayahsOfQuran": "{count} of {total} ayahs learned",
+  "@ayahsOfQuran": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
       }
     }
   }

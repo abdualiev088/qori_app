@@ -121,7 +121,14 @@ class _AppShellState extends State<AppShell> {
                       Toast.show(context, message);
                     },
                   ),
-                  SettingsScreen(locale: widget.locale, player: widget.player, bottomInset: contentInset),
+                  SettingsScreen(
+                    locale: widget.locale,
+                    player: widget.player,
+                    auth: widget.auth,
+                    learned: widget.learned,
+                    plans: widget.plans,
+                    bottomInset: contentInset,
+                  ),
                 ],
               ),
             ),

@@ -40,7 +40,7 @@ Qori helps a person memorise the Quran (hifdth). Hifdth, a round green mascot, r
 - **Apple and Google** sign-in are on the first step. Closing their sheet does nothing.
 - **When signing in:** an account that already has ayahs replaces whatever is on the phone; an empty account gets what's on the phone (normally nothing, since signed out can't change progress). Sign-in sends no earlier session, so the server never merges anything in.
 - **Errors:** show only after the first submit, next to their field, and clear as the user types. Unexpected failures always show a message, never nothing.
-- **The profile button** on Home opens the sign-in screen, or the account page when signed in.
+- **The profile card** heads Settings: a sky banner with an Edit pill ("Sign in" when signed out), the initial in a ringed circle, a segmented bar of how much of the Quran (6236 ayahs) is memorized, the name and email, and three numbers: surahs fully learned, evening lessons learned (ticked) and the best streak. Tapping it opens the account page, or sign-in when signed out. Home has no profile button.
 - **Signed in stays signed in offline:** the device remembers who is signed in. On launch, and whenever the account page opens, the app checks with the server.
   - **Offline:** the remembered account is shown, with the notice "You're offline. Turn on the internet to update your account."
   - **The server ended the session** (signed out elsewhere, or the account was deleted): the app forgets the account, closes the page and says "You were signed out."
@@ -68,7 +68,7 @@ The rules are in `lib/data/progress_sync.dart`.
 - **When it syncs:** on launch, when the app returns to the foreground, and after every save.
 - **Offline:** every change is saved on the phone first and queued. Server errors keep everything queued. While offline the app retries every 10 seconds, so the queue goes out as soon as the internet is back.
 - **Offline indicator:** while the server can't be reached, a glass cloud icon (crossed out) appears left of the profile icon on Home, in the same style. Tapping it explains that changes are saved on the phone and will sync when back online. It disappears on the next successful request.
-- **The cloud and profile icons are pinned:** they stay at the top right while the page scrolls under them.
+- **The cloud icon is pinned:** they stay at the top right while the page scrolls under them.
 
 ## 7. Hifdth's mood (live)
 
@@ -113,7 +113,7 @@ The rules are in `lib/data/progress_sync.dart`.
   - "Today's plan" lists the tasks, and the user ticks each one. The morning recitation has an amber sun tile, the evening lesson an indigo moon tile, so the time of day shows at a glance.
   - The "Your plan" card shows the range, a strip of days, and the pace, finish date and rest day as chips; the rest day is spelled out with a capital ("Friday off"). Its edit button opens My Method.
   - Rest days, the days before the start and a finished plan each have their own message.
-  - **Day calendar** (once a plan exists): a frosted-glass "‹ Today ›" pill floats in the top bar (left; the cloud and profile buttons are on the right), and the week's seven days sit above Hifdth's card, each with its weekday, date and state. Today is always the filled green cell. Home has no greeting or date line. Each day shows its state: done (green check), partly done (half amber ring), missed (soft red cross), today still open (green flame), coming up (gray flame), rest (moon). The arrows step a day, a day cell picks it, a sideways swipe moves a week, and tapping the pill opens the whole month in a bottom sheet (tap a day, swipe or arrow between months, "Back to today").
+  - **Day calendar** (once a plan exists): a frosted-glass "‹ Today ›" pill floats in the top bar (left; the offline cloud is on the right), and the week's seven days sit above Hifdth's card, each with its weekday, date and state. Today is always the filled green cell. Home has no greeting or date line. Each day shows its state: done (green check), partly done (half amber ring), missed (soft red cross), today still open (green flame), coming up (gray flame), rest (sofa, as on the plan card). The arrows step a day, a day cell picks it, a sideways swipe moves a week, and tapping the pill opens the whole month in a bottom sheet (tap a day, swipe or arrow between months, "Back to today").
   - Picking another day shows that day's tasks with their ticks in Hifdth's card, titled with the date, plus "All done that day", "1 of 2 done that day", "Missed that day" or "Coming up". Only today can be ticked; a past day's unticked tasks show a red cross instead of a checkbox. Hifdth's mood follows the shown day: a missed day makes it sad, a partly done day worried, a done or upcoming day happy (today keeps the late-task rule). The goal and the streak always follow today.
 - **Daily goal:** ticked ÷ today's tasks.
 - **Streak:**
@@ -141,7 +141,7 @@ The rules are in `lib/data/progress_sync.dart`.
 ## 11. Settings and languages (live)
 
 - The bottom nav has four tabs: **Home**, **Player**, **My Method** and **Settings** (gear).
-- **Language:** English (default), Russian, Uzbek in Latin script and Uzbek in Cyrillic. The choice applies at once and is saved on the device (`hifdth.locale.v1`); the phone's own language is not used yet. Surah meanings and the English ayah translation stay English for now. Surah names stay in their transliteration.
+- **Language:** English (default), Russian, Uzbek in Latin script and Uzbek in Cyrillic, each listed by its own name only; the Uzbek ones say their script: "Oʻzbekcha (lotin)", "Ўзбекча (кирилл)". The choice applies at once and is saved on the device (`hifdth.locale.v1`); the phone's own language is not used yet. Surah meanings and the English ayah translation stay English for now. Surah names stay in their transliteration.
 - **Playback:** the same repeat count (1, 3, 5, 7, 10, ∞) and "Then next ayah" switch the player uses; changing them here changes the player.
 - **About:** version, reciter; Privacy policy and Contact us are marked "Soon".
 - **Small Hifdth:** when Home scrolls and Hifdth flies to the corner, it turns happy (green) on the way and stays happy there whatever the plan's mood; it takes the real mood back as it lands in the card.
