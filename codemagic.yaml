@@ -55,4 +55,7 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
+        # Internal testers (group "Qori Team", automatic distribution) get every
+        # upload without review. Submitting for external beta review needs the
+        # Test Information in App Store Connect filled in first.
+        submit_to_testflight: false
