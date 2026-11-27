@@ -18,13 +18,16 @@ class SignInCancelled implements Exception {}
 
 /// The native Apple and Google sign-in sheets.
 ///
-/// Google needs its OAuth client IDs, passed with --dart-define:
+/// Google uses the OAuth clients of the Google Cloud project "Qori" (qori-516014).
+/// Client IDs aren't secret: they ship inside every app. Override with --dart-define:
 ///   GOOGLE_IOS_CLIENT_ID     the iOS client (its reversed ID must also be a URL scheme in ios/Runner/Info.plist)
 ///   GOOGLE_SERVER_CLIENT_ID  the web client; ID tokens are then issued for it on every platform
-/// The server must list the token's audience in GOOGLE_CLIENT_IDS.
+/// The server must list the token's audience (the web client) in GOOGLE_CLIENT_IDS.
 class SocialSignIn {
-  static const _googleIosClientId = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
-  static const _googleServerClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+  static const _googleIosClientId = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID',
+      defaultValue: '665244744578-ebf1no1ap3tsa5khjon1ut6tptffk16o.apps.googleusercontent.com');
+  static const _googleServerClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID',
+      defaultValue: '665244744578-jftm0h5vvp7tgvm2frc9564dk1hsim82.apps.googleusercontent.com');
 
   Future<void>? _googleReady;
 

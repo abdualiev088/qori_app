@@ -27,7 +27,7 @@ Flutter-приложение-компаньон для заучивания Ко
 | `data/api_client.dart` | `ApiClient`: JSON, bearer, авто-refresh при 401 (кроме `/auth/*`), `ApiException {status, code, message, fields, body}`, status 0 = offline. URL: `--dart-define=QORI_API_URL`, иначе `http://127.0.0.1:8000/v1` (Android-эмулятор `10.0.2.2`). |
 | `data/auth_api.dart` | `AuthApi`, `QoriUser{id,email,displayName,isGuest,hasPassword}`. Email-first: `/auth/email/check`, `/signin`, `/signup`, `/auth/password/reset`, `/auth/social`, `/auth/signout`, `GET/PATCH/DELETE /me`. |
 | `data/progress_sync.dart` | `ProgressSync`: гостевой аккаунт `/auth/guest`, очередь `hifdth.sync.pending.v1`, `/progress/merge` (union) при смене аккаунта (`hifdth.sync.merged.v1`), `PUT /progress/{surah}` с `updated_at`, 409 → берём серверный набор, потом `GET /progress`. |
-| `data/social_sign_in.dart` | Нативные Apple/Google. Google требует `--dart-define` `GOOGLE_IOS_CLIENT_ID` / `GOOGLE_SERVER_CLIENT_ID`. Отмена → `SignInCancelled`. |
+| `data/social_sign_in.dart` | Нативные Apple/Google. Google client ID (проект Google Cloud `qori-516014`) — значения по умолчанию, `--dart-define` `GOOGLE_IOS_CLIENT_ID` / `GOOGLE_SERVER_CLIENT_ID` их заменяет. Отмена → `SignInCancelled`. |
 | `player/player_controller.dart` | Плеер (порт из `Player.dc.html`): repeat (1,3,5,7,10,0=∞), autoNext, loopSelected, выделение-очередь; prefs `hifdth.qalam.*`. Аудио `assets/audio/068_NNN.mp3` (000 = басмала). |
 | `player/playback_rules.dart` | Чистые `nextAfter` / `prevBefore`, `lastAyah = 52`. |
 | `player/audio_handler.dart` | `HifdthAudioHandler` — мост к lock screen / уведомлению. |
