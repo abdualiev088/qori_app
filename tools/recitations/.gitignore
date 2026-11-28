@@ -3,3 +3,4 @@ cache/
 out/
 publish/
 .r2.env
+.r2.dest.env

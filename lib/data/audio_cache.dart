@@ -33,7 +33,7 @@ class AudioFileInfo {
 String defaultAudioUrl() {
   const fromEnv = String.fromEnvironment('QORI_AUDIO_URL');
   // r2.dev is rate-limited: fine for testing, replaced by our own domain before release.
-  return fromEnv.isNotEmpty ? fromEnv : 'https://pub-4158057f334347aba656f785e7219ec1.r2.dev';
+  return fromEnv.isNotEmpty ? fromEnv : 'https://pub-7de4094a116b495ab84aa2665580cd3c.r2.dev';
 }
 
 /// A surah's recordings for one reciter: `manifests/<reciter>/NNN.json`.
