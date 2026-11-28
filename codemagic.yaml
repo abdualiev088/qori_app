@@ -9,9 +9,9 @@
 #   upload the build.
 # - Later, when they exist: App settings → Environment variables, group
 #   "qori", then add `groups: [qori]` under environment below. Read by the
-#   build step: QORI_API_URL (the deployed backend; without it sign-in has no
-#   server), QORI_AUDIO_URL (the audio bucket; without it the app uses r2.dev),
-#   GOOGLE_IOS_CLIENT_ID, GOOGLE_SERVER_CLIENT_ID (Google sign-in).
+#   build step: QORI_AUDIO_URL (the audio bucket; without it the app uses r2.dev),
+#   GOOGLE_IOS_CLIENT_ID, GOOGLE_SERVER_CLIENT_ID (Google sign-in; the app has
+#   defaults). QORI_API_URL, the deployed backend, is set under environment below.
 
 workflows:
   ios-testflight:
@@ -21,6 +21,9 @@ workflows:
     integrations:
       app_store_connect: Qori App Store Connect
     environment:
+      vars:
+        # The backend on Render (service qori-api, Frankfurt). Not a secret.
+        QORI_API_URL: https://qori-api.onrender.com/v1
       flutter: stable
       xcode: latest
       cocoapods: default

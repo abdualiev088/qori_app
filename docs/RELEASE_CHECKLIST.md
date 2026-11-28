@@ -47,7 +47,8 @@
 - [x] Sign in with Apple: capability включена у App ID, профиль «Qori App Store» перевыпущен, `ios/Runner/Runner.entitlements`. (Claude)
 - [x] Google Sign-In: проект Google Cloud «Qori» (`qori-516014`, аккаунт maxparis956@gmail.com), клиенты «Qori iOS» и «Qori server» (web). ID — значения по умолчанию в `lib/data/social_sign_in.dart`, reversed iOS ID — URL scheme в `Info.plist`. (Claude)
 - [ ] Google: экран согласия в режиме Testing — войти могут только test users. Перед выходом нажать Publish app (Audience); для email/profile проверка Google не нужна.
-- [ ] Бэкенд: web client ID `665244744578-jftm0h5vvp7tgvm2frc9564dk1hsim82.apps.googleusercontent.com` в `GOOGLE_CLIENT_IDS`, bundle id `com.abdualiev088.qori` — аудитория для Apple.
+- [x] Бэкенд на Render: сервис `qori-api` (Frankfurt, бесплатный план) — `https://qori-api.onrender.com/v1`, база — Neon-проект qori; в Codemagic адрес задан в `codemagic.yaml`. Бесплатный сервер засыпает через ~15 мин без запросов, первый запрос ждёт до минуты.
+- [x] Бэкенд: web client ID `665244744578-jftm0h5vvp7tgvm2frc9564dk1hsim82.apps.googleusercontent.com` в `GOOGLE_CLIENT_IDS`, bundle id `com.abdualiev088.qori` — аудитория для Apple.
 - [ ] Заполнить App Privacy (какие данные собираются) и Export Compliance (только HTTPS → обычно «нет»).
 - [ ] Сборка на Mac:
   `flutter build ipa --dart-define=QORI_API_URL=https://api.<домен>/v1 --dart-define=GOOGLE_IOS_CLIENT_ID=… --dart-define=GOOGLE_SERVER_CLIENT_ID=…`
